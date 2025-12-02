@@ -1,0 +1,1 @@
+console.log("Megaservice theme JS loaded");

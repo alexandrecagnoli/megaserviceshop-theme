@@ -1,0 +1,7 @@
+.page-container {
+  @include container();
+}
+
+.page-content {
+  padding: 2rem 0;
+}

@@ -1,0 +1,19 @@
+// 1. Settings
+@import "settings/variables";
+@import "settings/mixins";
+
+// 2. Base
+@import "base/reset";
+@import "base/typography";
+
+// 3. Layout
+@import "layout/layout";
+@import "layout/header";
+@import "layout/footer";
+
+// 4. Components
+@import "components/buttons";
+@import "components/forms";
+
+// 5. Pages
+@import "pages/home";

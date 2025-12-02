@@ -1,0 +1,23 @@
+{
+  "name": "megaservice-theme",
+  "version": "1.0.0",
+  "description": "Theme PrestaShop Megaservice",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack --mode=development --watch",
+    "build": "webpack --mode=production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "mini-css-extract-plugin": "^2.9.4",
+    "sass": "^1.94.2",
+    "sass-loader": "^16.0.6",
+    "webpack-cli": "^6.0.1"
+  }
+}

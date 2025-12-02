@@ -1,0 +1,25 @@
+.header-top {
+  background: #ff0000;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+  .page-container {
+    @include container();
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 72px;
+  }
+}
+
+.header-logo img {
+  display: block;
+  max-height: 40px;
+  width: auto;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  justify-content: flex-end;
+}

@@ -1,0 +1,21 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Mac
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Bundles
+megaservice.zip
+
+# Logs
+*.log
+
+# Presta cache (si tu ajoutes PrestaShop plus tard)
+var/cache/
+var/logs/
