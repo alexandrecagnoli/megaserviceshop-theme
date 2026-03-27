@@ -1,17 +1,48 @@
 // ============================================
-// COULEURS
+// COULEURS — MARQUES
 // ============================================
-$color-primary: #0059ff;
-$color-primary-dark: #0046cc;
-$color-secondary: #ff5a5f;
-$color-secondary-dark: #e64a4e;
-$color-bg: #f5f5f5;
-$color-text: #222;
-$color-text-light: #555;
-$color-border: #e0e0e0;
-$color-success: #28a745;
-$color-error: #dc3545;
-$color-warning: #ffc107;
+$color-ktm:             #FE6604;
+$color-ktm-light:       #FFEADC;
+
+$color-gasgas:          #C80928;
+$color-gasgas-light:    #F5DCE0;
+
+$color-husqvarna:       #C80928;
+$color-husqvarna-light: #DADEE3;
+
+// ============================================
+// COULEURS — NEUTRES
+// ============================================
+$color-black:    #000000;
+$color-gray-85:  #282828;
+$color-gray-60:  #676767;
+$color-gray-50:  #7E7E7E;
+$color-gray-35:  #B5B5B5;
+$color-gray-20:  #CCCCCC;
+$color-gray-5:   #F3F3F3;
+$color-white:    #FFFFFF;
+
+// Aliases sémantiques
+$color-primary:      $color-ktm;
+$color-primary-dark: darken($color-ktm, 10%);
+$color-bg:           $color-gray-5;
+$color-text:         $color-black;
+$color-text-light:   $color-gray-60;
+$color-border:       $color-gray-20;
+
+// ============================================
+// COULEURS — STATUTS
+// ============================================
+$color-success:       #408712;
+$color-success-mid:   #128C0C;
+$color-success-light: #E2F4E5;
+
+$color-warning:       #9A8E00;
+$color-warning-light: #FFEEE8;
+
+$color-error:         #830303;
+$color-error-mid:     #EC4B10;
+$color-error-light:   #FDE6E6;
 
 // ============================================
 // LAYOUT
@@ -30,8 +61,9 @@ $breakpoint-xxl: 1400px;
 // ============================================
 // TYPOGRAPHIE
 // ============================================
-$font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-$font-mono: "Courier New", monospace;
+$font-main:    'Trade Gothic LT', system-ui, sans-serif;
+$font-heading: 'Blender Pro', 'Trade Gothic LT', sans-serif;
+$font-mono:    "Courier New", monospace;
 $font-size-base: 16px;
 $font-size-sm: 0.875rem;
 $font-size-lg: 1.125rem;

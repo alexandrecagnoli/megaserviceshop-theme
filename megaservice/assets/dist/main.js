@@ -1,1 +1,1 @@
-console.log("Megaservice theme JS loaded");
+!function(){"use strict";document.addEventListener("DOMContentLoaded",function(){console.log("Megaservice theme JS initialized")})}();
