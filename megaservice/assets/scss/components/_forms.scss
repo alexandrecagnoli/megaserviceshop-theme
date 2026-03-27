@@ -1,5 +1,92 @@
+// ============================================
+// FORMS
+// ============================================
+
+.form-group {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+label {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
 input,
 select,
 textarea {
   font-family: $font-main;
+  font-size: $font-size-base;
+  width: 100%;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+  padding: $spacing-md;
+  border: 1px solid $color-border;
+  border-radius: $border-radius;
+  background: #fff;
+  color: $color-text;
+  @include transition(border-color, box-shadow);
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: inset 0 0 0 1px $color-primary;
+    outline: none;
+  }
+
+  &:disabled {
+    background: $color-bg;
+    color: $color-text-light;
+    cursor: not-allowed;
+  }
+
+  &:invalid {
+    border-color: $color-error;
+  }
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+// Checkbox et Radio
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  margin-right: $spacing-sm;
+  cursor: pointer;
+}
+
+// ============================================
+// FORM STATES
+// ============================================
+.form-error {
+  color: $color-error;
+  font-size: $font-size-sm;
+  margin-top: $spacing-sm;
+}
+
+.form-success {
+  color: $color-success;
+  font-size: $font-size-sm;
+  margin-top: $spacing-sm;
+}
+
+.form-help {
+  color: $color-text-light;
+  font-size: $font-size-sm;
+  margin-top: $spacing-sm;
 }
