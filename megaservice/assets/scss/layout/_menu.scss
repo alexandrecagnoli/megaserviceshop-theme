@@ -1,0 +1,257 @@
+// ============================================
+// MENU SIDEBAR RESPONSIVE
+// ============================================
+
+.ms-menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: $spacing-md;
+  color: $color-text;
+
+  @include media-md() {
+    display: block;
+  }
+}
+
+// ============================================
+// SIDEBAR MENU
+// ============================================
+.ms-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 320px;
+  background: #ffffff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  @include transition(transform);
+  z-index: 999;
+
+  &.is-open {
+    transform: translateX(0);
+  }
+
+  // Overlay derrière le menu
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    @include transition(opacity, visibility);
+    z-index: -1;
+  }
+
+  &.is-open::before {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// ============================================
+// MENU HEADER
+// ============================================
+.ms-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  border-bottom: 1px solid $color-border;
+}
+
+.ms-menu__logo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex: 1;
+
+  img {
+    display: block;
+    height: 32px;
+    width: auto;
+  }
+}
+
+.ms-menu__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: $color-text;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+// ============================================
+// MENU LIST
+// ============================================
+.ms-menu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.ms-menu__item {
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.ms-menu__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  color: $color-text;
+  text-decoration: none;
+  font-weight: $font-weight-medium;
+  font-size: 0.95rem;
+  @include transition(background-color, color);
+
+  &:hover {
+    background: $color-bg;
+    color: $color-primary;
+  }
+
+  // Chevron pour les dropdowns
+  .ms-menu__chevron {
+    font-size: 0.75rem;
+    transition: transform 0.3s;
+  }
+
+  &.is-open .ms-menu__chevron {
+    transform: rotate(180deg);
+  }
+}
+
+// ============================================
+// MENU SUBMENU
+// ============================================
+.ms-menu__submenu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: $color-bg;
+  max-height: 0;
+  overflow: hidden;
+  @include transition(max-height);
+
+  &.is-open {
+    max-height: 500px; // Suffit pour la plupart des cas
+  }
+}
+
+.ms-menu__subitem {
+  a {
+    display: block;
+    padding: $spacing-md $spacing-lg $spacing-md calc($spacing-lg * 2);
+    color: $color-text-light;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: $font-weight-normal;
+    @include transition(color, background-color);
+
+    &:hover {
+      color: $color-primary;
+      background: rgba($color-primary, 0.05);
+    }
+  }
+}
+
+// ============================================
+// MENU FOOTER
+// ============================================
+.ms-menu__footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-lg;
+  border-top: 1px solid $color-border;
+  background: #ffffff;
+}
+
+.ms-menu__customer-service {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
+  background: $color-bg;
+  border-radius: $border-radius;
+
+  .icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #222;
+    color: #fff;
+  }
+
+  .info {
+    flex: 1;
+
+    .label {
+      font-size: 0.75rem;
+      color: $color-text-light;
+      text-transform: uppercase;
+      font-weight: $font-weight-medium;
+    }
+
+    .phone {
+      font-size: 0.95rem;
+      font-weight: $font-weight-bold;
+      color: $color-text;
+    }
+  }
+}
+
+.ms-menu__account-btn {
+  width: 100%;
+  border: 2px solid $color-text;
+  background: transparent;
+  color: $color-text;
+  padding: $spacing-md;
+  font-weight: $font-weight-bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: $border-radius;
+  @include transition(all);
+
+  &:hover {
+    background: $color-text;
+    color: #ffffff;
+  }
+}
+
+// ============================================
+// BODY OVERLAY
+// ============================================
+body.menu-open {
+  overflow: hidden;
+}

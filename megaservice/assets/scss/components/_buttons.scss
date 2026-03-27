@@ -2,19 +2,83 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.6rem 1.4rem;
-  border-radius: 999px;
-  border: none;
-  font-weight: 500;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $border-radius;
+  border: 2px solid transparent;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
   cursor: pointer;
   text-decoration: none;
+  @include transition(background-color, color);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    @include focus-ring();
+  }
 }
 
+// Variantes de style
 .btn-primary {
   background: $color-primary;
   color: #fff;
+  border-color: $color-primary;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+    border-color: $color-primary-dark;
+  }
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
+.btn-secondary {
+  background: $color-secondary;
+  color: #fff;
+  border-color: $color-secondary;
+
+  &:hover:not(:disabled) {
+    background: $color-secondary-dark;
+    border-color: $color-secondary-dark;
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  color: $color-primary;
+  border-color: $color-primary;
+
+  &:hover:not(:disabled) {
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: $color-text;
+  border-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: $color-bg;
+  }
+}
+
+// Tailles
+.btn-sm {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+}
+
+.btn-lg {
+  padding: $spacing-lg $spacing-xl;
+  font-size: $font-size-lg;
+}
+
+// Bloc (full-width)
+.btn-block {
+  width: 100%;
 }
