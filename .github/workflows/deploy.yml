@@ -25,18 +25,21 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup SSH
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
       - name: Deploy via rsync
         run: |
           rsync -rtvz --delete \
             --no-perms --no-times \
             --exclude='.DS_Store' \
-            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
+            -e "ssh -o StrictHostKeyChecking=yes" \
             megaservice/ \
             nuttyguru.com_j8g81qmwucn@93.90.201.182:/var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/themes/megaservice/
