@@ -224,9 +224,11 @@
   }
 
   &--vin {
+    height: 50px;
+    padding: 10px 52px 10px 15px;
+    border: 1px solid #F9D2C4;
     font-size: 15px;
     color: rgba(0, 0, 0, 0.60);
-    padding-right: 52px;
 
     &::placeholder {
       color: rgba(0, 0, 0, 0.60);
