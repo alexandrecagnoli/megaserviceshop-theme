@@ -1,56 +1,83 @@
-{**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- *}
-<div class="container">
-  <div class="row">
-    {block name='hook_footer_before'}
-      {hook h='displayFooterBefore'}
-    {/block}
+{block name='footer'}
+<footer class="ms-footer">
+
+  {* ── Bannière Pro ── *}
+  <div class="ms-footer__pro-banner">
+    <div class="ms-footer__container">
+      <p class="ms-footer__pro-text">{l s='Vous êtes un professionnel de la moto ?' d='Shop.Theme.Global'}</p>
+      <a href="#" class="ms-footer__pro-btn">{l s='DÉCOUVREZ LES AVANTAGES EXCLUSIFS' d='Shop.Theme.Global'}</a>
+    </div>
   </div>
-</div>
-<div class="footer-container">
-  <div class="container">
-    <div class="row">
-      {block name='hook_footer'}
-        {hook h='displayFooter'}
-      {/block}
-    </div>
-    <div class="row">
-      {block name='hook_footer_after'}
-        {hook h='displayFooterAfter'}
-      {/block}
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <p class="text-sm-center">
-          {block name='copyright_link'}
-            <a href="https://www.prestashop-project.org/" target="_blank" rel="noopener noreferrer nofollow">
-              {l s='%copyright% %year% - Ecommerce software by %prestashop%' sprintf=['%prestashop%' => 'PrestaShop™', '%year%' => 'Y'|date, '%copyright%' => '©'] d='Shop.Theme.Global'}
-            </a>
-          {/block}
-        </p>
+
+  {* ── Corps principal ── *}
+  <div class="ms-footer__main">
+    <div class="ms-footer__container">
+      <div class="ms-footer__grid">
+
+        {* Colonne 1 — Logo + adresse + marques *}
+        <div class="ms-footer__brand">
+          <a href="{$urls.pages.index}" aria-label="{$shop.name}">
+            <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_DARK.png" alt="{$shop.name}" class="ms-footer__logo" loading="lazy">
+          </a>
+          <p class="ms-footer__address">12 avenue du bigeon bleu<br>78490 Méré - France</p>
+          <img src="{$urls.theme_assets}img/brands/KTM_HUSQVARNA_GASGAS_LOGO.png" alt="KTM · Husqvarna · GasGas Authorized Dealer" class="ms-footer__brands-img" loading="lazy">
+        </div>
+
+        {* Colonne 2 — La Société *}
+        <div class="ms-footer__nav">
+          <h3 class="ms-footer__title">{l s='LA SOCIÉTÉ' d='Shop.Theme.Global'}</h3>
+          <ul class="ms-footer__links">
+            <li><a href="#">{l s='A propos' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Livraison et retours' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Blog' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='FAQ' d='Shop.Theme.Global'}</a></li>
+            <li><a href="{$urls.pages.contact}">{l s='Contact' d='Shop.Theme.Global'}</a></li>
+          </ul>
+        </div>
+
+        {* Colonne 3 — Catalogue *}
+        <div class="ms-footer__nav">
+          <h3 class="ms-footer__title">{l s='CATALOGUE' d='Shop.Theme.Global'}</h3>
+          <ul class="ms-footer__links">
+            <li><a href="#">{l s='Motos neuves' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Motos d\'occasion' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Equipements pilotes' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Pièces d\'origines' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Accessoires powerparts' d='Shop.Theme.Global'}</a></li>
+            <li><a href="#">{l s='Sportswear' d='Shop.Theme.Global'}</a></li>
+          </ul>
+        </div>
+
+        {* Colonne 4 — Newsletter *}
+        <div class="ms-footer__newsletter">
+          <h3 class="ms-footer__title">{l s='NEWSLETTER' d='Shop.Theme.Global'}</h3>
+          <p class="ms-footer__newsletter-desc">{l s='-10% sur votre première commande en vous inscrivant à la newsletter Mega Service' d='Shop.Theme.Global'}</p>
+          <form class="ms-footer__newsletter-form" action="{$urls.pages.index}" method="post">
+            <input type="email" name="email" class="ms-footer__newsletter-input" placeholder="email@address.com" aria-label="{l s='Votre adresse email' d='Shop.Theme.Global'}">
+            <button type="submit" class="ms-footer__newsletter-btn">{l s='JE M\'INSCRIS' d='Shop.Theme.Global'}</button>
+            <label class="ms-footer__newsletter-gdpr">
+              <input type="checkbox" name="gdpr" required>
+              <span>{l s='Je consens au traitement de mes données personnelles par Mega Service Shop.' d='Shop.Theme.Global'} <a href="#">{l s='Voir la politique de données personnelles' d='Shop.Theme.Global'}</a></span>
+            </label>
+          </form>
+        </div>
+
       </div>
     </div>
   </div>
-</div>
+
+  {* ── Barre légale ── *}
+  <div class="ms-footer__bottom">
+    <div class="ms-footer__container">
+      <ul class="ms-footer__legal">
+        <li><a href="#">{l s='Conditions générales de vente' d='Shop.Theme.Global'}</a></li>
+        <li><a href="#">{l s='Mentions légales' d='Shop.Theme.Global'}</a></li>
+        <li><a href="#">{l s='Politique de confidentialité' d='Shop.Theme.Global'}</a></li>
+        <li><a href="#">{l s='Vie privée et cookies' d='Shop.Theme.Global'}</a></li>
+        <li><a href="{$urls.pages.contact}">{l s='Contact' d='Shop.Theme.Global'}</a></li>
+      </ul>
+    </div>
+  </div>
+
+</footer>
+{/block}
