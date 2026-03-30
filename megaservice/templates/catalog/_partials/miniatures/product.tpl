@@ -39,7 +39,7 @@
     {/if}
 
     <div class="ms-product-card__availability{if $product.availability == 'available'} ms-product-card__availability--available{else} ms-product-card__availability--unavailable{/if}">
-      {$product.availability_message}
+      {if $product.availability == 'available'}{l s='Disponible' d='Shop.Theme.Catalog'}{else}{$product.availability_message}{/if}
     </div>
 
     {if $product.add_to_cart_url}
