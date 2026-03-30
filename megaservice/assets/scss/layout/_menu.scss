@@ -137,12 +137,15 @@
   flex-shrink: 0;
   color: $color-black;
   text-decoration: none;
-  font-family: $font-heading;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 0.05em;
+  font-family: $font-main;
+  font-weight: 700;
+  font-size: 18px;
   text-transform: uppercase;
-  line-height: 1;
+  line-height: normal;
+
+  @include media-md() {
+    font-size: 16px;
+  }
   @include transition(color);
 
   &:hover {
