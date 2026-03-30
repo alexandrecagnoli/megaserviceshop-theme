@@ -1,0 +1,243 @@
+// ============================================
+// RECHERCHE DE PIÈCES COMPATIBLES
+// ============================================
+
+.ms-parts-search {
+  display: flex;
+  width: 100%;
+  min-height: 500px;
+
+  @include media-md() {
+    flex-direction: column;
+  }
+}
+
+// ── Volet gauche ──────────────────────────────
+.ms-parts-search__visual {
+  position: relative;
+  flex: 0 0 65%;
+  background-image: url('../../img/640733_MY26_KTM 990 DUKE R_ACTION_ACTION_2026 Street and Adventure models_KTM 990 DUKE R_ACTION 1.jpg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+
+  @include media-md() {
+    min-height: 360px;
+    flex: none;
+  }
+}
+
+.ms-parts-search__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba($color-black, 0.60);
+}
+
+.ms-parts-search__content {
+  position: relative;
+  z-index: 1;
+  padding: 60px 60px 60px 120px;
+  max-width: 700px;
+
+  @include media-lg() {
+    padding: 40px;
+  }
+
+  @include media-md() {
+    padding: 32px 16px;
+    max-width: 100%;
+  }
+}
+
+.ms-parts-search__title {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 64px;
+  line-height: 68px;
+  text-transform: uppercase;
+  color: $color-white;
+  margin: 0 0 20px;
+
+  @include media-lg() {
+    font-size: 44px;
+    line-height: 48px;
+  }
+
+  @include media-md() {
+    font-size: 32px;
+    line-height: 36px;
+  }
+}
+
+.ms-parts-search__desc {
+  font-family: $font-main;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 28px;
+  color: $color-white;
+  margin: 0 0 28px;
+}
+
+.ms-parts-search__brands {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
+// ── Volet droit ───────────────────────────────
+.ms-parts-search__panel {
+  flex: 1;
+  background: $color-white;
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Onglets ───────────────────────────────────
+.ms-parts-search__tabs {
+  display: flex;
+}
+
+.ms-parts-search__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 16px;
+  background: $color-gray-5;
+  border: none;
+  cursor: pointer;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 15px;
+  line-height: normal;
+  text-transform: uppercase;
+  color: $color-black;
+  @include transition(background, color);
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  span {
+    text-align: left;
+  }
+
+  &.is-active {
+    background: $color-white;
+    color: $color-ktm;
+  }
+
+  &:hover:not(.is-active) {
+    background: $color-gray-20;
+  }
+}
+
+// ── Formulaire ────────────────────────────────
+.ms-parts-search__form {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 40px 40px;
+  flex: 1;
+
+  &.is-active {
+    display: flex;
+  }
+
+  @include media-lg() {
+    padding: 24px 24px 32px;
+  }
+}
+
+.ms-parts-search__field {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid $color-black;
+    pointer-events: none;
+  }
+
+  // Pas de chevron sur les inputs
+  &:has(.ms-parts-search__input)::after {
+    display: none;
+  }
+}
+
+.ms-parts-search__select {
+  width: 100%;
+  height: 46px;
+  padding: 0 40px 0 16px;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 400;
+  color: $color-gray-50;
+  appearance: none;
+  cursor: pointer;
+  @include transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: $color-black;
+  }
+}
+
+.ms-parts-search__input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 400;
+  color: $color-black;
+  @include transition(border-color);
+
+  &::placeholder {
+    color: $color-gray-50;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-black;
+  }
+}
+
+.ms-parts-search__submit {
+  width: 100%;
+  height: 50px;
+  background: $color-ktm;
+  color: $color-white;
+  border: 1px solid $color-ktm;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  margin-top: 4px;
+  @include transition(background, color);
+
+  &:hover {
+    background: transparent;
+    color: $color-ktm;
+  }
+
+  &:active {
+    background: $color-ktm;
+    color: $color-white;
+  }
+}

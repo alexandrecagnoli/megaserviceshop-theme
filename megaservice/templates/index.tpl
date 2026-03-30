@@ -32,7 +32,11 @@
 
         {block name='page_content'}
           {block name='hook_home'}
-            {$HOOK_HOME nofilter}
+            {hook h='displayHome' mod='ps_imageslider'}
+            {hook h='displayHome' mod='ps_newproducts'}
+            {include file='_partials/parts-search.tpl'}
+            {hook h='displayHome' mod='ps_specials'}
+            {hook h='displayHome' mod='ps_featuredproducts'}
           {/block}
         {/block}
       </section>
