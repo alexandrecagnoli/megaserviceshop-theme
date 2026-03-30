@@ -80,7 +80,7 @@
     <div class="ms-menu__header">
       <div class="ms-menu__logo">
         <a href="{$urls.pages.index}" aria-label="{$shop.name}">
-          <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_DARK.png" alt="{$shop.name}" class="ms-menu__logo-mega" loading="eager">
+          <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_LIGHT.png" alt="{$shop.name}" class="ms-menu__logo-mega" loading="eager">
         </a>
         <img src="{$urls.theme_assets}img/brands/KTM_HUSQVARNA_GASGAS_LOGO.png" alt="KTM · Husqvarna · GasGas" class="ms-menu__logo-brands" loading="lazy">
       </div>
