@@ -5,6 +5,7 @@
 .ms-parts-search {
   position: relative;
   width: 100%;
+  min-height: 500px;
   background-image: url('../img/parts-search-bg.jpg');
   background-size: cover;
   background-position: center;
@@ -93,9 +94,11 @@
   background: $color-white;
   display: flex;
   flex-direction: column;
+  min-height: 380px;
 
   @include media-md() {
     width: 100%;
+    min-height: auto;
   }
 }
 
