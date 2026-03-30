@@ -4,8 +4,8 @@
   {* ── Barre promo défilante ── *}
   <div class="ms-header__banner" role="marquee" aria-label="{l s='Promotional banner' d='Shop.Theme.Global'}">
     <div class="ms-header__banner-track">
-      <span>Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique</span>
-      <span aria-hidden="true">Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique</span>
+      <span>{l s='Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique' d='Shop.Theme.Global'}</span>
+      <span aria-hidden="true">{l s='Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique' d='Shop.Theme.Global'}</span>
     </div>
   </div>
 
