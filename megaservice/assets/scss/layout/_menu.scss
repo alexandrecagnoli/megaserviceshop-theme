@@ -82,16 +82,15 @@
 
 .ms-menu__logo-mega {
   display: block;
-  width: 115px;
-  height: 54px;
-  aspect-ratio: 115 / 54;
+  width: 160px;
+  height: auto;
   object-fit: contain;
 }
 
 .ms-menu__logo-brands {
   display: block;
-  height: 54px;
-  width: auto;
+  width: 190px;
+  height: auto;
   object-fit: contain;
 }
 
@@ -101,12 +100,18 @@
   justify-content: center;
   background: transparent;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   color: $color-text;
   padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+  margin-left: auto;
+
+  svg {
+    width: 25px;
+    height: 25px;
+  }
 
   &:hover {
     color: $color-primary;

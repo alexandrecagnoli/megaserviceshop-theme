@@ -53,7 +53,7 @@ $footer-cols: 12;
     font-family: $font-main;
     font-size: 14px;
     font-weight: 700;
-    text-decoration: none;
+    text-decoration: none !important;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 12px 24px;
@@ -62,7 +62,7 @@ $footer-cols: 12;
     &:hover {
       background: $color-white;
       color: $color-ktm;
-      text-decoration: none;
+      text-decoration: none !important;
     }
   }
 
