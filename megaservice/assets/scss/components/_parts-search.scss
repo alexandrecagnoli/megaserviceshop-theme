@@ -4,15 +4,20 @@
 
 .ms-parts-search {
   position: relative;
-  display: flex;
-  align-items: center;
   width: 100%;
-  min-height: 500px;
   background-image: url('../img/parts-search-bg.jpg');
   background-size: cover;
   background-position: center;
+}
+
+// ── Container grille ──────────────────────────
+.ms-parts-search__container {
+  display: flex;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
   padding: 60px 120px;
-  gap: 60px;
+  gap: calc(2 / 12 * 100%); // 2 colonnes vides
 
   @include media-lg() {
     padding: 40px;
@@ -26,24 +31,25 @@
   }
 }
 
-// ── Overlay global ────────────────────────────
-.ms-parts-search__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba($color-black, 0.60);
-}
-
-// ── Volet gauche ──────────────────────────────
+// ── Col 2-5 : texte (4/12 + 1 col vide = padding-left) ──
 .ms-parts-search__visual {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  display: flex;
-  align-items: center;
+  flex: 0 0 calc(4 / 12 * 100%);
+  padding-left: calc(1 / 12 * 100%); // col 1 vide
+
+  @include media-lg() {
+    flex: 1;
+    padding-left: 0;
+  }
+
+  @include media-md() {
+    flex: none;
+    width: 100%;
+    padding-left: 0;
+  }
 }
 
 .ms-parts-search__content {
-  max-width: 600px;
+  width: 100%;
 }
 
 .ms-parts-search__title {
@@ -81,21 +87,14 @@
   width: auto;
 }
 
-// ── Volet droit ───────────────────────────────
+// ── Panel (colonnes restantes) ────────────────
 .ms-parts-search__panel {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 420px;
+  flex: 1;
   background: $color-white;
   display: flex;
   flex-direction: column;
 
-  @include media-lg() {
-    flex: 0 0 360px;
-  }
-
   @include media-md() {
-    flex: none;
     width: 100%;
   }
 }
