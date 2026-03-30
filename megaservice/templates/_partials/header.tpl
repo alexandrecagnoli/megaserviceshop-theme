@@ -80,9 +80,9 @@
     <div class="ms-menu__header">
       <div class="ms-menu__logo">
         <a href="{$urls.pages.index}" aria-label="{$shop.name}">
-          <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_DARK.png" alt="{$shop.name}" height="32">
+          <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_DARK.png" alt="{$shop.name}" class="ms-menu__logo-mega" loading="eager">
         </a>
-        <img src="{$urls.theme_assets}img/brands/KTM_HUSQVARNA_GASGAS_LOGO.png" alt="KTM · Husqvarna · GasGas" height="24" loading="lazy">
+        <img src="{$urls.theme_assets}img/brands/KTM_HUSQVARNA_GASGAS_LOGO.png" alt="KTM · Husqvarna · GasGas" class="ms-menu__logo-brands" loading="lazy">
       </div>
       <button class="ms-menu__close" aria-label="{l s='Fermer le menu' d='Shop.Theme.Global'}">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

@@ -26,11 +26,13 @@
   bottom: 0;
   width: 100%;
   max-width: 320px;
-  background: #ffffff;
+  background: $color-white;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%);
   @include transition(transform);
   z-index: 999;
+  display: flex;
+  flex-direction: column;
 
   &.is-open {
     transform: translateX(0);
@@ -73,12 +75,21 @@
   align-items: center;
   gap: $spacing-md;
   flex: 1;
+}
 
-  img {
-    display: block;
-    height: 32px;
-    width: auto;
-  }
+.ms-menu__logo-mega {
+  display: block;
+  width: 115px;
+  height: 54px;
+  aspect-ratio: 115 / 54;
+  object-fit: contain;
+}
+
+.ms-menu__logo-brands {
+  display: block;
+  height: 54px;
+  width: auto;
+  object-fit: contain;
 }
 
 .ms-menu__close {
@@ -100,6 +111,16 @@
 }
 
 // ============================================
+// MENU NAV (zone scrollable)
+// ============================================
+.ms-menu__nav {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 $spacing-lg;
+}
+
+// ============================================
 // MENU LIST
 // ============================================
 .ms-menu__list {
@@ -107,7 +128,8 @@
   padding: 0;
   list-style: none;
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ms-menu__item {
@@ -237,7 +259,7 @@
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
   padding: $spacing-md;
-  background: $color-bg;
+  background: $color-white;
   border-radius: $border-radius;
   text-decoration: none;
   color: $color-text;
