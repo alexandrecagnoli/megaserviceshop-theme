@@ -1,4 +1,4 @@
-<div class="ms-parts-search">
+<section class="ms-parts-search">
 
   {* ── Volet gauche — visuel ── *}
   <div class="ms-parts-search__visual">
@@ -76,4 +76,4 @@
 
   </div>
 
-</div>
+</section>

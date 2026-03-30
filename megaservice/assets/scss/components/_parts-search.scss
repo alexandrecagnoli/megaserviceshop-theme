@@ -3,51 +3,47 @@
 // ============================================
 
 .ms-parts-search {
+  position: relative;
   display: flex;
+  align-items: center;
   width: 100%;
   min-height: 500px;
-
-  @include media-md() {
-    flex-direction: column;
-  }
-}
-
-// ── Volet gauche ──────────────────────────────
-.ms-parts-search__visual {
-  position: relative;
-  flex: 0 0 65%;
   background-image: url('../img/parts-search-bg.jpg');
   background-size: cover;
   background-position: center;
-  display: flex;
-  align-items: center;
+  padding: 60px 120px;
+  gap: 60px;
+
+  @include media-lg() {
+    padding: 40px;
+    gap: 40px;
+  }
 
   @include media-md() {
-    min-height: 360px;
-    flex: none;
+    flex-direction: column;
+    padding: 32px 16px;
+    gap: 32px;
   }
 }
 
+// ── Overlay global ────────────────────────────
 .ms-parts-search__overlay {
   position: absolute;
   inset: 0;
   background: rgba($color-black, 0.60);
 }
 
-.ms-parts-search__content {
+// ── Volet gauche ──────────────────────────────
+.ms-parts-search__visual {
   position: relative;
   z-index: 1;
-  padding: 60px 60px 60px 120px;
-  max-width: 700px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
 
-  @include media-lg() {
-    padding: 40px;
-  }
-
-  @include media-md() {
-    padding: 32px 16px;
-    max-width: 100%;
-  }
+.ms-parts-search__content {
+  max-width: 600px;
 }
 
 .ms-parts-search__title {
@@ -87,10 +83,21 @@
 
 // ── Volet droit ───────────────────────────────
 .ms-parts-search__panel {
-  flex: 1;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 420px;
   background: $color-white;
   display: flex;
   flex-direction: column;
+
+  @include media-lg() {
+    flex: 0 0 360px;
+  }
+
+  @include media-md() {
+    flex: none;
+    width: 100%;
+  }
 }
 
 // ── Onglets ───────────────────────────────────
@@ -168,7 +175,6 @@
     pointer-events: none;
   }
 
-  // Pas de chevron sur les inputs
   &:has(.ms-parts-search__input)::after {
     display: none;
   }
