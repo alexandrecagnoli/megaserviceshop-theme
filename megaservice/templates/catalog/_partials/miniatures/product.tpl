@@ -42,7 +42,16 @@
       {$product.availability_message}
     </div>
 
-    <a href="{$product.url}" class="ms-product-card__add">{l s='AJOUTER' d='Shop.Theme.Actions'}</a>
+    {if $product.add_to_cart_url}
+      <form action="{$product.add_to_cart_url}" method="post" class="ms-product-card__add-form">
+        <input type="hidden" name="token" value="{$static_token}">
+        <input type="hidden" name="id_product" value="{$product.id_product}">
+        <input type="hidden" name="qty" value="1">
+        <button type="submit" class="ms-product-card__add">{l s='AJOUTER' d='Shop.Theme.Actions'}</button>
+      </form>
+    {else}
+      <a href="{$product.url}" class="ms-product-card__add">{l s='AJOUTER' d='Shop.Theme.Actions'}</a>
+    {/if}
 
   </div>
 

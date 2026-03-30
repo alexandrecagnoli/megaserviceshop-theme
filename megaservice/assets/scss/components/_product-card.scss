@@ -1,4 +1,43 @@
 // ============================================
+// PRODUCT SECTION (remontée produits)
+// ============================================
+
+.ms-products-section {
+  padding: 40px 0;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  &__title {
+    color: $color-black;
+    font-family: $font-heading;
+    font-size: 26px;
+    font-weight: 900;
+    line-height: normal;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  &__see-all {
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: normal;
+    text-transform: uppercase;
+    text-decoration: underline !important;
+
+    &:hover {
+      color: $color-ktm;
+    }
+  }
+}
+
+// ============================================
 // PRODUCT GRID
 // ============================================
 
@@ -183,6 +222,13 @@
     }
   }
 
+  // ── Form add to cart ───────────────────────
+  &__add-form {
+    margin: 0;
+    padding: 0;
+    margin-top: 8px;
+  }
+
   // ── Bouton AJOUTER ─────────────────────────
   &__add {
     display: flex;
@@ -199,6 +245,8 @@
     letter-spacing: 0.05em;
     text-decoration: none !important;
     margin-top: 8px;
+    border: none;
+    cursor: pointer;
     @include transition(background);
 
     &:hover {
