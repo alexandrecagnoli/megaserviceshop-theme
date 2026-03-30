@@ -178,7 +178,7 @@
   &__body {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     padding: 16px 0 0;
     flex: 1;
   }
@@ -240,6 +240,7 @@
     font-weight: 400;
     letter-spacing: -0.26px;
     line-height: normal;
+    margin-bottom: 12px;
 
     &--available {
       color: #128C0C;
