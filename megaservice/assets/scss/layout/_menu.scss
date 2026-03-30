@@ -293,13 +293,13 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  border: 2px solid $color-black;
+  height: 35px;
+  border: 1px solid $color-black;
   background: transparent;
   color: $color-black;
-  padding: $spacing-md;
   font-family: $font-main;
   font-weight: $font-weight-bold;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.05em;
