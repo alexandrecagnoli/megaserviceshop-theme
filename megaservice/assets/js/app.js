@@ -5,6 +5,7 @@
 
 import './carousel.js';
 import './menu.js';
+import './parts-search.js';
 
 (function() {
   'use strict';

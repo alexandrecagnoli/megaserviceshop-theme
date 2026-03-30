@@ -174,7 +174,7 @@
     pointer-events: none;
   }
 
-  &:has(.ms-parts-search__input)::after {
+  &--search::after {
     display: none;
   }
 }
@@ -219,6 +219,30 @@
     outline: none;
     border-color: $color-black;
   }
+
+  &--vin {
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.60);
+    padding-right: 52px;
+
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.60);
+    }
+  }
+}
+
+.ms-parts-search__search-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 46px;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .ms-parts-search__submit {
