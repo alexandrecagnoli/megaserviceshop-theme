@@ -1,0 +1,173 @@
+// ============================================
+// PRODUCT CARD
+// ============================================
+
+.ms-product-card {
+  display: flex;
+  flex-direction: column;
+  background: $color-white;
+
+  // ── Image ──────────────────────────────────
+  &__media {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    height: 190px;
+
+    picture {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  // ── Hover overlay ──────────────────────────
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    @include transition(opacity);
+  }
+
+  &__media:hover &__overlay {
+    opacity: 1;
+  }
+
+  &__overlay-btn {
+    border: 2px solid $color-white;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 13px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  // ── Badge réduction ────────────────────────
+  &__badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: $color-ktm;
+    color: $color-white;
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 10px;
+    line-height: normal;
+  }
+
+  // ── Body ───────────────────────────────────
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 0 0;
+  }
+
+  // ── Nom ────────────────────────────────────
+  &__name {
+    margin: 0;
+
+    a {
+      color: $color-black;
+      font-family: $font-main;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: normal;
+      text-transform: uppercase;
+      text-decoration: none !important;
+
+      &:hover {
+        color: $color-ktm;
+      }
+    }
+  }
+
+  // ── Prix ───────────────────────────────────
+  &__prices {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  &__price {
+    color: $color-ktm;
+    font-family: $font-main;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: normal;
+    text-transform: uppercase;
+
+    &--old {
+      color: $color-black;
+      font-family: $font-main;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: line-through;
+      text-transform: uppercase;
+    }
+  }
+
+  // ── Disponibilité ──────────────────────────
+  &__availability {
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: -0.26px;
+    line-height: normal;
+
+    &--available {
+      color: #128C0C;
+    }
+
+    &--unavailable {
+      color: $color-ktm;
+    }
+
+    &--last_remaining_items {
+      color: $color-ktm;
+    }
+  }
+
+  // ── Bouton AJOUTER ─────────────────────────
+  &__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    background: $color-black;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none !important;
+    margin-top: 8px;
+    @include transition(background);
+
+    &:hover {
+      background: $color-ktm;
+      color: $color-white;
+      text-decoration: none !important;
+    }
+  }
+}
