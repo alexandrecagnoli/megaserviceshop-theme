@@ -23,6 +23,19 @@ textarea {
   font-family: $font-main;
   font-size: $font-size-base;
   width: 100%;
+  color: $color-black;
+}
+
+// Placeholder plus clair que le texte saisi
+input::placeholder,
+textarea::placeholder {
+  color: rgba($color-black, 0.40);
+}
+
+// Select : option placeholder (disabled) plus clair
+select:invalid,
+select option[value=""][disabled] {
+  color: rgba($color-black, 0.40);
 }
 
 input[type="text"],

@@ -5,7 +5,7 @@
 .ms-parts-search {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 600px;
   background-image: url('../img/parts-search-bg.jpg');
   background-size: cover;
   background-position: center;
@@ -199,10 +199,14 @@
   font-family: $font-main;
   font-size: 15px;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.60);
+  color: $color-black;
   appearance: none;
   cursor: pointer;
   @include transition(border-color);
+
+  &:invalid {
+    color: rgba($color-black, 0.40);
+  }
 
   &:focus {
     outline: none;
