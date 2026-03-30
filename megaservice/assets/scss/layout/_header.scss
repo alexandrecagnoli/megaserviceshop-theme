@@ -31,8 +31,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 $spacing-xl;
-    height: 72px;
+    padding: 12px $spacing-xl;
     gap: $spacing-lg;
   }
 
@@ -314,8 +313,7 @@
 
   @include media-md() {
     &__main {
-      padding: 0 $spacing-md;
-      height: 60px;
+      padding: 12px $spacing-md;
     }
 
     &__model-btn {
