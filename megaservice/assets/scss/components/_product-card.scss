@@ -3,28 +3,28 @@
 // ============================================
 
 .products {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 30px 60px;
 
-  // Neutralise le padding Bootstrap des colonnes
   > * {
-    width: 100% !important;
+    width: calc(25% - 45px) !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
     margin-bottom: 0 !important;
   }
 
   @include media-lg() {
-    grid-template-columns: repeat(3, 1fr);
+    > * { width: calc(33.333% - 40px) !important; }
   }
 
   @include media-md() {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 30px;
+    > * { width: calc(50% - 15px) !important; }
   }
 
   @include media-sm() {
-    grid-template-columns: 1fr;
+    > * { width: 100% !important; }
   }
 }
 
