@@ -1,0 +1,178 @@
+// ============================================
+// HERO CAROUSEL — ms-carousel
+// ============================================
+
+$carousel-height-desktop: 580px;
+$carousel-height-tablet:  420px;
+$carousel-height-mobile:  320px;
+$carousel-dot-size:       10px;
+$carousel-dash-width:     28px;
+$carousel-dash-height:    3px;
+
+.ms-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: $color-black;
+}
+
+.ms-carousel__track {
+  position: relative;
+  height: $carousel-height-desktop;
+
+  @include media-lg {
+    height: $carousel-height-tablet;
+  }
+
+  @include media-md {
+    height: $carousel-height-mobile;
+  }
+}
+
+.ms-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  pointer-events: none;
+
+  &.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.ms-carousel__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ms-carousel__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.ms-carousel__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba($color-black, 0.5);
+}
+
+.ms-carousel__content {
+  position: absolute;
+  inset: 0;
+  @include flex-center;
+  flex-direction: column;
+  text-align: center;
+  padding: 0 $spacing-xl;
+  gap: $spacing-lg;
+  z-index: 2;
+
+  @include media-md {
+    padding: 0 $spacing-lg;
+    gap: $spacing-md;
+  }
+}
+
+.ms-carousel__title {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 64px;
+  line-height: normal;
+  text-transform: uppercase;
+  color: $color-white;
+  margin: 0;
+
+  @include media-lg {
+    font-size: 48px;
+  }
+
+  @include media-md {
+    font-size: 32px;
+  }
+}
+
+.ms-carousel__subtitle {
+  font-family: $font-main;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: normal;
+  color: $color-white;
+  text-align: center;
+  margin: 0;
+  max-width: 700px;
+
+  @include media-md {
+    font-size: 16px;
+  }
+}
+
+.ms-carousel__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  padding: 0 $spacing-xl;
+  background: $color-ktm;
+  color: $color-white;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  border: none;
+  @include transition(background);
+
+  &:hover,
+  &:focus-visible {
+    background: darken($color-ktm, 10%);
+    color: $color-white;
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.ms-carousel__dots {
+  position: absolute;
+  bottom: $spacing-lg;
+  left: 0;
+  right: 0;
+  @include flex-center;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.ms-carousel__dot {
+  display: block;
+  border: none;
+  background: rgba($color-white, 0.7);
+  padding: 0;
+  cursor: pointer;
+  width: $carousel-dash-width;
+  height: $carousel-dash-height;
+  border-radius: 2px;
+  @include transition(all, 0.3s, ease);
+
+  &:hover {
+    background: $color-white;
+  }
+
+  &.is-active {
+    width: $carousel-dot-size;
+    height: $carousel-dot-size;
+    border-radius: 50%;
+    background: $color-ktm;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

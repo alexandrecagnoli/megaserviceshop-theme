@@ -36,13 +36,13 @@
 }
 
 .btn-secondary {
-  background: $color-secondary;
+  background: $color-gray-85;
   color: #fff;
-  border-color: $color-secondary;
+  border-color: $color-gray-85;
 
   &:hover:not(:disabled) {
-    background: $color-secondary-dark;
-    border-color: $color-secondary-dark;
+    background: $color-black;
+    border-color: $color-black;
   }
 }
 
