@@ -19,6 +19,14 @@ $footer-cols: 12;
     background: $color-ktm;
     padding: 20px 0;
 
+    // ps_banner peut s'injecter ici via un second hook — on le neutralise
+    a.banner {
+      display: contents;
+      text-decoration: none !important;
+      color: inherit;
+      pointer-events: none;
+    }
+
     .ms-footer__container {
       display: flex;
       align-items: center;
