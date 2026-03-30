@@ -735,14 +735,30 @@
   }
 }
 
-// ── Modale images (non utilisée, masquée) ─────
-.js-product-images-modal {
+// ── Modales Bootstrap — masquées par défaut ───
+.js-product-images-modal,
+.product-comment-modal,
+.modal {
   display: none !important;
 }
 
-// Modales Bootstrap — masquées par défaut, visibles si .show ou .in
-.modal.fade:not(.show):not(.in) {
-  display: none !important;
+.modal.show,
+.modal.in {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0.5);
+
+  .modal-dialog {
+    background: $color-white;
+    border-radius: $border-radius;
+    max-width: 500px;
+    width: 90%;
+    padding: 24px;
+  }
 }
 
 // ── Mobile ─────────────────────────────────────
