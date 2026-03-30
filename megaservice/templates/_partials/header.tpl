@@ -1,10 +1,11 @@
 {block name='header'}
 <header id="header" class="ms-header">
 
-  {* ── Barre promo défilante (texte éditable via ps_customtext → displayNav1) ── *}
+  {* ── Barre promo défilante ── *}
   <div class="ms-header__banner" role="marquee" aria-label="{l s='Promotional banner' d='Shop.Theme.Global'}">
     <div class="ms-header__banner-track">
-      {hook h='displayNav1' mod='ps_customtext'}
+      <span>Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique</span>
+      <span aria-hidden="true">Livraison offerte pour la 1ère commande dès 35€ avec le code KTMONFIRE en France Métropolitaine et en Belgique</span>
     </div>
   </div>
 

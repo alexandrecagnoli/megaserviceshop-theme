@@ -7,10 +7,21 @@ Ne jamais modifier les assets ci-dessous sans accord explicite.
 
 ## Git workflow
 
-- `main` : branche stable, toujours deployable
-- Feature branches : `feat/nom-feature` — merger sur main une fois validé
-- En cas de régression : `git checkout <commit>` pour revenir en arrière
-- Commiter après chaque feature validée, avant de passer à la suivante
+### Règle absolue
+**Un commit par composant/modification terminé, AVANT le deploy, toujours.**
+
+### Granularité des commits
+- Chaque composant, template, fichier SCSS ou JS modifié → commit dédié avec description explicite
+- Exemples : `feat: footer — template HTML`, `feat: footer — scss`, `fix: carousel — hauteur mobile`
+- Ça permet un `git checkout <hash> -- fichier` chirurgical sans toucher au reste
+
+### Branches
+- Petite modif / fix CSS → commit direct sur `main`
+- Grosse feature (nouvelle page, nouveau composant complexe) → branche `feat/nom-feature`, merge sur `main` une fois validé visuellement
+
+### En cas de régression
+- Revenir à un fichier spécifique : `git checkout <hash> -- chemin/du/fichier`
+- Revenir à un état complet : `git revert <hash>`
 
 ---
 
@@ -67,6 +78,9 @@ Ces SVGs sont fournis par le client. Toujours utiliser exactement ces codes.
 - Hauteur : 580px desktop, 420px tablet, 425px mobile
 - Mobile : pas de dots, gap 60px entre texte et bouton
 
+### UI Kit — règle globale
+- **Tous les boutons** : font-family Blender Pro, font-weight 900, text-transform uppercase
+
 ### Header desktop
 - Height : 72px
 - Background : $color-black
@@ -96,8 +110,12 @@ Ces SVGs sont fournis par le client. Toujours utiliser exactement ces codes.
 | Build output | `megaservice/assets/dist/` |
 | Deploy | `bash deploy.sh` (full) ou `bash deploy-css.sh` (CSS only) |
 
-## Build
-```bash
-npm run build   # compile SCSS + JS → dist/
-bash deploy.sh  # rsync vers le serveur
-```
+## Build & Deploy — règle absolue
+
+**TOUJOURS dans cet ordre :**
+1. `npm run build`
+2. `git add` + `git commit`
+3. `bash deploy.sh`
+
+**Ne jamais déployer sans commit préalable.** Si le build ou le commit échoue, ne pas déployer.
+Ne jamais proposer un deploy si les changements ne sont pas commités.
