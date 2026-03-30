@@ -35,8 +35,8 @@
             {hook h='displayHome' mod='ps_imageslider'}
             {hook h='displayHome' mod='ps_newproducts'}
             {include file='_partials/parts-search.tpl'}
-            {include file='_partials/mosaic.tpl'}
             {hook h='displayHome' mod='ps_specials'}
+            {include file='_partials/mosaic.tpl'}
             {hook h='displayHome' mod='ps_featuredproducts'}
           {/block}
         {/block}
