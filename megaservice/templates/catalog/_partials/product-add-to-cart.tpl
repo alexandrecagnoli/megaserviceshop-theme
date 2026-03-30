@@ -1,34 +1,11 @@
-{**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- *}
-<div class="product-add-to-cart js-product-add-to-cart">
+<div class="ms-product__add-to-cart js-product-add-to-cart">
   {if !$configuration.is_catalog}
-    <span class="control-label">{l s='Quantity' d='Shop.Theme.Catalog'}</span>
 
     {block name='product_quantity'}
-      <div class="product-quantity clearfix">
-        <div class="qty">
+      <div class="ms-product__qty-row">
+        <label class="ms-product__qty-label" for="quantity_wanted">{l s='Quantité' d='Shop.Theme.Catalog'}</label>
+        <div class="ms-product__qty-control">
+          <button type="button" class="ms-product__qty-btn js-qty-minus" aria-label="{l s='Diminuer la quantité' d='Shop.Theme.Actions'}">−</button>
           <input
             type="number"
             name="qty"
@@ -42,54 +19,50 @@
               value="1"
               min="1"
             {/if}
-            class="input-group"
-            aria-label="{l s='Quantity' d='Shop.Theme.Actions'}"
+            class="ms-product__qty-input"
+            aria-label="{l s='Quantité' d='Shop.Theme.Actions'}"
           >
+          <button type="button" class="ms-product__qty-btn js-qty-plus" aria-label="{l s='Augmenter la quantité' d='Shop.Theme.Actions'}">+</button>
         </div>
-
-        <div class="add">
-          <button
-            class="btn btn-primary add-to-cart"
-            data-button-action="add-to-cart"
-            type="submit"
-            {if !$product.add_to_cart_url}
-              disabled
-            {/if}
-          >
-            <i class="material-icons shopping-cart">&#xE547;</i>
-            {l s='Add to cart' d='Shop.Theme.Actions'}
-          </button>
-        </div>
-
-        {hook h='displayProductActions' product=$product}
       </div>
     {/block}
 
+    <div class="ms-product__cta-group">
+      <div class="ms-product__cta-row">
+        <button
+          class="ms-product__btn-cart"
+          data-button-action="add-to-cart"
+          type="submit"
+          {if !$product.add_to_cart_url}disabled{/if}
+        >
+          {l s='Ajouter au panier' d='Shop.Theme.Actions'}
+        </button>
+        <button type="button" class="ms-product__btn-wishlist js-wishlist-btn" aria-label="{l s='Ajouter aux favoris' d='Shop.Theme.Actions'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <button type="button" class="ms-product__btn-reserve">
+        {l s='Réserver un essai' d='Shop.Theme.Catalog'}
+      </button>
+    </div>
+
     {block name='product_availability'}
-      <span id="product-availability" class="js-product-availability">
+      <span id="product-availability" class="ms-product__availability-msg js-product-availability">
         {if $product.show_availability && $product.availability_message}
-          {if $product.availability == 'available'}
-            <i class="material-icons rtl-no-flip product-available">&#xE5CA;</i>
-          {elseif $product.availability == 'last_remaining_items'}
-            <i class="material-icons product-last-items">&#xE002;</i>
-          {else}
-            <i class="material-icons product-unavailable">&#xE14B;</i>
-          {/if}
           {$product.availability_message}
         {/if}
       </span>
     {/block}
 
     {block name='product_minimal_quantity'}
-      <p class="product-minimal-quantity js-product-minimal-quantity">
-        {if $product.minimal_quantity > 1}
-          {l
-          s='The minimum purchase order quantity for the product is %quantity%.'
-          d='Shop.Theme.Checkout'
-          sprintf=['%quantity%' => $product.minimal_quantity]
-          }
-        {/if}
-      </p>
+      {if $product.minimal_quantity > 1}
+        <p class="ms-product__min-qty">
+          {l s='Quantité minimum d\'achat : %quantity%' d='Shop.Theme.Checkout' sprintf=['%quantity%' => $product.minimal_quantity]}
+        </p>
+      {/if}
     {/block}
+
   {/if}
 </div>
