@@ -129,7 +129,7 @@
   font-size: 15px;
   line-height: normal;
   text-transform: uppercase;
-  color: $color-black;
+  color: rgba($color-black, 0.7);
   @include transition(background, color);
 
   svg {
@@ -144,7 +144,7 @@
 
   &.is-active {
     background: $color-white;
-    color: $color-ktm;
+    color: $color-black;
   }
 
   &:hover:not(.is-active) {
