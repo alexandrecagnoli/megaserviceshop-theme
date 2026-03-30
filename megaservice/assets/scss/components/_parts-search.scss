@@ -5,20 +5,27 @@
 .ms-parts-search {
   position: relative;
   width: 100%;
-  min-height: 500px;
+  height: 500px;
   background-image: url('../img/parts-search-bg.jpg');
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
+
+  @include media-md() {
+    height: auto;
+    background-attachment: scroll;
+  }
 }
 
 // ── Container grille ──────────────────────────
 .ms-parts-search__container {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  height: 100%;
   max-width: 1440px;
   margin: 0 auto;
   padding: 60px 120px;
-  gap: calc(2 / 12 * 100%); // 2 colonnes vides
+  gap: calc(2 / 12 * 100%);
 
   @include media-lg() {
     padding: 40px;
@@ -27,6 +34,7 @@
 
   @include media-md() {
     flex-direction: column;
+    height: auto;
     padding: 32px 16px;
     gap: 32px;
   }
@@ -95,11 +103,9 @@
   background: $color-white;
   display: flex;
   flex-direction: column;
-  min-height: 380px;
 
   @include media-md() {
     width: 100%;
-    min-height: auto;
   }
 }
 
