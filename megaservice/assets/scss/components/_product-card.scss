@@ -1,4 +1,34 @@
 // ============================================
+// PRODUCT GRID
+// ============================================
+
+.products {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  // Neutralise le padding Bootstrap des colonnes
+  > * {
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  @include media-lg() {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @include media-md() {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include media-sm() {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================
 // PRODUCT CARD
 // ============================================
 
