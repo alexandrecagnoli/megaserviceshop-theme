@@ -138,20 +138,24 @@ $carousel-dash-height:    3px;
   padding: 0 $spacing-xl;
   background: $color-ktm;
   color: $color-white;
-  font-family: $font-main;
+  font-family: $font-heading;
+  font-weight: 900;
   font-size: $font-size-base;
-  font-weight: $font-weight-bold;
   text-transform: uppercase;
-  text-decoration: none;
+  text-decoration: none !important;
   letter-spacing: 0.08em;
-  border: none;
-  @include transition(background);
+  border: 1px solid $color-ktm;
+  @include transition(background, color);
 
-  &:hover,
-  &:focus-visible {
-    background: darken($color-ktm, 10%);
+  &:hover {
+    background: transparent;
+    color: $color-ktm;
+    text-decoration: none !important;
+  }
+
+  &:active {
+    background: $color-ktm;
     color: $color-white;
-    text-decoration: none;
   }
 
   &:focus-visible {
