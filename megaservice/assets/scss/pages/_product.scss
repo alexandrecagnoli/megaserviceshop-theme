@@ -1,0 +1,759 @@
+// ============================================
+// PAGE PRODUIT
+// ============================================
+
+.ms-product {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 40px $container-padding 80px;
+}
+
+// ── Layout top : gallery + info ────────────────
+.ms-product__top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+
+  @include media-lg() {
+    gap: 40px;
+  }
+
+  @include media-md() {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+// ── Galerie ────────────────────────────────────
+.ms-product__gallery {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @include media-md() {
+    position: static;
+  }
+}
+
+.ms-product__gallery-main {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: $color-gray-5;
+  border-radius: $border-radius;
+}
+
+.ms-product__gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.ms-product__gallery-thumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ms-product__gallery-thumb {
+  width: 72px;
+  height: 72px;
+  border: 2px solid transparent;
+  border-radius: $border-radius;
+  overflow: hidden;
+  background: $color-gray-5;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: $color-gray-35;
+  }
+
+  &.is-active {
+    border-color: $color-ktm;
+  }
+
+  picture,
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+// ── Info colonne droite ────────────────────────
+.ms-product__info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ms-product__name {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 40px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: $color-black;
+  margin: 0;
+
+  @include media-lg() {
+    font-size: 32px;
+  }
+}
+
+.ms-product__reference {
+  font-family: $font-main;
+  font-size: 13px;
+  color: $color-gray-50;
+  margin: 0;
+
+  span {
+    color: $color-gray-60;
+  }
+}
+
+.ms-product__desc {
+  font-family: $font-main;
+  font-size: 15px;
+  line-height: 1.6;
+  color: $color-text;
+}
+
+// ── Disponibilité ──────────────────────────────
+.ms-product__availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: $font-main;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 99px;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  &--available,
+  &--last_remaining_items {
+    color: $color-success-mid;
+    background: $color-success-light;
+    &::before { background: $color-success-mid; }
+  }
+
+  &--unavailable {
+    color: $color-error-mid;
+    background: $color-error-light;
+    &::before { background: $color-error-mid; }
+  }
+}
+
+// ── Variants ───────────────────────────────────
+.product-variants {
+  .product-variants-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .control-label {
+      font-family: $font-main;
+      font-size: 13px;
+      font-weight: 700;
+      color: $color-black;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .input-container {
+    float: none;
+  }
+
+  input.input-color {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .color {
+      outline: 2px solid $color-ktm;
+      outline-offset: 2px;
+    }
+  }
+
+  .color {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid $color-gray-20;
+    cursor: pointer;
+    transition: outline 0.15s ease;
+  }
+
+  input.input-radio {
+    position: absolute;
+    opacity: 0;
+
+    &:checked + .radio-label {
+      background: $color-black;
+      color: $color-white;
+      border-color: $color-black;
+    }
+  }
+
+  .radio-label {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid $color-gray-20;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .form-control-select {
+    height: 44px;
+    border: 1px solid $color-gray-20;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: 14px;
+    padding: 0 12px;
+    width: 100%;
+    background: $color-white;
+  }
+}
+
+// ── Prix ───────────────────────────────────────
+.ms-product__prices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-product__price-old {
+  font-family: $font-main;
+  font-size: 16px;
+  color: $color-gray-50;
+  text-decoration: line-through;
+}
+
+.ms-product__price-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-product__price {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 40px;
+  color: $color-black;
+  line-height: 1;
+
+  &.has-discount {
+    color: $color-ktm;
+  }
+}
+
+.ms-product__price-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-ktm;
+  color: $color-white;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.ms-product__delivery-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: $color-ktm-light;
+  color: $color-ktm;
+  font-family: $font-main;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: $border-radius;
+  width: fit-content;
+}
+
+// ── Accordion livraison ────────────────────────
+.ms-product__accordion {
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius;
+  overflow: hidden;
+}
+
+.ms-product__accordion-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  background: $color-gray-5;
+  border: none;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-black;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+
+  &:hover {
+    background: darken($color-gray-5, 3%);
+  }
+
+  svg {
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+  }
+
+  &[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+}
+
+.ms-product__accordion-body {
+  padding: 16px;
+  font-family: $font-main;
+  font-size: 14px;
+  color: $color-gray-60;
+  line-height: 1.6;
+
+  p { margin: 0 0 8px; &:last-child { margin-bottom: 0; } }
+}
+
+// ── Add to cart ────────────────────────────────
+.ms-product__add-to-cart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ms-product__qty-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ms-product__qty-label {
+  font-family: $font-main;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-black;
+  white-space: nowrap;
+}
+
+.ms-product__qty-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius;
+  overflow: hidden;
+  height: 44px;
+}
+
+.ms-product__qty-btn {
+  width: 40px;
+  height: 100%;
+  border: none;
+  background: $color-gray-5;
+  font-size: 18px;
+  color: $color-black;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $color-gray-20;
+  }
+}
+
+.ms-product__qty-input {
+  width: 56px;
+  height: 100%;
+  border: none;
+  border-left: 1px solid $color-gray-20;
+  border-right: 1px solid $color-gray-20;
+  text-align: center;
+  font-family: $font-main;
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-black;
+  background: $color-white;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+  -moz-appearance: textfield;
+}
+
+.ms-product__cta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ms-product__cta-row {
+  display: flex;
+  gap: 12px;
+}
+
+.ms-product__btn-cart {
+  flex: 1;
+  height: 52px;
+  background: $color-black;
+  color: $color-white;
+  border: none;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border-radius: $border-radius;
+  transition: background 0.2s;
+
+  &:hover {
+    background: $color-gray-85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.ms-product__btn-wishlist {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+  border-radius: $border-radius;
+  cursor: pointer;
+  color: $color-gray-50;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: $color-ktm;
+    border-color: $color-ktm;
+  }
+
+  &.is-active {
+    color: $color-ktm;
+    border-color: $color-ktm;
+
+    svg path {
+      fill: $color-ktm;
+    }
+  }
+}
+
+.ms-product__btn-reserve {
+  width: 100%;
+  height: 52px;
+  background: transparent;
+  color: $color-black;
+  border: 1.5px solid $color-black;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border-radius: $border-radius;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: $color-black;
+    color: $color-white;
+  }
+}
+
+.ms-product__availability-msg {
+  font-family: $font-main;
+  font-size: 13px;
+  color: $color-success-mid;
+}
+
+.ms-product__min-qty {
+  font-family: $font-main;
+  font-size: 13px;
+  color: $color-gray-50;
+  margin: 0;
+}
+
+// ── Onglets ────────────────────────────────────
+.ms-product__tabs-section {
+  margin-top: 64px;
+  border-top: 1px solid $color-gray-20;
+}
+
+.ms-product__tabs-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid $color-gray-20;
+}
+
+.ms-product__tab-btn {
+  padding: 16px 28px;
+  border: none;
+  background: transparent;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-gray-50;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: $color-black;
+  }
+
+  &.is-active {
+    color: $color-black;
+    border-bottom-color: $color-ktm;
+  }
+
+  @include media-sm() {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
+.ms-product__tabs-content {
+  padding: 40px 0;
+}
+
+.ms-product__tab-panel {
+  display: none;
+
+  &.is-active {
+    display: block;
+  }
+}
+
+// ── Description ────────────────────────────────
+.ms-product__description {
+  font-family: $font-main;
+  font-size: 15px;
+  line-height: 1.7;
+  color: $color-text;
+  max-width: 800px;
+
+  h2, h3, h4 { font-family: $font-heading; font-weight: 900; text-transform: uppercase; margin: 1.5em 0 0.5em; }
+  p { margin: 0 0 1em; }
+  ul, ol { padding-left: 1.5em; margin: 0 0 1em; }
+}
+
+// ── Fiche technique ────────────────────────────
+.ms-product__features {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius;
+  overflow: hidden;
+
+  @include media-md() {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ms-product__features-nav {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid $color-gray-20;
+  background: $color-gray-5;
+
+  @include media-md() {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid $color-gray-20;
+  }
+}
+
+.ms-product__feature-group-btn {
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-gray-60;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: $color-black;
+    background: darken($color-gray-5, 3%);
+  }
+
+  &.is-active {
+    color: $color-black;
+    background: $color-white;
+    border-left-color: $color-ktm;
+  }
+
+  @include media-md() {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-size: 13px;
+
+    &.is-active {
+      background: transparent;
+      border-bottom-color: $color-ktm;
+    }
+  }
+}
+
+.ms-product__features-table {
+  background: $color-white;
+}
+
+.ms-product__feature-group {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+
+  &.is-active {
+    display: table;
+  }
+
+  tr {
+    border-bottom: 1px solid $color-gray-5;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 12px 20px;
+    font-family: $font-main;
+    font-size: 14px;
+    vertical-align: top;
+  }
+}
+
+.ms-product__feature-name {
+  color: $color-gray-50;
+  font-weight: 400;
+  width: 45%;
+}
+
+.ms-product__feature-value {
+  color: $color-black;
+  font-weight: 700;
+}
+
+// ── Accessoires / produits liés ────────────────
+.ms-products-section {
+  margin-top: 80px;
+  border-top: 1px solid $color-gray-20;
+  padding-top: 40px;
+}
+
+.ms-products-section__header {
+  margin-bottom: 32px;
+}
+
+.ms-products-section__title {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 28px;
+  text-transform: uppercase;
+  color: $color-black;
+  margin: 0;
+}
+
+.ms-products-section .products {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @include media-lg() {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @include media-md() {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include media-sm() {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+// ── Mobile ─────────────────────────────────────
+@include media-sm() {
+  .ms-product {
+    padding: 20px $container-padding 60px;
+  }
+
+  .ms-product__name {
+    font-size: 26px;
+  }
+
+  .ms-product__price {
+    font-size: 32px;
+  }
+
+  .ms-product__tabs-section {
+    margin-top: 40px;
+  }
+
+  .ms-product__tabs-content {
+    padding: 24px 0;
+  }
+}
