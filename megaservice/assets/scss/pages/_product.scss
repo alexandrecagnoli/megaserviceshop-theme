@@ -735,9 +735,16 @@
   }
 }
 
-// ── Modale images (masquée, non utilisée) ─────
-.js-product-images-modal {
+// ── Modales Bootstrap (non utilisées, masquées) ─
+.js-product-images-modal,
+.modal,
+.modal.fade {
   display: none !important;
+
+  &.show,
+  &.in {
+    display: flex !important;
+  }
 }
 
 // ── Mobile ─────────────────────────────────────
