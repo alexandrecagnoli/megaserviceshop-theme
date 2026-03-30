@@ -62,7 +62,7 @@
 .products {
   display: flex !important;
   flex-wrap: wrap;
-  gap: 30px 60px;
+  gap: 60px 30px;
 
   > * {
     width: calc(25% - 45px) !important;
