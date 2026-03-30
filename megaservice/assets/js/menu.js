@@ -5,8 +5,8 @@
 
 class MenuToggle {
   constructor() {
-    this.menuToggle = document.querySelector('.ms-menu-toggle');
-    this.menu = document.querySelector('.ms-menu');
+    this.menuToggle = document.querySelector('.ms-header__burger');
+    this.menu = document.querySelector('#ms-sidebar');
     this.menuClose = document.querySelector('.ms-menu__close');
     this.body = document.body;
     

@@ -202,27 +202,97 @@
     display: flex;
     align-items: center;
     gap: $spacing-lg;
+  }
 
-    // Labels sous les icônes PS
-    a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      color: $color-white;
+  &__action-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: $color-white;
+    text-decoration: none;
+    font-size: 0.7rem;
+    @include transition(color);
+
+    &:hover {
+      color: $color-ktm;
       text-decoration: none;
-      font-size: 0.7rem;
-      @include transition(color);
+    }
+  }
+}
+
+// ── Search Widget ─────────────────────────────
+.ms-search-widget {
+  position: relative;
+
+  &__toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $color-white;
+    font-size: 0.7rem;
+    font-family: $font-main;
+    padding: 0;
+    @include transition(color);
+
+    &:hover {
+      color: $color-ktm;
+    }
+  }
+
+  &__form {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: $color-white;
+    border-radius: $border-radius;
+    box-shadow: 0 4px 16px rgba($color-black, 0.2);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    width: 280px;
+    z-index: 200;
+
+    &[hidden] {
+      display: none;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      border: none;
+      padding: $spacing-md;
+      font-family: $font-main;
+      font-size: $font-size-base;
+      outline: none;
+      color: $color-black;
+      background: transparent;
+      width: auto;
+    }
+
+    button[type="submit"] {
+      background: $color-ktm;
+      border: none;
+      padding: $spacing-md;
+      cursor: pointer;
+      color: $color-white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      @include transition(background);
 
       &:hover {
-        color: $color-ktm;
-      }
-
-      svg, i {
-        font-size: 1.2rem;
+        background: darken($color-ktm, 10%);
       }
     }
   }
+}
+
+// Ferme la recherche (hack nécessaire pour le scss)
+.ms-header {
 
   // ── Responsive ─────────────────────────────
   @include media-lg() {

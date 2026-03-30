@@ -2,11 +2,11 @@
  * Hero Carousel — ps_imageslider override
  * Megaservice Theme
  *}
-{if $slides}
+{if $homeslider.slides}
 <section class="ms-carousel" data-carousel aria-label="Carousel principal">
 
   <div class="ms-carousel__track" data-carousel-track>
-    {foreach from=$slides item=slide name=slides_loop}
+    {foreach from=$homeslider.slides item=slide name=slides_loop}
     <div class="ms-carousel__slide{if $smarty.foreach.slides_loop.first} is-active{/if}"
          data-carousel-slide
          role="group"
@@ -15,8 +15,8 @@
 
       <div class="ms-carousel__media">
         <img class="ms-carousel__img"
-             src="{$slide.image}"
-             alt="{$slide.title|escape:'html':'UTF-8'}"
+             src="{$slide.image_url}"
+             alt="{$slide.legend|escape}"
              {if $smarty.foreach.slides_loop.first}loading="eager"{else}loading="lazy"{/if}>
       </div>
 
@@ -27,7 +27,7 @@
         <h2 class="ms-carousel__title">{$slide.title|escape:'html':'UTF-8'}</h2>
         {/if}
         {if $slide.description}
-        <p class="ms-carousel__subtitle">{$slide.description|escape:'html':'UTF-8'}</p>
+        <div class="ms-carousel__subtitle">{$slide.description nofilter}</div>
         {/if}
         {if $slide.url && $slide.legend}
         <a href="{$slide.url}" class="ms-carousel__cta">
@@ -40,9 +40,9 @@
     {/foreach}
   </div>
 
-  {if count($slides) > 1}
+  {if count($homeslider.slides) > 1}
   <nav class="ms-carousel__dots" aria-label="Navigation carousel" data-carousel-dots>
-    {foreach from=$slides item=slide name=dots_loop}
+    {foreach from=$homeslider.slides item=slide name=dots_loop}
     <button class="ms-carousel__dot{if $smarty.foreach.dots_loop.first} is-active{/if}"
             data-carousel-dot="{$smarty.foreach.dots_loop.index}"
             aria-label="Slide {$smarty.foreach.dots_loop.index+1}"

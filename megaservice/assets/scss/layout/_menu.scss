@@ -200,52 +200,54 @@
   padding: $spacing-md;
   background: $color-bg;
   border-radius: $border-radius;
+  text-decoration: none;
+  color: $color-text;
 
-  .icon {
-    font-size: 1.5rem;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: #222;
-    color: #fff;
+  svg {
+    flex-shrink: 0;
+    color: $color-gray-60;
+  }
+}
+
+.ms-menu__customer-service-info {
+  display: flex;
+  flex-direction: column;
+
+  small {
+    font-size: 0.75rem;
+    color: $color-text-light;
+    text-transform: uppercase;
+    font-weight: $font-weight-medium;
   }
 
-  .info {
-    flex: 1;
-
-    .label {
-      font-size: 0.75rem;
-      color: $color-text-light;
-      text-transform: uppercase;
-      font-weight: $font-weight-medium;
-    }
-
-    .phone {
-      font-size: 0.95rem;
-      font-weight: $font-weight-bold;
-      color: $color-text;
-    }
+  strong {
+    font-size: 0.95rem;
+    font-weight: $font-weight-bold;
+    color: $color-text;
   }
 }
 
 .ms-menu__account-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  border: 2px solid $color-text;
+  border: 2px solid $color-black;
   background: transparent;
-  color: $color-text;
+  color: $color-black;
   padding: $spacing-md;
+  font-family: $font-main;
   font-weight: $font-weight-bold;
   font-size: 0.95rem;
-  cursor: pointer;
-  border-radius: $border-radius;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   @include transition(all);
 
   &:hover {
-    background: $color-text;
-    color: #ffffff;
+    background: $color-black;
+    color: $color-white;
+    text-decoration: none;
   }
 }
 
