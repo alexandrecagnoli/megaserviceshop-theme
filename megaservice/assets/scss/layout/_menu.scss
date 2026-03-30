@@ -33,6 +33,7 @@
   z-index: 999;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 
   &.is-open {
     transform: translateX(0);
@@ -117,7 +118,7 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 $spacing-lg;
+  padding: 0 16px;
 }
 
 // ============================================
@@ -127,21 +128,12 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-y: auto;
-  flex: 1;
-  -webkit-overflow-scrolling: touch;
 }
 
 .ms-menu__item {
   display: flex;
-  height: 56px;
-  padding: 16px 0;
-  align-items: center;
-  flex-shrink: 0;
-  align-self: stretch;
-  border-bottom: 1px solid $color-border;
   flex-direction: column;
-  height: auto;
+  border-bottom: 1px solid #E8E8E8;
 
   &:last-child {
     border-bottom: none;
@@ -150,13 +142,11 @@
 
 .ms-menu__link {
   display: flex;
-  width: 100%;
   height: 56px;
-  padding: 16px 0;
+  padding: 0;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
   color: $color-black;
   text-decoration: none;
   font-family: $font-main;
@@ -164,11 +154,11 @@
   font-size: 18px;
   text-transform: uppercase;
   line-height: normal;
+  @include transition(color);
 
   @include media-md() {
     font-size: 16px;
   }
-  @include transition(color);
 
   &:hover {
     color: $color-ktm;
