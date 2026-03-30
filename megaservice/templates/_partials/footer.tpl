@@ -4,7 +4,7 @@
   {* ── Bannière Pro ── *}
   <div class="ms-footer__pro-banner">
     <div class="ms-footer__container">
-      <p class="ms-footer__pro-text">{l s='Vous êtes un professionnel de la moto ?' d='Shop.Theme.Global'}</p>
+      <span class="ms-footer__pro-text">{l s='Vous êtes un professionnel de la moto ?' d='Shop.Theme.Global'}</span>
       <a href="#" class="ms-footer__pro-btn">{l s='DÉCOUVREZ LES AVANTAGES EXCLUSIFS' d='Shop.Theme.Global'}</a>
     </div>
   </div>
