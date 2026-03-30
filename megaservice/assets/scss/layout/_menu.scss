@@ -111,7 +111,15 @@
 }
 
 .ms-menu__item {
+  display: flex;
+  height: 56px;
+  padding: 16px 0;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
   border-bottom: 1px solid $color-border;
+  flex-direction: column;
+  height: auto;
 
   &:last-child {
     border-bottom: none;
@@ -120,9 +128,13 @@
 
 .ms-menu__link {
   display: flex;
-  align-items: center;
+  width: 100%;
+  height: 56px;
+  padding: 16px 0;
   justify-content: space-between;
-  padding: 20px 16px;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
   color: $color-black;
   text-decoration: none;
   font-family: $font-heading;
@@ -157,6 +169,7 @@
 .ms-menu__submenu-wrap {
   max-height: 0;
   overflow: hidden;
+  width: 100%;
   @include transition(max-height);
 
   &.is-open {
@@ -166,31 +179,34 @@
 
 .ms-menu__submenu {
   margin: 0;
-  padding: 0;
+  padding: 0 0 16px;
   list-style: none;
-  background: $color-bg;
+  background: transparent;
 
   &.is-open {
     max-height: 500px; // Suffit pour la plupart des cas
   }
 }
 
-.ms-menu__subitem {
-  border-bottom: 1px solid $color-border;
+.ms-menu__submenu-wrap {
+  width: 100%;
+}
 
-  &:last-child {
-    border-bottom: none;
+.ms-menu__subitem {
+  & + & {
+    margin-top: 16px;
   }
 }
 
 .ms-menu__sublink {
   display: block;
-  padding: 16px 16px 16px 32px;
-  color: $color-text;
+  color: $color-black;
   text-decoration: none;
   font-family: $font-main;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
+  text-transform: uppercase;
+  line-height: normal;
   @include transition(color);
 
   &:hover {
