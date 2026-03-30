@@ -6,9 +6,9 @@
   padding: $spacing-md $spacing-lg;
   border-radius: $border-radius;
   border: 2px solid transparent;
-  font-family: $font-main;
+  font-family: $font-heading;
   font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-weight: 900;
   cursor: pointer;
   text-decoration: none;
   @include transition(background-color, color);

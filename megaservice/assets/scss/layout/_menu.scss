@@ -25,7 +25,7 @@
   left: 0;
   bottom: 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 360px;
   background: $color-white;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%);
@@ -33,7 +33,7 @@
   z-index: 999;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
 
   &.is-open {
     transform: translateX(0);
@@ -67,8 +67,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-lg;
-  border-bottom: 1px solid $color-border;
+  padding: 16px;
+  border-bottom: 1px solid #E8E8E8;
+  background: $color-white;
+  flex-shrink: 0;
 }
 
 .ms-menu__logo {
@@ -133,7 +135,7 @@
 .ms-menu__item {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid #E8E8E8;
+  border-bottom: 1px solid #B5B5B5;
 
   &:last-child {
     border-bottom: none;
@@ -246,17 +248,19 @@
 .ms-menu__customer-service {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  justify-content: center;
+  gap: 16px;
+  height: 68px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  opacity: 0.8;
+  background: rgba(43, 12, 12, 0.08);
   margin-bottom: $spacing-lg;
-  padding: $spacing-md;
-  background: $color-white;
-  border-radius: $border-radius;
   text-decoration: none;
   color: $color-text;
 
   svg {
     flex-shrink: 0;
-    color: $color-gray-60;
   }
 }
 
@@ -287,8 +291,8 @@
   border: 1px solid $color-black;
   background: transparent;
   color: $color-black;
-  font-family: $font-main;
-  font-weight: $font-weight-bold;
+  font-family: $font-heading;
+  font-weight: 900;
   font-size: 0.875rem;
   text-decoration: none;
   text-transform: uppercase;

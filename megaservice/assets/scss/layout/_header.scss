@@ -126,8 +126,10 @@
     }
 
     img {
-      height: 48px;
-      width: auto;
+      width: 150.618px;
+      height: 76.375px;
+      aspect-ratio: 150.62 / 76.37;
+      object-fit: contain;
       display: block;
     }
   }
@@ -321,7 +323,9 @@
     }
 
     &__logo img {
-      height: 36px;
+      width: 78.426px;
+      height: 39.768px;
+      aspect-ratio: 78.43 / 39.77;
     }
   }
 }
