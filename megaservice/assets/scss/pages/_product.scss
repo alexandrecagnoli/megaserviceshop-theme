@@ -735,6 +735,11 @@
   }
 }
 
+// ── Modale images (masquée, non utilisée) ─────
+.js-product-images-modal {
+  display: none !important;
+}
+
 // ── Mobile ─────────────────────────────────────
 @include media-sm() {
   .ms-product {

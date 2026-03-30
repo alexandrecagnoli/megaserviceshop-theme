@@ -103,7 +103,9 @@
           <button class="ms-product__tab-btn js-product-tab-btn" data-tab="description">{l s='Description' d='Shop.Theme.Catalog'}</button>
         {/if}
         <button class="ms-product__tab-btn js-product-tab-btn is-active" data-tab="features">{l s='Fiche technique' d='Shop.Theme.Catalog'}</button>
-        <button class="ms-product__tab-btn js-product-tab-btn" data-tab="reviews">{l s='Avis clients' d='Shop.Theme.Catalog'}</button>
+        {foreach from=$product.extra_tabs item=extra_tab}
+          <button class="ms-product__tab-btn js-product-tab-btn" data-tab="{$extra_tab.id_tab|escape:'htmlall'}">{$extra_tab.title}</button>
+        {/foreach}
       </nav>
 
       <div class="ms-product__tabs-content">
@@ -142,9 +144,11 @@
           {/if}
         </div>
 
-        <div class="ms-product__tab-panel js-product-tab-panel" data-panel="reviews">
-          {hook h='displayProductAdditionalInfo' product=$product}
-        </div>
+        {foreach from=$product.extra_tabs item=extra_tab}
+          <div class="ms-product__tab-panel js-product-tab-panel" data-panel="{$extra_tab.id_tab|escape:'htmlall'}">
+            {$extra_tab.content nofilter}
+          </div>
+        {/foreach}
 
       </div>
     </div>
