@@ -14,55 +14,33 @@ $footer-cols: 12;
     @include container();
   }
 
-  // ── Bannière Pro ──────────────────────────
-  &__pro-banner {
+  // ── Bannière PS Banner (displayBanner hook) ───
+  // Sortie : <div class="banner"><a class="banner" href="...">...</a></div>
+  div.banner {
     background: $color-ktm;
     padding: 20px 0;
 
-    .ms-footer__container {
+    a.banner {
+      @include container();
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: $footer-gap;
+      color: $color-white;
+      text-decoration: none !important;
+      font-family: $font-main;
+      font-size: 22px;
+      font-weight: 700;
+
+      &:hover {
+        text-decoration: none !important;
+      }
 
       @include media-md() {
         flex-direction: column;
         text-align: center;
         gap: 16px;
       }
-    }
-  }
-
-  &__pro-text {
-    color: $color-white;
-    font-family: $font-main;
-    font-size: 22px;
-    font-weight: 700;
-    font-style: normal;
-    line-height: normal;
-    text-decoration: none;
-    margin: 0;
-  }
-
-  &__pro-btn {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    border: 2px solid $color-white;
-    color: $color-white;
-    font-family: $font-main;
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none !important;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 12px 24px;
-    @include transition(background, color);
-
-    &:hover {
-      background: $color-white;
-      color: $color-ktm;
-      text-decoration: none !important;
     }
   }
 
