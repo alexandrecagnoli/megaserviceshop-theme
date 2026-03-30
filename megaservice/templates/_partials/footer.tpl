@@ -1,7 +1,10 @@
 {block name='footer'}
 <footer class="ms-footer">
 
-  {* ── Bannière Pro ── *}
+  {* ── Bannière PS module (displayBanner) ── *}
+  {hook h='displayBanner'}
+
+  {* ── Bannière Pro KTM ── *}
   <div class="ms-footer__pro-banner">
     <div class="ms-footer__container">
       <span class="ms-footer__pro-text">{l s='Vous êtes un professionnel de la moto ?' d='Shop.Theme.Global'}</span>
