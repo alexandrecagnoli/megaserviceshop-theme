@@ -11,7 +11,7 @@ class MenuToggle {
     this.body = document.body;
     
     // Dropdowns dans le menu
-    this.menuLinks = document.querySelectorAll('.ms-menu__link[data-toggle]');
+    this.menuLinks = document.querySelectorAll('.ms-menu__link[data-toggle="true"]');
 
     this.init();
   }
@@ -38,6 +38,9 @@ class MenuToggle {
       });
     });
 
+    // Fermeture des sous-menus quand on ferme le menu
+    this.menuClose.addEventListener('click', () => this.closeAllSubmenus());
+
     // Fermeture au clic sur Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.close();
@@ -55,13 +58,34 @@ class MenuToggle {
   }
 
   toggleSubmenu(link) {
-    const submenuId = link.getAttribute('data-toggle');
-    const submenu = document.querySelector(submenuId);
+    const wrap = link.nextElementSibling;
+    if (!wrap || !wrap.classList.contains('ms-menu__submenu-wrap')) return;
 
-    if (!submenu) return;
+    const isOpen = wrap.classList.contains('is-open');
 
-    link.classList.toggle('is-open');
-    submenu.classList.toggle('is-open');
+    // Ferme tous les autres
+    this.menuLinks.forEach((l) => {
+      const w = l.nextElementSibling;
+      if (w && w.classList.contains('ms-menu__submenu-wrap')) {
+        w.classList.remove('is-open');
+        l.classList.remove('is-open');
+      }
+    });
+
+    if (!isOpen) {
+      wrap.classList.add('is-open');
+      link.classList.add('is-open');
+    }
+  }
+
+  closeAllSubmenus() {
+    this.menuLinks.forEach((link) => {
+      const wrap = link.nextElementSibling;
+      if (wrap && wrap.classList.contains('ms-menu__submenu-wrap')) {
+        wrap.classList.remove('is-open');
+        link.classList.remove('is-open');
+      }
+    });
   }
 }
 

@@ -122,40 +122,53 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-lg;
-  color: $color-text;
+  padding: 20px 16px;
+  color: $color-black;
   text-decoration: none;
-  font-weight: $font-weight-medium;
-  font-size: 0.95rem;
-  @include transition(background-color, color);
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+  @include transition(color);
 
   &:hover {
-    background: $color-bg;
-    color: $color-primary;
+    color: $color-ktm;
+    text-decoration: none;
   }
 
-  // Chevron pour les dropdowns
-  .ms-menu__chevron {
-    font-size: 0.75rem;
-    transition: transform 0.3s;
+  &.is-open {
+    .ms-menu__chevron {
+      transform: rotate(180deg);
+    }
   }
+}
 
-  &.is-open .ms-menu__chevron {
-    transform: rotate(180deg);
-  }
+.ms-menu__chevron {
+  flex-shrink: 0;
+  color: $color-black;
+  @include transition(transform);
 }
 
 // ============================================
 // MENU SUBMENU
 // ============================================
+.ms-menu__submenu-wrap {
+  max-height: 0;
+  overflow: hidden;
+  @include transition(max-height);
+
+  &.is-open {
+    max-height: 500px;
+  }
+}
+
 .ms-menu__submenu {
   margin: 0;
   padding: 0;
   list-style: none;
   background: $color-bg;
-  max-height: 0;
-  overflow: hidden;
-  @include transition(max-height);
 
   &.is-open {
     max-height: 500px; // Suffit pour la plupart des cas
@@ -163,19 +176,26 @@
 }
 
 .ms-menu__subitem {
-  a {
-    display: block;
-    padding: $spacing-md $spacing-lg $spacing-md calc($spacing-lg * 2);
-    color: $color-text-light;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: $font-weight-normal;
-    @include transition(color, background-color);
+  border-bottom: 1px solid $color-border;
 
-    &:hover {
-      color: $color-primary;
-      background: rgba($color-primary, 0.05);
-    }
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.ms-menu__sublink {
+  display: block;
+  padding: 16px 16px 16px 32px;
+  color: $color-text;
+  text-decoration: none;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 400;
+  @include transition(color);
+
+  &:hover {
+    color: $color-ktm;
+    text-decoration: none;
   }
 }
 
