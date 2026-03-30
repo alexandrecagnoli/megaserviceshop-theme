@@ -1,3 +1,5 @@
+{include file='_partials/reassurance.tpl'}
+
 {block name='footer'}
 <footer class="ms-footer">
 
