@@ -1,8 +1,16 @@
 {block name='footer'}
 <footer class="ms-footer">
 
-  {* ── Bannière footer (module ps_banner) ── *}
+  {* ── Module bannière back office (ps_banner) ── *}
   {hook h='displayBanner'}
+
+  {* ── Bloc espace pro (custom) ── *}
+  <div class="ms-footer__espace-pro">
+    <div class="ms-footer__container">
+      <span class="ms-footer__espace-pro-text">{l s='Vous êtes un professionnel de la moto ?' d='Shop.Theme.Global'}</span>
+      <a href="#" class="ms-footer__espace-pro-btn">{l s='DÉCOUVREZ LES AVANTAGES EXCLUSIFS' d='Shop.Theme.Global'}</a>
+    </div>
+  </div>
 
   {* ── Corps principal ── *}
   <div class="ms-footer__main">
