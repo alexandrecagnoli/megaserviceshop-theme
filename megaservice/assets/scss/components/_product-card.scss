@@ -180,6 +180,7 @@
     flex-direction: column;
     gap: 6px;
     padding: 16px 0 0;
+    flex: 1;
   }
 
   // ── Nom ────────────────────────────────────
@@ -247,7 +248,7 @@
     }
 
     &--last_remaining_items {
-      color: $color-ktm;
+      color: #128C0C;
     }
   }
 
@@ -255,7 +256,8 @@
   &__add-form {
     margin: 0;
     padding: 0;
-    margin-top: 8px;
+    margin-top: auto;
+    padding-top: 8px;
   }
 
   // ── Bouton AJOUTER ─────────────────────────
