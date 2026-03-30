@@ -3,13 +3,31 @@
 // ============================================
 
 .ms-products-section {
-  padding: 40px 0;
+  width: 100%;
+
+  .ms-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 60px;
+    max-width: 1440px;
+    padding: 45px 120px;
+
+    @include media-lg() {
+      padding: 40px 40px;
+    }
+
+    @include media-md() {
+      padding: 32px 16px;
+      gap: 30px;
+    }
+  }
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 30px;
+    width: 100%;
   }
 
   &__title {
