@@ -160,25 +160,16 @@
         {/if}
 
         <div class="ms-product__tab-panel js-product-tab-panel is-active" data-panel="features">
-          {if $product.grouped_features}
+          {if $product.features}
             <div class="ms-product__features">
-              <nav class="ms-product__features-nav">
-                {foreach from=$product.grouped_features item=feature key=k}
-                  <button class="ms-product__feature-group-btn js-feature-group-btn{if $k@first} is-active{/if}" data-group="{$k}">{$feature.name}</button>
+              <table class="ms-product__feature-group is-active">
+                {foreach from=$product.features item=f}
+                  <tr>
+                    <td class="ms-product__feature-name">{$f.name}</td>
+                    <td class="ms-product__feature-value">{$f.value|escape:'htmlall'|nl2br nofilter}</td>
+                  </tr>
                 {/foreach}
-              </nav>
-              <div class="ms-product__features-table">
-                {foreach from=$product.grouped_features item=feature key=k}
-                  <table class="ms-product__feature-group js-feature-group{if $k@first} is-active{/if}" data-group="{$k}">
-                    {foreach from=$feature.features item=f}
-                      <tr>
-                        <td class="ms-product__feature-name">{$f.name}</td>
-                        <td class="ms-product__feature-value">{$f.value|escape:'htmlall'|nl2br nofilter}</td>
-                      </tr>
-                    {/foreach}
-                  </table>
-                {/foreach}
-              </div>
+              </table>
             </div>
           {else}
             {block name='product_details'}

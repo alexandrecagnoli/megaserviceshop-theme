@@ -59,13 +59,7 @@
       {/if}
     </div>
 
-    {block name='product_availability'}
-      <span id="product-availability" class="ms-product__availability-msg js-product-availability">
-        {if $product.show_availability && $product.availability_message}
-          {$product.availability_message}
-        {/if}
-      </span>
-    {/block}
+    {block name='product_availability'}{/block}
 
     {block name='product_minimal_quantity'}
       {if $product.minimal_quantity > 1}
