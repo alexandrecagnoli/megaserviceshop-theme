@@ -48,12 +48,18 @@ document.addEventListener('DOMContentLoaded', function () {
     trigger.addEventListener('click', function () {
       var expanded = trigger.getAttribute('aria-expanded') === 'true';
       var body = trigger.nextElementSibling;
+      var iconPlus = trigger.querySelector('.ms-product__accordion-icon--plus');
+      var iconMinus = trigger.querySelector('.ms-product__accordion-icon--minus');
 
       trigger.setAttribute('aria-expanded', String(!expanded));
       if (expanded) {
         body.setAttribute('hidden', '');
+        if (iconPlus) iconPlus.removeAttribute('hidden');
+        if (iconMinus) iconMinus.setAttribute('hidden', '');
       } else {
         body.removeAttribute('hidden');
+        if (iconPlus) iconPlus.setAttribute('hidden', '');
+        if (iconMinus) iconMinus.removeAttribute('hidden');
       }
     });
   });
