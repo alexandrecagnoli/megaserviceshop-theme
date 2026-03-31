@@ -1,4 +1,5 @@
 <nav data-depth="{$breadcrumb.count}" class="ms-breadcrumb">
+  <div class="ms-container">
   <ol class="ms-breadcrumb__list">
     {block name='breadcrumb'}
       {foreach from=$breadcrumb.links item=path name=breadcrumb}
@@ -17,4 +18,5 @@
       {/foreach}
     {/block}
   </ol>
+  </div>
 </nav>
