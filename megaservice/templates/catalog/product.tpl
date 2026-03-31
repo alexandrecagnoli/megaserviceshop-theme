@@ -190,28 +190,20 @@
     </div>
   {/block}
 
-  {* ── Accessoires ── *}
-  {block name='product_accessories'}
-    {if $accessories}
+  {* ── Accessoires Powerparts + Produits associés ── *}
+  {block name='product_footer'}
+    {capture name='footer_hook'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
+    {if $smarty.capture.footer_hook|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Accessoires Powerparts associés' d='Shop.Theme.Catalog'}</h2>
           </div>
           <div class="products">
-            {foreach from=$accessories item="product_accessory" key="position"}
-              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position}
-            {/foreach}
+            {$smarty.capture.footer_hook nofilter}
           </div>
         </div>
       </section>
-    {/if}
-  {/block}
-
-  {* ── Produits associés ── *}
-  {block name='product_footer'}
-    {capture name='footer_hook'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
-    {if $smarty.capture.footer_hook|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
@@ -224,6 +216,8 @@
       </section>
     {/if}
   {/block}
+
+  {block name='product_accessories'}{/block}
 
   {block name='product_images_modal'}
     {include file='catalog/_partials/product-images-modal.tpl'}
