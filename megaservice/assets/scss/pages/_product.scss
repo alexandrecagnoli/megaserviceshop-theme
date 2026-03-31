@@ -92,71 +92,59 @@
 .ms-product__info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 25px;
+}
+
+// ── Bloc identité : titre + ref + desc + dispo ─
+.ms-product__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  align-self: stretch;
 }
 
 .ms-product__name {
   font-family: $font-heading;
   font-weight: 900;
-  font-size: 40px;
-  line-height: 1.1;
+  font-size: 34px;
+  line-height: normal;
   text-transform: uppercase;
   color: $color-black;
   margin: 0;
-
-  @include media-lg() {
-    font-size: 32px;
-  }
 }
 
 .ms-product__reference {
-  font-family: $font-main;
-  font-size: 13px;
+  font-family: $font-heading;
+  font-size: 16px;
+  font-weight: 700;
   color: $color-gray-50;
   margin: 0;
-
-  span {
-    color: $color-gray-60;
-  }
 }
 
 .ms-product__desc {
   font-family: $font-main;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
   color: $color-text;
 }
 
 // ── Disponibilité ──────────────────────────────
 .ms-product__availability {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: $font-main;
-  font-size: 13px;
+  font-family: $font-heading;
+  font-size: 16px;
   font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 99px;
-
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
+  line-height: normal;
 
   &--available,
   &--last_remaining_items {
     color: $color-success-mid;
-    background: $color-success-light;
-    &::before { background: $color-success-mid; }
   }
 
   &--unavailable {
     color: $color-error-mid;
-    background: $color-error-light;
-    &::before { background: $color-error-mid; }
   }
 }
 
@@ -267,39 +255,46 @@
 .ms-product__price {
   font-family: $font-heading;
   font-weight: 900;
-  font-size: 40px;
+  font-size: 34px;
   color: $color-black;
-  line-height: 1;
+  line-height: normal;
+  text-transform: uppercase;
 
   &.has-discount {
     color: $color-ktm;
   }
 }
 
-.ms-product__price-badge {
-  display: inline-flex;
+.ms-product__price-row {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  background: $color-ktm;
-  color: $color-white;
-  font-family: $font-heading;
-  font-weight: 900;
-  font-size: 14px;
-  padding: 4px 10px;
-  border-radius: 99px;
+  justify-content: space-between;
+  gap: 16px;
+  align-self: stretch;
 }
 
 .ms-product__delivery-badge {
-  display: inline-flex;
+  display: flex;
+  height: 50px;
+  padding: 10px 16px;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  background: $color-ktm-light;
-  color: $color-ktm;
-  font-family: $font-main;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 12px;
-  width: fit-content;
+  gap: 10px;
+  flex-shrink: 0;
+
+  svg { flex-shrink: 0; }
+
+  span {
+    font-family: $font-main;
+    font-size: 15px;
+    font-weight: 400;
+    color: $color-black;
+    white-space: nowrap;
+
+    strong {
+      font-weight: 700;
+    }
+  }
 }
 
 // ── Accordion livraison ────────────────────────
@@ -313,39 +308,62 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 14px 16px;
-  background: $color-gray-5;
+  padding: 16px 0;
+  background: transparent;
   border: none;
-  font-family: $font-main;
-  font-size: 14px;
+  border-top: 1px solid $color-gray-20;
+  border-bottom: 1px solid $color-gray-20;
+  font-family: $font-heading;
+  font-size: 16px;
   font-weight: 700;
+  text-transform: uppercase;
   color: $color-black;
   cursor: pointer;
   text-align: left;
-  transition: background 0.2s;
+}
 
-  &:hover {
-    background: darken($color-gray-5, 3%);
-  }
-
-  svg {
-    flex-shrink: 0;
-    transition: transform 0.3s ease;
-  }
-
-  &[aria-expanded="true"] svg {
-    transform: rotate(180deg);
-  }
+.ms-product__accordion-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .ms-product__accordion-body {
-  padding: 16px;
-  font-family: $font-main;
-  font-size: 14px;
-  color: $color-gray-60;
-  line-height: 1.6;
+  padding: 20px 0;
+  border-bottom: 1px solid $color-gray-20;
+}
 
-  p { margin: 0 0 8px; &:last-child { margin-bottom: 0; } }
+.ms-product__delivery-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ms-product__delivery-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ms-product__delivery-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  span {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 400;
+    color: $color-black;
+  }
+}
+
+.ms-product__delivery-row-time {
+  font-family: $font-heading;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: $color-black;
 }
 
 // ── Add to cart ────────────────────────────────
@@ -358,64 +376,57 @@
 .ms-product__qty-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  align-self: stretch;
 }
 
 .ms-product__qty-label {
   font-family: $font-main;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: $color-black;
-  white-space: nowrap;
 }
 
 .ms-product__qty-control {
   display: flex;
   align-items: center;
-  border: 1px solid $color-gray-20;
-  overflow: hidden;
-  height: 44px;
-}
-
-.ms-product__qty-btn {
-  width: 40px;
-  height: 100%;
-  border: none;
-  background: $color-gray-5;
-  font-size: 18px;
-  color: $color-black;
+  width: 174px;
+  height: 50px;
+  border: 1.5px solid $color-black;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-  flex-shrink: 0;
-
-  &:hover {
-    background: $color-gray-20;
-  }
+  position: relative;
 }
 
 .ms-product__qty-input {
-  width: 56px;
+  flex: 1;
   height: 100%;
   border: none;
-  border-left: 1px solid $color-gray-20;
-  border-right: 1px solid $color-gray-20;
-  text-align: center;
+  padding: 0 16px;
   font-family: $font-main;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   color: $color-black;
   background: $color-white;
+  outline: none;
 
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button {
     -webkit-appearance: none;
   }
   -moz-appearance: textfield;
+}
+
+.ms-product__qty-sep {
+  width: 1px;
+  height: 28px;
+  background: $color-gray-20;
+  flex-shrink: 0;
+}
+
+.ms-product__qty-chevron {
+  flex-shrink: 0;
+  margin: 0 12px;
+  pointer-events: none;
 }
 
 .ms-product__cta-group {
@@ -431,7 +442,7 @@
 
 .ms-product__btn-cart {
   flex: 1;
-  height: 52px;
+  height: 50px;
   background: $color-black;
   color: $color-white;
   border: none;
@@ -441,49 +452,44 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   transition: background 0.2s;
 
-  &:hover {
-    background: $color-gray-85;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+  &:hover { background: $color-gray-85; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .ms-product__btn-wishlist {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid $color-gray-20;
+  border: 2px solid $color-black;
   background: $color-white;
   cursor: pointer;
-  color: $color-gray-50;
-  transition: color 0.2s, border-color 0.2s;
+  color: $color-black;
+  transition: background 0.2s, color 0.2s;
 
   &:hover {
-    color: $color-ktm;
-    border-color: $color-ktm;
+    background: $color-black;
+    color: $color-white;
+    svg path { stroke: $color-white; }
   }
 
   &.is-active {
-    color: $color-ktm;
-    border-color: $color-ktm;
-
-    svg path {
-      fill: $color-ktm;
-    }
+    background: $color-black;
+    svg path { fill: $color-white; stroke: $color-white; }
   }
 }
 
 .ms-product__btn-reserve {
   width: 100%;
-  height: 52px;
+  height: 50px;
   background: transparent;
   color: $color-black;
   border: 1.5px solid $color-black;
@@ -495,10 +501,7 @@
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 
-  &:hover {
-    background: $color-black;
-    color: $color-white;
-  }
+  &:hover { background: $color-black; color: $color-white; }
 }
 
 .ms-product__availability-msg {
@@ -688,8 +691,6 @@
 
 // ── Accessoires / produits liés ────────────────
 .ms-products-section {
-  margin-top: 80px;
-  border-top: 1px solid $color-gray-20;
   padding-top: 40px;
 }
 

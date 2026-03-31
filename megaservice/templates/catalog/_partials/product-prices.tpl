@@ -17,25 +17,18 @@
             {$product.price}
           {/if}
         </span>
-        {if $product.has_discount}
-          {if $product.discount_type === 'percentage'}
-            <span class="ms-product__price-badge">{$product.discount_percentage_absolute}</span>
-          {else}
-            <span class="ms-product__price-badge">-{$product.discount_to_display}</span>
-          {/if}
-        {/if}
+
+        <div class="ms-product__delivery-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18.5 21C19.8807 21 21 19.8807 21 18.5C21 17.1193 19.8807 16 18.5 16C17.1193 16 16 17.1193 16 18.5C16 19.8807 17.1193 21 18.5 21Z" stroke="#FE6604" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5.5 21C6.88071 21 8 19.8807 8 18.5C8 17.1193 6.88071 16 5.5 16C4.11929 16 3 17.1193 3 18.5C3 19.8807 4.11929 21 5.5 21Z" stroke="#FE6604" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 8H20L23 11V16H16V8Z" stroke="#FE6604" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 3H1V16H16V3Z" stroke="#FE6604" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span><strong>{l s='Livraison offerte' d='Shop.Theme.Catalog'}</strong> {l s='dès 150€' d='Shop.Theme.Catalog'}</span>
+        </div>
       </div>
     {/block}
-
-    <div class="ms-product__delivery-badge">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="1" y="3" width="15" height="13" rx="1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M16 8h4l3 3v5h-7V8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="5.5" cy="18.5" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-        <circle cx="18.5" cy="18.5" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
-      {l s='Livraison offerte dès 150€' d='Shop.Theme.Catalog'}
-    </div>
 
   </div>
 {/if}
