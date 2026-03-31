@@ -192,26 +192,25 @@
 
   {* ── Accessoires Powerparts + Produits associés ── *}
   {block name='product_footer'}
-    {capture name='footer_hook'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
-    {if $smarty.capture.footer_hook|trim neq ''}
+    {capture name='footer_hook_1'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
+    {if $smarty.capture.footer_hook_1|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Accessoires Powerparts associés' d='Shop.Theme.Catalog'}</h2>
           </div>
-          <div class="products">
-            {$smarty.capture.footer_hook nofilter}
-          </div>
+          {$smarty.capture.footer_hook_1 nofilter}
         </div>
       </section>
+    {/if}
+    {capture name='footer_hook_2'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
+    {if $smarty.capture.footer_hook_2|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Produits qui pourraient vous plaire' d='Shop.Theme.Catalog'}</h2>
           </div>
-          <div class="products">
-            {$smarty.capture.footer_hook nofilter}
-          </div>
+          {$smarty.capture.footer_hook_2 nofilter}
         </div>
       </section>
     {/if}
