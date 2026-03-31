@@ -322,6 +322,8 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+
+  &[hidden] { display: none !important; }
 }
 
 .ms-product__accordion-body {
