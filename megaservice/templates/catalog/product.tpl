@@ -141,6 +141,7 @@
 
   {* ── Onglets ── *}
   {block name='product_tabs'}
+    <div class="ms-container">
     <div class="ms-product__tabs-section">
 
       <nav class="ms-product__tabs-nav">
@@ -188,35 +189,41 @@
 
       </div>
     </div>
+    </div>
   {/block}
 
   {* ── Accessoires Powerparts + Produits associés ── *}
-  {block name='product_footer'}
-    {capture name='footer_hook_1'}{hook h='displayFooterProduct' product=$product category=$category mod='ps_crossselling'}{/capture}
-    {if $smarty.capture.footer_hook_1|trim neq ''}
+  {* TODO: filtrer powerparts vs produits associés quand les données seront prêtes *}
+  {block name='product_accessories'}
+    {if $accessories}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Accessoires Powerparts associés' d='Shop.Theme.Catalog'}</h2>
           </div>
-          {$smarty.capture.footer_hook_1 nofilter}
+          <div class="products">
+            {foreach from=$accessories item="product_accessory" key="position"}
+              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position}
+            {/foreach}
+          </div>
         </div>
       </section>
-    {/if}
-    {capture name='footer_hook_2'}{hook h='displayFooterProduct' product=$product category=$category mod='ps_crossselling'}{/capture}
-    {if $smarty.capture.footer_hook_2|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Produits qui pourraient vous plaire' d='Shop.Theme.Catalog'}</h2>
           </div>
-          {$smarty.capture.footer_hook_2 nofilter}
+          <div class="products">
+            {foreach from=$accessories item="product_accessory" key="position"}
+              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position}
+            {/foreach}
+          </div>
         </div>
       </section>
     {/if}
   {/block}
 
-  {block name='product_accessories'}{/block}
+  {block name='product_footer'}{/block}
 
   {block name='product_images_modal'}
     {include file='catalog/_partials/product-images-modal.tpl'}
