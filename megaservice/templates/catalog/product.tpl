@@ -192,7 +192,7 @@
 
   {* ── Accessoires Powerparts + Produits associés ── *}
   {block name='product_footer'}
-    {capture name='footer_hook_1'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
+    {capture name='footer_hook_1'}{hook h='displayFooterProduct' product=$product category=$category mod='ps_crossselling'}{/capture}
     {if $smarty.capture.footer_hook_1|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
@@ -203,7 +203,7 @@
         </div>
       </section>
     {/if}
-    {capture name='footer_hook_2'}{hook h='displayFooterProduct' product=$product category=$category}{/capture}
+    {capture name='footer_hook_2'}{hook h='displayFooterProduct' product=$product category=$category mod='ps_crossselling'}{/capture}
     {if $smarty.capture.footer_hook_2|trim neq ''}
       <section class="ms-products-section">
         <div class="ms-container">
