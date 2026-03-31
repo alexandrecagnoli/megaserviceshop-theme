@@ -1,0 +1,49 @@
+// ============================================
+// FIL D'ARIANE
+// ============================================
+
+.ms-breadcrumb {
+  padding: 16px 0;
+}
+
+.ms-breadcrumb__list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ms-breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ms-breadcrumb__link {
+  font-family: $font-main;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $color-ktm;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.ms-breadcrumb__sep {
+  flex-shrink: 0;
+  display: block;
+}
+
+.ms-breadcrumb__current {
+  font-family: $font-main;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: rgba($color-black, 0.80);
+}
