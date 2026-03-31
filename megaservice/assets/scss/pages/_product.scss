@@ -683,41 +683,7 @@
 }
 
 // ── Accessoires / produits liés ────────────────
-.ms-products-section {
-  padding-top: 40px;
-}
-
-.ms-products-section__header {
-  margin-bottom: 32px;
-}
-
-.ms-products-section__title {
-  font-family: $font-heading;
-  font-weight: 900;
-  font-size: 28px;
-  text-transform: uppercase;
-  color: $color-black;
-  margin: 0;
-}
-
-.ms-products-section .products {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-
-  @include media-lg() {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @include media-md() {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include media-sm() {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-}
+// Le layout .products et les cards sont gérés par _product-card.scss
 
 // ── Modales Bootstrap — masquées par défaut ───
 .js-product-images-modal,
