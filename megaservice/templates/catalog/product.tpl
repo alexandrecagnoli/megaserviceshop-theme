@@ -22,6 +22,7 @@
   <meta content="{$product.url}">
 
   {* ── Zone principale : images + infos ── *}
+  <div class="ms-container">
   <div class="ms-product__top">
 
     {* Colonne gauche — images *}
@@ -135,6 +136,7 @@
       </div>
 
     </div>
+  </div>
   </div>
 
   {* ── Onglets ── *}
