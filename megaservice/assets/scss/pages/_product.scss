@@ -43,7 +43,6 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   background: $color-gray-5;
-  border-radius: $border-radius;
 }
 
 .ms-product__gallery-img {
@@ -65,7 +64,6 @@
   width: 72px;
   height: 72px;
   border: 2px solid transparent;
-  border-radius: $border-radius;
   overflow: hidden;
   background: $color-gray-5;
   padding: 0;
@@ -229,7 +227,6 @@
     display: inline-block;
     padding: 6px 14px;
     border: 1px solid $color-gray-20;
-    border-radius: $border-radius;
     font-family: $font-main;
     font-size: 13px;
     cursor: pointer;
@@ -239,7 +236,6 @@
   .form-control-select {
     height: 44px;
     border: 1px solid $color-gray-20;
-    border-radius: $border-radius;
     font-family: $font-main;
     font-size: 14px;
     padding: 0 12px;
@@ -303,14 +299,12 @@
   font-size: 13px;
   font-weight: 700;
   padding: 6px 12px;
-  border-radius: $border-radius;
   width: fit-content;
 }
 
 // ── Accordion livraison ────────────────────────
 .ms-product__accordion {
   border: 1px solid $color-gray-20;
-  border-radius: $border-radius;
   overflow: hidden;
 }
 
@@ -381,7 +375,6 @@
   display: flex;
   align-items: center;
   border: 1px solid $color-gray-20;
-  border-radius: $border-radius;
   overflow: hidden;
   height: 44px;
 }
@@ -448,7 +441,6 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;
-  border-radius: $border-radius;
   transition: background 0.2s;
 
   &:hover {
@@ -470,7 +462,6 @@
   justify-content: center;
   border: 1px solid $color-gray-20;
   background: $color-white;
-  border-radius: $border-radius;
   cursor: pointer;
   color: $color-gray-50;
   transition: color 0.2s, border-color 0.2s;
@@ -502,7 +493,6 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;
-  border-radius: $border-radius;
   transition: background 0.2s, color 0.2s;
 
   &:hover {
