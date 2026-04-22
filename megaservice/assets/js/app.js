@@ -47,16 +47,32 @@ window.prestashop.on('updateFacets', function(url) {
   fetchFacetUpdate(url);
 });
 
-// Direct handler for checkbox/link filters — ps_facetedsearch's own click
-// handler sometimes fails to emit updateFacets, so we intercept directly.
+// Direct handler for all filter interactions.
+// ps_facetedsearch only listens on clicks whose target IS a.js-search-link,
+// so clicking the visual checkbox (a sibling, not a child of the link) is missed.
+// We intercept at the .facet-label level to cover both the text and the checkbox,
+// and catch any <a> in #js-active-search-filters ("Effacer tout" has no js-search-link class).
 document.addEventListener('click', function(e) {
-  var link = e.target.closest(
-    '#search_filters a.js-search-link, #js-active-search-filters a.js-search-link'
-  );
-  if (!link) return;
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  fetchFacetUpdate(link.getAttribute('href'));
+  // "Effacer tout" and any active filter badge
+  var activeLink = e.target.closest('#js-active-search-filters a');
+  if (activeLink && activeLink.getAttribute('href')) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    fetchFacetUpdate(activeLink.getAttribute('href'));
+    return;
+  }
+
+  // Checkbox / link inside a facet row
+  var facetLabel = e.target.closest('#search_filters .facet-label');
+  if (facetLabel) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var searchLink = facetLabel.querySelector('a.js-search-link');
+    if (searchLink && searchLink.getAttribute('href')) {
+      fetchFacetUpdate(searchLink.getAttribute('href'));
+    }
+    return;
+  }
 }, true);
 
 // updateProductList : émis après chaque mise à jour AJAX
