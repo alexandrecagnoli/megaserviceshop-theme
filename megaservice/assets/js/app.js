@@ -48,12 +48,34 @@ window.prestashop.on('updateFacets', function(url) {
 });
 
 // Direct handler for all filter interactions.
-// ps_facetedsearch only listens on clicks whose target IS a.js-search-link,
-// so clicking the visual checkbox (a sibling, not a child of the link) is missed.
-// We intercept at the .facet-label level to cover both the text and the checkbox,
-// and catch any <a> in #js-active-search-filters ("Effacer tout" has no js-search-link class).
+// ps_facetedsearch's handlers only fire on specific targets — we intercept at a broader level.
 document.addEventListener('click', function(e) {
-  // "Effacer tout" and any active filter badge
+  // Any a.js-search-link anywhere in the filters block
+  // (covers "Effacer tout" in #_desktop_search_filters_clear_all AND facet links)
+  var searchLink = e.target.closest('#search_filters a.js-search-link');
+  if (searchLink && searchLink.getAttribute('href')) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    fetchFacetUpdate(searchLink.getAttribute('href'));
+    return;
+  }
+
+  // Button "Effacer tout" (when rendered as <button> not <a>)
+  var clearBtn = e.target.closest('.js-search-filters-clear-all');
+  if (clearBtn) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var clearUrl = clearBtn.getAttribute('href') || clearBtn.dataset.url;
+    if (clearUrl) {
+      fetchFacetUpdate(clearUrl);
+    } else {
+      // Fallback: navigate to base URL without query params
+      fetchFacetUpdate(window.location.pathname);
+    }
+    return;
+  }
+
+  // Any link in the active filters block
   var activeLink = e.target.closest('#js-active-search-filters a');
   if (activeLink && activeLink.getAttribute('href')) {
     e.preventDefault();
@@ -62,14 +84,14 @@ document.addEventListener('click', function(e) {
     return;
   }
 
-  // Checkbox / link inside a facet row
+  // Checkbox visual click (target is inside .facet-label but NOT the link itself)
   var facetLabel = e.target.closest('#search_filters .facet-label');
-  if (facetLabel) {
+  if (facetLabel && !e.target.closest('a.js-search-link')) {
     e.preventDefault();
     e.stopImmediatePropagation();
-    var searchLink = facetLabel.querySelector('a.js-search-link');
-    if (searchLink && searchLink.getAttribute('href')) {
-      fetchFacetUpdate(searchLink.getAttribute('href'));
+    var labelLink = facetLabel.querySelector('a.js-search-link');
+    if (labelLink && labelLink.getAttribute('href')) {
+      fetchFacetUpdate(labelLink.getAttribute('href'));
     }
     return;
   }
