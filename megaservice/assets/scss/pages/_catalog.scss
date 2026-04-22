@@ -186,6 +186,9 @@ body#category {
   flex-shrink: 0;
 
   @include media-md() { width: 100%; }
+
+  // ps_categorytree accroché sur displayLeftColumn — non voulu ici
+  .category-tree { display: none; }
 }
 
 // ── Éléments PS à masquer ───────────────────
