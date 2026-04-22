@@ -59,39 +59,6 @@ document.addEventListener('click', function(e) {
   fetchFacetUpdate(link.getAttribute('href'));
 }, true);
 
-function reinitSlider() {
-  document.querySelectorAll('#search_filters [data-slider-id]').forEach(function(el) {
-    var $el = jQuery(el);
-    var min        = parseFloat($el.data('slider-min'))  || 0;
-    var max        = parseFloat($el.data('slider-max'))  || 100;
-    var valuesRaw  = $el.data('slider-values');
-    var encodedUrl = $el.data('slider-encoded-url') || '';
-    var label      = $el.data('slider-label')       || '';
-    var unit       = $el.data('slider-unit')        || '';
-
-    var values;
-    try { values = JSON.parse(valuesRaw); } catch(e) { values = [min, max]; }
-    if (!Array.isArray(values) || values.length < 2) values = [min, max];
-
-    // Destroy any existing slider instance before re-init
-    if ($el.hasClass('ui-slider')) {
-      try { $el.slider('destroy'); } catch(e) {}
-    }
-
-    $el.slider({
-      range : true,
-      min   : min,
-      max   : max,
-      values: values,
-      stop  : function(event, ui) {
-        var filterUrl = encodedUrl +
-          '&q=' + encodeURIComponent(label + '-' + unit + '-' + ui.values[0] + '-' + ui.values[1]);
-        fetchFacetUpdate(filterUrl);
-      }
-    });
-  });
-}
-
 // updateProductList : émis après chaque mise à jour AJAX
 window.prestashop.on('updateProductList', function(data) {
   function swapBlock(selector, html) {
@@ -119,7 +86,6 @@ window.prestashop.on('updateProductList', function(data) {
     }
   }
 
-  reinitSlider();
   initializeSortDropdown();
 });
 
