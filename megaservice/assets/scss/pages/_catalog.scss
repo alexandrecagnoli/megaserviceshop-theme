@@ -335,6 +335,20 @@ body#category {
       color: $color-black;
       margin: 0 0 12px;
       letter-spacing: 0.04em;
+
+      // Lien "Effacer" par section
+      a {
+        font-family: $font-main;
+        font-size: 11px;
+        font-weight: 400;
+        text-transform: none;
+        color: $color-gray-60;
+        text-decoration: underline;
+        letter-spacing: 0;
+        @include transition(color);
+
+        &:hover { color: $color-ktm; }
+      }
     }
 
     // Liste options
@@ -349,13 +363,24 @@ body#category {
 
     li { margin: 0; }
 
-    // Label de chaque filtre
+    // Label de chaque filtre — checkbox à droite
     .facet-label {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       cursor: pointer;
       margin: 0;
+
+      .search-link {
+        order: 1;
+        flex: 1;
+      }
+
+      .custom-checkbox,
+      .custom-radio {
+        order: 2;
+      }
 
       &.active .search-link {
         color: $color-black;
@@ -467,6 +492,125 @@ body#category {
         border-color: $color-ktm;
 
         &::after { background: $color-ktm; }
+      }
+    }
+
+    // "Voir plus / Voir moins" toggle
+    .js-more,
+    .facets-more-trigger,
+    [data-action="show-facets-more"],
+    [data-action="show-facets-less"] {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 10px;
+      font-family: $font-main;
+      font-size: 12px;
+      color: $color-gray-60;
+      text-decoration: none;
+      cursor: pointer;
+      @include transition(color);
+
+      &:hover { color: $color-ktm; }
+    }
+  }
+
+  // ── Slider prix (noUiSlider) ─────────────────
+  .facet-slider {
+    padding: 8px 4px 0;
+  }
+
+  .noUi-target {
+    height: 4px;
+    background: $color-gray-20;
+    border: none;
+    box-shadow: none;
+    border-radius: 2px;
+    margin-bottom: 24px;
+  }
+
+  .noUi-connect {
+    background: $color-ktm;
+  }
+
+  .noUi-handle {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    background: $color-ktm !important;
+    border: 2px solid $color-white !important;
+    box-shadow: 0 0 0 1px $color-ktm !important;
+    cursor: pointer;
+    top: -7px !important;
+    right: -9px !important;
+
+    &::before, &::after { display: none !important; }
+  }
+
+  .facet-slider-values {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    > div {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      // Label "min" / "max"
+      > span:first-child {
+        font-family: $font-main;
+        font-size: 10px;
+        font-weight: 700;
+        color: $color-ktm;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      // Wrapper input + €
+      .input-group,
+      &:has(input) {
+        position: relative;
+
+        &::after {
+          content: '€';
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-family: $font-main;
+          font-size: 12px;
+          color: $color-gray-60;
+          pointer-events: none;
+        }
+      }
+    }
+
+    input[type="number"],
+    input[type="text"],
+    .js-price-min,
+    .js-price-max {
+      width: 100%;
+      height: 36px;
+      padding: 0 24px 0 8px;
+      border: 1px solid $color-gray-20;
+      background: $color-white;
+      font-family: $font-main;
+      font-size: 13px;
+      color: $color-black;
+      -moz-appearance: textfield;
+      @include transition(border-color);
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $color-ktm;
       }
     }
   }
