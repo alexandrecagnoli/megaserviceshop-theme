@@ -184,6 +184,7 @@ body#category {
 .ms-catalog__sidebar {
   width: 290px;
   flex-shrink: 0;
+  order: -1; // sidebar à gauche en flex row ; en column-reverse mobile → reste sous les produits
 
   @include media-md() { width: 100%; }
 
