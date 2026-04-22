@@ -344,13 +344,13 @@ body#category {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-family: $font-main;
-      font-size: 13px;
-      font-weight: 700;
+      font-family: $font-heading;
+      font-size: 18px;
+      font-weight: 900;
       text-transform: uppercase;
-      color: $color-black;
+      color: rgba(0, 0, 0, 0.80);
       margin: 0 0 12px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
 
       // Lien "Effacer" par section
       a {
@@ -407,8 +407,9 @@ body#category {
     // Texte du filtre
     .search-link {
       font-family: $font-main;
-      font-size: 13px;
-      color: $color-gray-60;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.80);
       text-decoration: none;
       @include transition(color);
 
@@ -416,7 +417,7 @@ body#category {
 
       .magnitude {
         color: $color-gray-35;
-        font-size: 12px;
+        font-size: 13px;
       }
     }
 
@@ -444,7 +445,7 @@ body#category {
         justify-content: center;
         width: 18px;
         height: 18px;
-        border: 2px solid $color-gray-20;
+        border: 1px solid #000;
         background: $color-white;
         pointer-events: none;
         @include transition(background, border-color);
