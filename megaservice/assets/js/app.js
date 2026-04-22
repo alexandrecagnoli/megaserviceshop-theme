@@ -13,12 +13,10 @@ import './product.js';
 
   // Initialize when DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('Megaservice theme JS initialized');
-    
-    // Initialize components
     initializeNavigation();
     initializeCartWidget();
     initializeSearchWidget();
+    initializeSortDropdown();
   });
 
   /**
@@ -38,6 +36,29 @@ import './product.js';
   /**
    * Initialize search widget functionality
    */
+  function initializeSortDropdown() {
+    document.querySelectorAll('.products-sort-order').forEach(function(dropdown) {
+      const trigger = dropdown.querySelector('.select-title');
+      const menu = dropdown.querySelector('.dropdown-menu');
+      if (!trigger || !menu) return;
+
+      trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = menu.classList.contains('show');
+        closeAllSortDropdowns();
+        if (!isOpen) menu.classList.add('show');
+      });
+    });
+
+    document.addEventListener('click', closeAllSortDropdowns);
+
+    function closeAllSortDropdowns() {
+      document.querySelectorAll('.products-sort-order .dropdown-menu').forEach(function(m) {
+        m.classList.remove('show');
+      });
+    }
+  }
+
   function initializeSearchWidget() {
     const widget = document.querySelector('.ms-search-widget');
     if (!widget) return;
