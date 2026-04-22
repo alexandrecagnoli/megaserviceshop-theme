@@ -24,6 +24,13 @@
  *}
 {extends file=$layout}
 
+{* IDs des catégories en layout pleine largeur (sans sidebar, 4 colonnes) *}
+{assign var='ms_full_width_ids' value=[15]}
+{assign var='ms_is_full_width' value=false}
+{if $page.page_name == 'category' && isset($category.id) && in_array($category.id, $ms_full_width_ids)}
+  {assign var='ms_is_full_width' value=true}
+{/if}
+
 {block name='head_microdata_special'}
   {include file='_partials/microdata/product-list-jsonld.tpl' listing=$listing}
 {/block}
@@ -35,9 +42,8 @@
 
   {block name='product_list_header'}{/block}
 
-  <div class="ms-catalog-layout">
+  <div class="ms-catalog-layout{if $ms_is_full_width} ms-catalog-layout--full{/if}">
 
-    {* ─── Colonne principale : produits ─── *}
     <div class="ms-catalog__main">
 
       {hook h="displayHeaderCategory"}
@@ -74,12 +80,14 @@
 
     </div>
 
-    {* ─── Sidebar : filtres (hook left_column redirigé ici) ─── *}
-    {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
-    {if $sidebar_content|trim}
-      <aside class="ms-catalog__sidebar" id="js-search-filters-wrapper">
-        {$sidebar_content nofilter}
-      </aside>
+    {* Sidebar filtres uniquement pour les layouts avec colonne *}
+    {if !$ms_is_full_width}
+      {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
+      {if $sidebar_content|trim}
+        <aside class="ms-catalog__sidebar" id="js-search-filters-wrapper">
+          {$sidebar_content nofilter}
+        </aside>
+      {/if}
     {/if}
 
   </div>
