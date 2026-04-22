@@ -56,4 +56,4 @@ jobs:
       - name: Clear PrestaShop cache
         run: |
           ssh -o StrictHostKeyChecking=yes nuttyguru.com_j8g81qmwucn@93.90.201.182 \
-            "rm -rf /var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/var/cache/*"
+            "find /var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/var/cache -mindepth 1 -delete || true"
