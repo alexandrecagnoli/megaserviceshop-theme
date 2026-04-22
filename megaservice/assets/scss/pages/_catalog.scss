@@ -189,6 +189,9 @@ body#category {
 
   // ps_categorytree accroché sur displayLeftColumn — non voulu ici
   .category-tree { display: none; }
+
+  // En-tête "Filtres actifs" PS — masqué
+  #js-active-search-filters { display: none; }
 }
 
 // ── Éléments PS à masquer ───────────────────
@@ -310,9 +313,9 @@ body#category {
   display: flex;
   flex-direction: column;
 
-  // Titre "Filtrer par" PS — masqué
-  > p.h6:first-child,
-  > .h6:first-child {
+  // Titres de section PS en double (doublons avec .facet-title) — masqués
+  > p.h6,
+  > .h6 {
     display: none;
   }
 
