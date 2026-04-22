@@ -61,7 +61,7 @@ body#category {
   }
 }
 
-// ── Layout 2 colonnes ───────────────────────
+// ── Layout 2 colonnes (avec sidebar) ────────
 .ms-catalog-layout {
   display: flex;
   align-items: flex-start;
@@ -78,6 +78,23 @@ body#category {
     padding-top: 24px;
     padding-bottom: 32px;
   }
+
+  // ── Variante pleine largeur (sans sidebar) ──
+  &--full {
+    gap: 0;
+
+    .ms-catalog__main .products {
+      gap: 40px 24px;
+
+      > * {
+        width: calc(25% - 18px) !important;
+
+        @include media-lg() { width: calc(33.333% - 16px) !important; }
+        @include media-md() { width: calc(50% - 12px) !important; }
+        @include media-sm() { width: 100% !important; }
+      }
+    }
+  }
 }
 
 // ── Colonne principale ───────────────────────
@@ -85,7 +102,7 @@ body#category {
   flex: 1;
   min-width: 0;
 
-  // Grille 3 colonnes (vs 4 sur la homepage)
+  // Grille 3 colonnes (avec sidebar)
   .products {
     gap: 40px 24px;
 
@@ -96,6 +113,71 @@ body#category {
       @include media-sm() { width: 100% !important; }
     }
   }
+}
+
+// ── Nav sous-catégories (layout full) ────────
+.ms-catalog-hero--full {
+  padding-bottom: 0;
+}
+
+.ms-subcat-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-top: 20px;
+  padding-bottom: 28px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ms-subcat-nav__item {
+  flex-shrink: 0;
+  position: relative;
+  display: block;
+  width: 140px;
+  height: 90px;
+  overflow: hidden;
+  text-decoration: none !important;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    @include transition(transform);
+  }
+
+  &:hover img { transform: scale(1.05); }
+
+  // Overlay sombre
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba($color-black, 0.45);
+    z-index: 1;
+    @include transition(background);
+  }
+
+  &:hover::before { background: rgba($color-ktm, 0.55); }
+}
+
+.ms-subcat-nav__label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 6px;
+  text-align: center;
+  color: $color-white;
+  font-family: $font-heading;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.2;
+  z-index: 2;
+  background: linear-gradient(transparent, rgba($color-black, 0.6));
 }
 
 // ── Sidebar filtres ──────────────────────────
