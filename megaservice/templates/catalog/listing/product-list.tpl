@@ -24,12 +24,8 @@
  *}
 {extends file=$layout}
 
-{* IDs des catégories en layout pleine largeur (sans sidebar, 4 colonnes) *}
-{assign var='ms_full_width_ids' value=[15]}
-{assign var='ms_is_full_width' value=false}
-{if $page.page_name == 'category' && isset($category.id) && in_array($category.id, $ms_full_width_ids)}
-  {assign var='ms_is_full_width' value=true}
-{/if}
+{* ms_is_full_width est assigné par CategoryController (override/controllers/front/CategoryController.php) *}
+{if !isset($ms_is_full_width)}{assign var='ms_is_full_width' value=false}{/if}
 
 {block name='head_microdata_special'}
   {include file='_partials/microdata/product-list-jsonld.tpl' listing=$listing}
