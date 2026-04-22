@@ -2,11 +2,11 @@
 // PAGE CATALOGUE — Listing catégories
 // ============================================
 
-// ── Override structure PS (left column masqué) ──
+// ── Override structure PS ───────────────────
 body#category {
   overflow-x: hidden;
 
-  #left-column { display: none !important; }
+  // left_column vidé dans le template — plus nécessaire de le masquer ici
 
   #wrapper {
     > .container {
@@ -105,6 +105,15 @@ body#category {
 
   @include media-md() { width: 100%; }
 }
+
+// ── Éléments PS à masquer ───────────────────
+.ms-catalog__main {
+  // "Retour en haut" Bootstrap 3 (hidden-md-up non supporté en BS4)
+  .up { display: none !important; }
+}
+
+// Label "Trier par :" dans sort-orders.tpl
+.ms-catalog-topbar .sort-by { display: none !important; }
 
 // ── Topbar : count + tri ─────────────────────
 .ms-catalog-topbar {
