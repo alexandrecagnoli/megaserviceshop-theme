@@ -4,7 +4,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   entry: {
     app: './megaservice/assets/scss/app.scss',
-    main: './megaservice/assets/js/app.js'
+    theme: './megaservice/assets/js/app.js'
   },
   output: {
     path: path.resolve(__dirname, 'megaservice/assets/dist'),

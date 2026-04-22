@@ -35,7 +35,7 @@ assets:
   js:
     all:
       - id: megaservice-js
-        path: assets/dist/main.js
+        path: assets/dist/theme.js
         priority: 200
 
 global_settings:
