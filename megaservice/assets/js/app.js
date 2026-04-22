@@ -65,7 +65,7 @@ document.addEventListener('click', function(e) {
   if (clearBtn) {
     e.preventDefault();
     e.stopImmediatePropagation();
-    var clearUrl = clearBtn.getAttribute('href') || clearBtn.dataset.url;
+    var clearUrl = clearBtn.getAttribute('href') || clearBtn.dataset.searchUrl || clearBtn.dataset.url;
     if (clearUrl) {
       fetchFacetUpdate(clearUrl);
     } else {
