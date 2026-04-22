@@ -3,10 +3,25 @@
  * ==============================================
  */
 
+import EventEmitter from 'events';
 import './carousel.js';
 import './menu.js';
 import './parts-search.js';
 import './product.js';
+
+// Initialise l'EventEmitter sur l'objet prestashop — requis par core.js et tous les modules PS
+(function initPrestashopEventEmitter() {
+  const ps = window.prestashop || {};
+  const emitter = new EventEmitter();
+  emitter.setMaxListeners(100);
+  ps.on             = emitter.on.bind(emitter);
+  ps.once           = emitter.once.bind(emitter);
+  ps.off            = emitter.off.bind(emitter);
+  ps.emit           = emitter.emit.bind(emitter);
+  ps.addListener    = emitter.addListener.bind(emitter);
+  ps.removeListener = emitter.removeListener.bind(emitter);
+  window.prestashop = ps;
+}());
 
 (function() {
   'use strict';

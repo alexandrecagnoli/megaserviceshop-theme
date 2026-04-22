@@ -8,7 +8,10 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'megaservice/assets/dist'),
-    filename: '[name].js'
+    filename: (pathData) => {
+      // PS core cherche theme.js dans assets/js/ (chemin hardcodé)
+      return pathData.chunk.name === 'theme' ? '../js/theme.js' : '[name].js';
+    }
   },
   module: {
     rules: [
