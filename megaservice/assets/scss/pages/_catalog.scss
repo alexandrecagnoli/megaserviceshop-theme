@@ -192,6 +192,15 @@ body#category {
 
   // En-tête "Filtres actifs" PS — masqué
   #js-active-search-filters { display: none; }
+
+  // PS génère deux versions par facet : hidden-sm-down (desktop) + hidden-md-up (mobile)
+  // Bootstrap 3 responsive classes non chargées → on les gère manuellement
+  .hidden-md-up { display: none !important; }
+
+  @include media-md() {
+    .hidden-sm-down { display: none !important; }
+    .hidden-md-up   { display: block !important; }
+  }
 }
 
 // ── Éléments PS à masquer ───────────────────
@@ -521,104 +530,50 @@ body#category {
     }
   }
 
-  // ── Slider prix (noUiSlider) ─────────────────
-  .facet-slider {
-    padding: 8px 4px 0;
-  }
-
-  .noUi-target {
+  // ── Slider prix (jQuery UI) ──────────────────
+  // PS utilise jQuery UI slider (ui-slider), pas noUiSlider
+  .ui-slider {
+    position: relative;
     height: 4px;
     background: $color-gray-20;
     border: none;
-    box-shadow: none;
     border-radius: 2px;
-    margin-bottom: 24px;
-  }
+    margin: 16px 8px 20px;
 
-  .noUi-connect {
-    background: $color-ktm;
-  }
-
-  .noUi-handle {
-    width: 18px !important;
-    height: 18px !important;
-    border-radius: 50% !important;
-    background: $color-ktm !important;
-    border: 2px solid $color-white !important;
-    box-shadow: 0 0 0 1px $color-ktm !important;
-    cursor: pointer;
-    top: -7px !important;
-    right: -9px !important;
-
-    &::before, &::after { display: none !important; }
-  }
-
-  .facet-slider-values {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-
-    > div {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      // Label "min" / "max"
-      > span:first-child {
-        font-family: $font-main;
-        font-size: 10px;
-        font-weight: 700;
-        color: $color-ktm;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      // Wrapper input + €
-      .input-group,
-      &:has(input) {
-        position: relative;
-
-        &::after {
-          content: '€';
-          position: absolute;
-          right: 8px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-family: $font-main;
-          font-size: 12px;
-          color: $color-gray-60;
-          pointer-events: none;
-        }
-      }
+    .ui-slider-range {
+      position: absolute;
+      height: 100%;
+      background: $color-ktm;
+      border-radius: 2px;
     }
 
-    input[type="number"],
-    input[type="text"],
-    .js-price-min,
-    .js-price-max {
-      width: 100%;
-      height: 36px;
-      padding: 0 24px 0 8px;
-      border: 1px solid $color-gray-20;
-      background: $color-white;
-      font-family: $font-main;
-      font-size: 13px;
-      color: $color-black;
-      -moz-appearance: textfield;
-      @include transition(border-color);
+    a.ui-slider-handle {
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      margin-top: -9px;
+      margin-left: -9px;
+      border-radius: 50%;
+      background: $color-ktm;
+      border: 2px solid $color-white;
+      box-shadow: 0 0 0 1px $color-ktm;
+      cursor: pointer;
+      outline: none;
+      text-decoration: none;
 
-      &::-webkit-outer-spin-button,
-      &::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-
-      &:focus {
-        outline: none;
-        border-color: $color-ktm;
-      }
+      &:focus { outline: none; }
     }
+  }
+
+  // Label fourchette de prix (ex: "1 318,00 € - 11 480,00 €")
+  #facet_label_50800,
+  [id^="facet_label_"] {
+    font-family: $font-main;
+    font-size: 13px;
+    color: $color-black;
+    margin: 0 0 8px;
+    text-align: center;
   }
 
   // Bouton RÉINITIALISER / Clear all
