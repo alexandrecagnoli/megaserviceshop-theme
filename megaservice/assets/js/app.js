@@ -133,6 +133,90 @@ window.prestashop.on('updateProductList', function(data) {
   initializeSortDropdown();
 });
 
+// ── Delete from cart (AJAX) ──────────────────────────────────────────────────
+// En l'absence du core.js Classic, les liens [data-link-action="delete-from-cart"]
+// naviguent vers la page panier au lieu de supprimer via AJAX. On intercepte.
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('[data-link-action="delete-from-cart"]');
+  if (!link) return;
+  e.preventDefault();
+
+  const url = link.getAttribute('href');
+  if (!url) return;
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      window.prestashop.emit('updateCart', {
+        reason: {
+          idProduct: parseInt(link.dataset.idProduct, 10) || 0,
+          idProductAttribute: parseInt(link.dataset.idProductAttribute, 10) || 0,
+          linkAction: 'delete-from-cart',
+          cart: data.cart || null
+        },
+        resp: data
+      });
+    })
+    .catch(function(err) { console.error('[megaservice] delete-from-cart error:', err); });
+});
+
+// ── Quantity update dans le panier (AJAX) ────────────────────────────────────
+// Le plugin sidebarcart déclenche focusout sur .js-cart-line-product-quantity
+// après un batch de clics sur les boutons up/down. On capte et on fait l'AJAX.
+// Sans ça, le DOM n'est jamais rafraîchi et la classe .adding reste → tous les
+// clics suivants sont bloqués par son sélecteur :not(.adding).
+document.addEventListener('focusout', function(e) {
+  const input = e.target;
+  if (!input || !input.classList || !input.classList.contains('js-cart-line-product-quantity')) return;
+
+  const updateUrl = input.dataset.updateUrl;
+  if (!updateUrl) return;
+
+  const newValue  = parseInt(input.value, 10);
+  const baseValue = parseInt(input.getAttribute('value'), 10);
+  if (isNaN(newValue) || isNaN(baseValue) || newValue === baseValue) return;
+
+  const diff = newValue - baseValue;
+  const op   = diff > 0 ? 'up' : 'down';
+  const qty  = Math.abs(diff);
+
+  input.setAttribute('value', String(newValue));
+
+  const sep = updateUrl.indexOf('?') === -1 ? '?' : '&';
+  const url = updateUrl + sep + 'qty=' + qty + '&op=' + op;
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      window.prestashop.emit('updateCart', {
+        reason: {
+          idProduct: parseInt(input.dataset.productId, 10) || 0,
+          linkAction: 'update-quantity-in-cart',
+          cart: data.cart || null
+        },
+        resp: data
+      });
+    })
+    .catch(function(err) {
+      console.error('[megaservice] update-qty error:', err);
+      // En cas d'erreur, on libère .adding pour permettre de réessayer
+      var container = input.closest('.product-qty-container');
+      if (container) container.classList.remove('adding');
+    });
+}, true);
+
 // ── Add-to-cart AJAX pour les miniatures de listing ──────────────────────────
 // Le formulaire sur .ms-product-card__add-form POST classique navigue vers la page panier.
 // On intercepte, on fait un POST AJAX et on émet updateCart pour que les modules
