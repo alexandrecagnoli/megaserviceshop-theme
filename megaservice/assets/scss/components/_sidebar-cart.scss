@@ -101,6 +101,13 @@
     margin: 0;
     border-bottom: 1px solid rgba($color-black, 0.1);
     text-align: left;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+
+    &.is-removing {
+      opacity: 0;
+      transform: translateX(20px);
+      pointer-events: none;
+    }
 
     .product-image {
       width: auto;

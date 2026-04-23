@@ -133,89 +133,93 @@ window.prestashop.on('updateProductList', function(data) {
   initializeSortDropdown();
 });
 
-// ── Delete from cart (AJAX) ──────────────────────────────────────────────────
-// En l'absence du core.js Classic, les liens [data-link-action="delete-from-cart"]
-// naviguent vers la page panier au lieu de supprimer via AJAX. On intercepte.
-document.addEventListener('click', function(e) {
-  const link = e.target.closest('[data-link-action="delete-from-cart"]');
-  if (!link) return;
-  e.preventDefault();
+// ── Handlers AJAX panier (delete + qty update) ───────────────────────────────
+// En l'absence du core.js Classic, ces interactions naviguent ou restent bloquées.
+// On utilise jQuery (fourni par PS) pour rester aligné sur le système d'events
+// du plugin an_sidebarcart (qui fait .trigger('focusout') via jQuery).
+(function initCartAjaxHandlers() {
+  if (!window.jQuery) { return; }
+  var $ = window.jQuery;
 
-  const url = link.getAttribute('href');
-  if (!url) return;
+  // Delete from cart
+  $(document).on('click', '[data-link-action="delete-from-cart"]', function(e) {
+    e.preventDefault();
+    var $link = $(this);
+    var url = $link.attr('href');
+    if (!url) return;
 
-  fetch(url, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    // Fade immédiat de la ligne produit pour feedback visuel
+    $link.closest('.cart-product-line').addClass('is-removing');
+
+    $.ajax({
+      url: url,
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      dataType: 'json',
+      data: {
+        ajax: 1,
+        action: 'update',
+        id_product: $link.data('id-product'),
+        id_product_attribute: $link.data('id-product-attribute'),
+        id_customization: $link.data('id-customization')
+      }
+    }).done(function(resp) {
       window.prestashop.emit('updateCart', {
         reason: {
-          idProduct: parseInt(link.dataset.idProduct, 10) || 0,
-          idProductAttribute: parseInt(link.dataset.idProductAttribute, 10) || 0,
+          idProduct: parseInt($link.data('id-product'), 10) || 0,
+          idProductAttribute: parseInt($link.data('id-product-attribute'), 10) || 0,
           linkAction: 'delete-from-cart',
-          cart: data.cart || null
+          cart: resp.cart || null
         },
-        resp: data
+        resp: resp
       });
-    })
-    .catch(function(err) { console.error('[megaservice] delete-from-cart error:', err); });
-});
+    }).fail(function(xhr) {
+      console.error('[megaservice] delete-from-cart error:', xhr.status, xhr.responseText);
+      $link.closest('.cart-product-line').removeClass('is-removing');
+    });
+  });
 
-// ── Quantity update dans le panier (AJAX) ────────────────────────────────────
-// Le plugin sidebarcart déclenche focusout sur .js-cart-line-product-quantity
-// après un batch de clics sur les boutons up/down. On capte et on fait l'AJAX.
-// Sans ça, le DOM n'est jamais rafraîchi et la classe .adding reste → tous les
-// clics suivants sont bloqués par son sélecteur :not(.adding).
-document.addEventListener('focusout', function(e) {
-  const input = e.target;
-  if (!input || !input.classList || !input.classList.contains('js-cart-line-product-quantity')) return;
+  // Quantity update — écoute via jQuery pour capter .trigger("focusout") du plugin
+  $(document).on('focusout', '.js-cart-line-product-quantity', function() {
+    var $input = $(this);
+    var updateUrl = $input.data('update-url');
+    if (!updateUrl) return;
 
-  const updateUrl = input.dataset.updateUrl;
-  if (!updateUrl) return;
+    var newVal  = parseInt($input.val(), 10);
+    var baseVal = parseInt($input.attr('value'), 10);
+    if (isNaN(newVal) || isNaN(baseVal) || newVal === baseVal) return;
 
-  const newValue  = parseInt(input.value, 10);
-  const baseValue = parseInt(input.getAttribute('value'), 10);
-  if (isNaN(newValue) || isNaN(baseValue) || newValue === baseValue) return;
+    var diff = newVal - baseVal;
+    var op   = diff > 0 ? 'up' : 'down';
+    var qty  = Math.abs(diff);
 
-  const diff = newValue - baseValue;
-  const op   = diff > 0 ? 'up' : 'down';
-  const qty  = Math.abs(diff);
+    $input.attr('value', newVal);
 
-  input.setAttribute('value', String(newValue));
+    var sep = updateUrl.indexOf('?') === -1 ? '?' : '&';
+    var url = updateUrl + sep + 'qty=' + qty + '&op=' + op;
 
-  const sep = updateUrl.indexOf('?') === -1 ? '?' : '&';
-  const url = updateUrl + sep + 'qty=' + qty + '&op=' + op;
-
-  fetch(url, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    $.ajax({
+      url: url,
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      dataType: 'json',
+      data: { ajax: 1, action: 'update' }
+    }).done(function(resp) {
       window.prestashop.emit('updateCart', {
         reason: {
-          idProduct: parseInt(input.dataset.productId, 10) || 0,
+          idProduct: parseInt($input.data('product-id'), 10) || 0,
           linkAction: 'update-quantity-in-cart',
-          cart: data.cart || null
+          cart: resp.cart || null
         },
-        resp: data
+        resp: resp
       });
-    })
-    .catch(function(err) {
-      console.error('[megaservice] update-qty error:', err);
-      // En cas d'erreur, on libère .adding pour permettre de réessayer
-      var container = input.closest('.product-qty-container');
-      if (container) container.classList.remove('adding');
+    }).fail(function(xhr) {
+      console.error('[megaservice] update-qty error:', xhr.status, xhr.responseText);
+      // Libère .adding pour permettre de réessayer
+      $input.closest('.product-qty-container').removeClass('adding');
     });
-}, true);
+  });
+}());
 
 // ── Add-to-cart AJAX pour les miniatures de listing ──────────────────────────
 // Le formulaire sur .ms-product-card__add-form POST classique navigue vers la page panier.
