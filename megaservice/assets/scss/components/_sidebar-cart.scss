@@ -206,64 +206,46 @@
     &--unavailable            { color: #c0392b; }
   }
 
-  // ── Qty spinner (bordered box 56×36) ─────
-  .product-qty { margin: 0; }
+  // ── Qty select (1..10, chevron overlay) ──
+  .product-qty {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+  }
 
-  .product-qty-container {
-    display: grid;
-    grid-template-columns: 1fr 22px;
-    grid-template-rows: 1fr 1fr;
+  .product-qty-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     width: 56px;
     height: 36px;
+    padding: 0 22px 0 12px;
     border: 1px solid $color-black;
     border-radius: 0;
     background: transparent;
-    overflow: hidden;
-  }
-
-  .product-qty-input {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
     color: $color-black;
     font-family: $font-main;
     font-size: 14px;
     font-weight: 700;
     line-height: 1;
-    text-align: center !important;
-  }
-
-  .quantity-button {
-    grid-column: 2;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 22px !important;
-    height: auto !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    color: $color-black;
     cursor: pointer;
-    line-height: 1;
-    transform: none !important;
-    @include transition(color);
+    @include transition(border-color);
 
-    &.quantity-up   { grid-row: 1; }
-    &.quantity-down { grid-row: 2; }
-
-    svg { display: block; }
-
-    &:hover { color: $color-ktm; }
+    &:focus {
+      outline: none;
+      border-color: $color-ktm;
+    }
   }
 
-  // Masque le group-btn-vertical Bootstrap éventuel (plugin CSS l'a déjà mais on renforce)
-  .input-group-btn-vertical { display: none !important; }
+  .product-qty-chevron {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: $color-black;
+    display: block;
+  }
 
   // ── Lien "Supprimer" ──────────────────────
   .remove-from-cart {

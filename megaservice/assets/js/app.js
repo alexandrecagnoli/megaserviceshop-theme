@@ -174,45 +174,40 @@ window.prestashop.on('updateProductList', function(data) {
       });
   });
 
-  // Quantity update — écoute via jQuery pour capter .trigger("focusout") du plugin
-  $(document).on('focusout', '.js-cart-line-product-quantity', function() {
-    var $input = $(this);
-    var updateUrl = $input.data('update-url');
+  // Quantity update — sur change d'un <select> (1..10)
+  $(document).on('change', '.js-cart-line-product-quantity', function() {
+    var $select = $(this);
+    var updateUrl = $select.data('update-url');
     if (!updateUrl) return;
 
-    var newVal  = parseInt($input.val(), 10);
-    var baseVal = parseInt($input.attr('value'), 10);
+    var newVal  = parseInt($select.val(), 10);
+    var baseVal = parseInt($select.data('current-qty'), 10);
     if (isNaN(newVal) || isNaN(baseVal) || newVal === baseVal) return;
 
     var diff = newVal - baseVal;
     var op   = diff > 0 ? 'up' : 'down';
     var qty  = Math.abs(diff);
 
-    $input.attr('value', newVal);
+    // Met à jour le state local au cas où l'utilisateur rechange avant updateCart
+    $select.data('current-qty', newVal);
 
     var sep = updateUrl.indexOf('?') === -1 ? '?' : '&';
     var url = updateUrl + sep + 'qty=' + qty + '&op=' + op;
 
-    $.ajax({
-      url: url,
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      dataType: 'json',
-      data: { ajax: 1, action: 'update' }
-    }).done(function(resp) {
-      window.prestashop.emit('updateCart', {
-        reason: {
-          idProduct: parseInt($input.data('product-id'), 10) || 0,
-          linkAction: 'update-quantity-in-cart',
-          cart: resp.cart || null
-        },
-        resp: resp
+    $.post(url, { ajax: 1, action: 'update' }, null, 'json')
+      .done(function(resp) {
+        window.prestashop.emit('updateCart', {
+          reason: {
+            idProduct: parseInt($select.data('product-id'), 10) || 0,
+            linkAction: 'update-quantity-in-cart',
+            cart: resp && resp.cart || null
+          },
+          resp: resp
+        });
+      })
+      .fail(function(xhr) {
+        console.error('[megaservice] update-qty failed:', xhr.status, xhr.responseText ? xhr.responseText.substring(0, 300) : '(no body)');
       });
-    }).fail(function(xhr) {
-      console.error('[megaservice] update-qty error:', xhr.status, xhr.responseText);
-      // Libère .adding pour permettre de réessayer
-      $input.closest('.product-qty-container').removeClass('adding');
-    });
   });
 }());
 

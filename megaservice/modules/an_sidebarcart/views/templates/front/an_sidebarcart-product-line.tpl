@@ -39,30 +39,24 @@
 <div class="product-actions">
   {if $widget.quantity}
     <div class="product-qty">
-      <div class="product-qty-container">
-        <input
-          class="product-qty-input js-cart-line-product-quantity"
-          data-down-url="{$product.down_quantity_url|escape:'htmlall':'UTF-8'}{if isset($product.an_group_id)}&an_group_id={$product.an_group_id|intval}{/if}"
-          data-up-url="{$product.up_quantity_url|escape:'htmlall':'UTF-8'}{if isset($product.an_group_id)}&an_group_id={$product.an_group_id|intval}{/if}"
-          data-update-url="{$product.update_quantity_url|escape:'htmlall':'UTF-8'}{if isset($product.an_group_id)}&an_group_id={$product.an_group_id|intval}{/if}"
-          data-product-id="{$product.id_product|intval}"
-          type="text"
-          step="1"
-          value="{$product.quantity|escape:'htmlall':'UTF-8'}"
-          name="product-qty-spin"
-          min="{$product.minimal_quantity|escape:'htmlall':'UTF-8'}"
-        >
-        <div class="quantity-button quantity-up" aria-label="{l s='Augmenter la quantité' d='Shop.Theme.Actions'}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
-            <path d="M1 5L5 1L9 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="quantity-button quantity-down" aria-label="{l s='Diminuer la quantité' d='Shop.Theme.Actions'}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
-            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
+      <select
+        class="product-qty-select js-cart-line-product-quantity"
+        data-update-url="{$product.update_quantity_url|escape:'htmlall':'UTF-8'}{if isset($product.an_group_id)}&an_group_id={$product.an_group_id|intval}{/if}"
+        data-product-id="{$product.id_product|intval}"
+        data-current-qty="{$product.quantity|intval}"
+        aria-label="{l s='Quantité' d='Shop.Theme.Actions'}"
+      >
+        {* Si la qté actuelle dépasse 10, on l'expose en haut pour ne pas la perdre *}
+        {if $product.quantity > 10}
+          <option value="{$product.quantity|intval}" selected>{$product.quantity|intval}</option>
+        {/if}
+        {section name=qty loop=10 start=1}
+          <option value="{$smarty.section.qty.index}"{if $smarty.section.qty.index == $product.quantity} selected{/if}>{$smarty.section.qty.index}</option>
+        {/section}
+      </select>
+      <svg class="product-qty-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
   {/if}
 
