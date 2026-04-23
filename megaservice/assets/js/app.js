@@ -9,9 +9,15 @@ import './menu.js';
 import './parts-search.js';
 import './product.js';
 
-// Initialise l'EventEmitter sur l'objet prestashop — requis par core.js et tous les modules PS
+// Initialise l'EventEmitter sur l'objet prestashop — requis par core.js et tous les modules PS.
+// Défensif : si PS core (ou un module) a déjà initialisé prestashop.on/emit, on NE TOUCHE PAS.
+// Écraser briserait les listeners déjà enregistrés par d'autres modules (ex: sidebar cart plugin).
 (function initPrestashopEventEmitter() {
   const ps = window.prestashop || {};
+  if (typeof ps.on === 'function' && typeof ps.emit === 'function') {
+    window.prestashop = ps;
+    return;
+  }
   const emitter = new EventEmitter();
   emitter.setMaxListeners(100);
   ps.on             = emitter.on.bind(emitter);
@@ -125,6 +131,49 @@ window.prestashop.on('updateProductList', function(data) {
   }
 
   initializeSortDropdown();
+});
+
+// ── Add-to-cart AJAX pour les miniatures de listing ──────────────────────────
+// Le formulaire sur .ms-product-card__add-form POST classique navigue vers la page panier.
+// On intercepte, on fait un POST AJAX et on émet updateCart pour que les modules
+// (ex: sidebar cart plugin) se déclenchent.
+document.addEventListener('submit', function(e) {
+  const form = e.target.closest('.ms-product-card__add-form');
+  if (!form) return;
+  e.preventDefault();
+
+  const formData = new FormData(form);
+  formData.append('ajax', '1');
+  formData.append('action', 'update');
+  formData.append('add', '1');
+
+  fetch(form.getAttribute('action'), {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.hasError && data.errors && data.errors.length) {
+        alert(data.errors.join('\n'));
+        return;
+      }
+      window.prestashop.emit('updateCart', {
+        reason: {
+          idProduct: parseInt(formData.get('id_product'), 10) || 0,
+          idProductAttribute: parseInt(formData.get('id_product_attribute'), 10) || 0,
+          linkAction: 'add-to-cart',
+          cart: data.cart || null
+        },
+        resp: data
+      });
+    })
+    .catch(function(err) {
+      console.error('[megaservice] add-to-cart error:', err);
+    });
 });
 
 function initializeSortDropdown() {
