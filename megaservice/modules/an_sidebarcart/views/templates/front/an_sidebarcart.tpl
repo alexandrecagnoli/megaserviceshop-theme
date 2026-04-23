@@ -28,41 +28,27 @@
 
     <div class="cart-dropdown js-cart-source" style="display:none;">
       <div class="cart-dropdown-wrapper">
-        {if isset($widget.title) && $widget.title != ''}
-          <div class="cart-title">
-            <h4 class="text-center">{$widget.title|escape:'htmlall':'UTF-8'}</h4>
-          </div>
-        {/if}
+        <div class="cart-title">
+          <h4 class="cart-title__text">
+            {l s='Mon panier' d='Shop.Theme.Checkout'}
+            <span class="cart-title__count">({$cart.products_count|intval})</span>
+          </h4>
+        </div>
+
         {if $cart.products}
           <ul class="cart-items">
             {foreach from=$cart.products item=product}
               <li class="cart-product-line">{include 'module:an_sidebarcart/views/templates/front/an_sidebarcart-product-line.tpl' product=$product}</li>
             {/foreach}
           </ul>
+
           <div class="cart-bottom">
-            <div class="cart-subtotals">
-              {foreach from=$cart.subtotals item="subtotal"}
-                {if $subtotal}
-                  <div class="total-line {$subtotal.type|escape:'htmlall':'UTF-8'}">
-                    <span class="label">{$subtotal.label|escape:'htmlall':'UTF-8'}</span>
-                    <span class="value price">{$subtotal.value|escape:'htmlall':'UTF-8'}</span>
-                  </div>
-                {/if}
-              {/foreach}
-            </div>
-            <hr>
-            <div class="cart-total total-line">
-              <span class="label">{$cart.totals.total.label|escape:'htmlall':'UTF-8'}</span>
-              <span class="value price price-total">{$cart.totals.total.value|escape:'htmlall':'UTF-8'}</span>
-            </div>
-            <div class="cart-action">
-              <div class="text-center">
-                <a href="{$cart_url|escape:'htmlall':'UTF-8'}" class="btn btn-primary">{l s='Valider ma commande' d='Shop.Theme.Actions'}</a>
-                {if isset($widget.show_continue_shopping_btn) && $widget.show_continue_shopping_btn}
-                  <span class="btn btn-secondary js-ansidebarcart-close">{l s='Continuer mes achats' d='Shop.Theme.Actions'}</span>
-                {/if}
-              </div>
-            </div>
+            <a href="{$cart_url|escape:'htmlall':'UTF-8'}" class="cart-cta">
+              <span>{l s='Passer ma commande' d='Shop.Theme.Actions'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="16" viewBox="0 0 24 16" fill="none" aria-hidden="true">
+                <path d="M1 8H23M23 8L16 1M23 8L16 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
           </div>
         {else}
           <div class="no-items">{l s='Votre panier est vide' d='Shop.Theme.Checkout'}</div>
