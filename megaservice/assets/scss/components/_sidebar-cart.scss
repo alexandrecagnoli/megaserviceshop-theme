@@ -20,6 +20,8 @@
 }
 
 // Bouton de fermeture (plugin le prepend avec <i class="material-icons">)
+// On remplace le glyph material par notre SVG via mask-image, pour conserver
+// un hover couleur orange sans devoir écraser le HTML généré par le plugin.
 .sb-close-btn {
   position: absolute;
   top: 20px;
@@ -34,14 +36,17 @@
   cursor: pointer;
 
   i {
-    font-family: 'Material Icons', serif;
-    font-size: 22px;
-    color: $color-black;
-    line-height: 1;
-    @include transition(color);
+    display: block;
+    width: 24px;
+    height: 24px;
+    font-size: 0; // masque le caractère material-icons
+    background: $color-black;
+    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M18 18L12 12M12 12L6 6M12 12L18 6M12 12L6 18' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center / contain;
+            mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M18 18L12 12M12 12L6 6M12 12L18 6M12 12L6 18' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center / contain;
+    @include transition(background);
   }
 
-  &:hover i { color: $color-ktm; }
+  &:hover i { background: $color-ktm; }
 }
 
 // Contenu du sidebar — flex column pour épingler le CTA en bas
