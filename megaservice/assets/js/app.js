@@ -141,42 +141,37 @@ window.prestashop.on('updateProductList', function(data) {
   if (!window.jQuery) { return; }
   var $ = window.jQuery;
 
-  // Delete from cart
+  // Delete from cart — match le pattern Classic cart.js à la lettre
   $(document).on('click', '[data-link-action="delete-from-cart"]', function(e) {
     e.preventDefault();
     var $link = $(this);
-    var url = $link.attr('href');
+    var $line = $link.closest('.cart-product-line');
+    var url = $link.prop('href');  // prop() au lieu d'attr() → URL totalement résolue (pas d'encoding &amp;)
     if (!url) return;
 
-    // Fade immédiat de la ligne produit pour feedback visuel
-    $link.closest('.cart-product-line').addClass('is-removing');
+    $line.addClass('is-removing');
 
-    $.ajax({
-      url: url,
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      dataType: 'json',
-      data: {
-        ajax: 1,
-        action: 'update',
-        id_product: $link.data('id-product'),
-        id_product_attribute: $link.data('id-product-attribute'),
-        id_customization: $link.data('id-customization')
-      }
-    }).done(function(resp) {
-      window.prestashop.emit('updateCart', {
-        reason: {
-          idProduct: parseInt($link.data('id-product'), 10) || 0,
-          idProductAttribute: parseInt($link.data('id-product-attribute'), 10) || 0,
-          linkAction: 'delete-from-cart',
-          cart: resp.cart || null
-        },
-        resp: resp
+    // Safety net : si le DOM n'est pas remplacé dans les 2s, on retire la classe
+    var safetyTimer = setTimeout(function() { $line.removeClass('is-removing'); }, 2000);
+
+    $.post(url, { ajax: 1, action: 'update' }, null, 'json')
+      .done(function(resp) {
+        clearTimeout(safetyTimer);
+        window.prestashop.emit('updateCart', {
+          reason: {
+            idProduct: parseInt($link.data('id-product'), 10) || 0,
+            idProductAttribute: parseInt($link.data('id-product-attribute'), 10) || 0,
+            linkAction: 'delete-from-cart',
+            cart: resp && resp.cart || null
+          },
+          resp: resp
+        });
+      })
+      .fail(function(xhr) {
+        clearTimeout(safetyTimer);
+        console.error('[megaservice] delete-from-cart failed:', xhr.status, xhr.responseText ? xhr.responseText.substring(0, 300) : '(no body)');
+        $line.removeClass('is-removing');
       });
-    }).fail(function(xhr) {
-      console.error('[megaservice] delete-from-cart error:', xhr.status, xhr.responseText);
-      $link.closest('.cart-product-line').removeClass('is-removing');
-    });
   });
 
   // Quantity update — écoute via jQuery pour capter .trigger("focusout") du plugin

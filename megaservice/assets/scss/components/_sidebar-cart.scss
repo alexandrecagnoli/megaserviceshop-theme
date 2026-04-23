@@ -104,9 +104,10 @@
     transition: opacity 0.25s ease, transform 0.25s ease;
 
     &.is-removing {
-      opacity: 0;
-      transform: translateX(20px);
-      pointer-events: none;
+      opacity: 0.3;
+      // Pas de pointer-events:none — si l'AJAX traîne ou échoue, la ligne
+      // reste visible/cliquable (la qté restera possible tant que le DOM
+      // n'est pas rafraîchi via updateCart).
     }
 
     .product-image {
