@@ -93,9 +93,11 @@ $model-panel-width:  472px;
   background: $color-white;
   display: flex;
   flex-direction: column;
+  min-height: 480px;
 
   @include media-md() {
     width: 100%;
+    min-height: 0;
   }
 }
 
