@@ -324,7 +324,7 @@ $model-panel-width:  472px;
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: background 0.2s;
-  margin-top: 4px;
+  margin-top: auto;
 
   &:hover { background: darken($color-ktm, 8%); }
 }
