@@ -24,65 +24,72 @@
  *}
 {extends file=$layout}
 
+{* ms_is_full_width est assigné par CategoryController (override/controllers/front/CategoryController.php) *}
+{if !isset($ms_is_full_width)}{assign var='ms_is_full_width' value=false}{/if}
+
 {block name='head_microdata_special'}
   {include file='_partials/microdata/product-list-jsonld.tpl' listing=$listing}
 {/block}
 
+{* Vide le left_column PS — les filtres sont rendus dans ms-catalog__sidebar *}
+{block name='left_column'}{/block}
+
 {block name='content'}
-  <section id="main">
 
-    {block name='product_list_header'}
-      <h1 id="js-product-list-header" class="h2">{$listing.label}</h1>
-    {/block}
+  {block name='product_list_header'}{/block}
 
-    {block name='subcategory_list'}
-      {if isset($subcategories) && $subcategories|@count > 0}
-        {include file='catalog/_partials/subcategories.tpl' subcategories=$subcategories}
-      {/if}
-    {/block}
-    
-    {hook h="displayHeaderCategory"}
+  <div class="ms-catalog-layout{if $ms_is_full_width} ms-catalog-layout--full{/if}">
 
-    <section id="products">
-      {if $listing.products|count}
+    <div class="ms-catalog__main">
 
-        {block name='product_list_top'}
-          {include file='catalog/_partials/products-top.tpl' listing=$listing}
-        {/block}
+      {hook h="displayHeaderCategory"}
 
-        {block name='product_list_active_filters'}
-          <div class="hidden-sm-down">
-            {$listing.rendered_active_filters nofilter}
+      <section id="products">
+        {if $listing.products|count}
+
+          {block name='product_list_top'}
+            {include file='catalog/_partials/products-top.tpl' listing=$listing}
+          {/block}
+
+          {block name='product_list'}
+            {include file='catalog/_partials/products.tpl' listing=$listing productClass=""}
+          {/block}
+
+          {block name='product_list_bottom'}
+            {include file='catalog/_partials/products-bottom.tpl' listing=$listing}
+          {/block}
+
+        {else}
+          <div id="js-product-list-top"></div>
+
+          <div id="js-product-list">
+            {capture assign="errorContent"}
+              <h4>{l s='No products available yet' d='Shop.Theme.Catalog'}</h4>
+              <p>{l s='Stay tuned! More products will be shown here as they are added.' d='Shop.Theme.Catalog'}</p>
+            {/capture}
+            {include file='errors/not-found.tpl' errorContent=$errorContent}
           </div>
-        {/block}
 
-        {block name='product_list'}
-          {include file='catalog/_partials/products.tpl' listing=$listing productClass="col-xs-12 col-sm-6 col-xl-4"}
-        {/block}
+          <div id="js-product-list-bottom"></div>
+        {/if}
+      </section>
 
-        {block name='product_list_bottom'}
-          {include file='catalog/_partials/products-bottom.tpl' listing=$listing}
-        {/block}
+    </div>
 
-      {else}
-        <div id="js-product-list-top"></div>
-
-        <div id="js-product-list">
-          {capture assign="errorContent"}
-            <h4>{l s='No products available yet' d='Shop.Theme.Catalog'}</h4>
-            <p>{l s='Stay tuned! More products will be shown here as they are added.' d='Shop.Theme.Catalog'}</p>
-          {/capture}
-
-          {include file='errors/not-found.tpl' errorContent=$errorContent}
-        </div>
-
-        <div id="js-product-list-bottom"></div>
+    {* Sidebar filtres uniquement pour les layouts avec colonne *}
+    {if !$ms_is_full_width}
+      {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
+      {if $sidebar_content|trim}
+        <aside class="ms-catalog__sidebar" id="js-search-filters-wrapper">
+          {$sidebar_content nofilter}
+        </aside>
       {/if}
-    </section>
+    {/if}
 
-    {block name='product_list_footer'}{/block}
+  </div>
 
-    {hook h="displayFooterCategory"}
+  {block name='product_list_footer'}{/block}
 
-  </section>
+  {hook h="displayFooterCategory"}
+
 {/block}

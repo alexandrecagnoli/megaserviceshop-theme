@@ -1,0 +1,673 @@
+// ============================================
+// PAGE CATALOGUE — Listing catégories
+// ============================================
+
+// ── Override structure PS ───────────────────
+body#category {
+  overflow-x: hidden;
+
+  // left_column vidé dans le template — plus nécessaire de le masquer ici
+
+  #wrapper {
+    > .container {
+      max-width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+  }
+
+  #content-wrapper {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  // Breadcrumb sur fond noir (se fusionne avec le hero)
+  .ms-breadcrumb {
+    background: $color-black;
+    padding-top: 16px;
+    padding-bottom: 0;
+
+    .ms-breadcrumb__current {
+      color: rgba($color-white, 0.5);
+    }
+
+    .ms-breadcrumb__sep path {
+      stroke: rgba($color-white, 0.5) !important;
+    }
+  }
+}
+
+// ── Hero : bande noire + titre ───────────────
+.ms-catalog-hero {
+  background: $color-black;
+  padding: 16px 0 28px;
+
+  &__inner {
+    @include container();
+  }
+
+  &__title {
+    color: $color-white;
+    font-family: $font-heading;
+    font-size: 36px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1.1;
+
+    @include media-md() { font-size: 26px; }
+  }
+}
+
+// ── Layout 2 colonnes (avec sidebar) ────────
+.ms-catalog-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  @include container();
+  padding-top: 32px;
+  padding-bottom: 56px;
+
+  @include media-lg() { gap: 24px; }
+
+  @include media-md() {
+    flex-direction: column-reverse;
+    gap: 24px;
+    padding-top: 24px;
+    padding-bottom: 32px;
+  }
+
+  // ── Variante pleine largeur (sans sidebar) ──
+  &--full {
+    gap: 0;
+
+    .ms-catalog__main .products {
+      gap: 40px 24px;
+
+      > * {
+        width: calc(25% - 18px) !important;
+
+        @include media-lg() { width: calc(33.333% - 16px) !important; }
+        @include media-md() { width: calc(50% - 12px) !important; }
+        @include media-sm() { width: 100% !important; }
+      }
+    }
+  }
+}
+
+// ── Colonne principale ───────────────────────
+.ms-catalog__main {
+  flex: 1;
+  min-width: 0;
+
+  // Grille 3 colonnes (avec sidebar)
+  .products {
+    gap: 40px 24px;
+
+    > * {
+      width: calc(33.333% - 16px) !important;
+
+      @include media-lg() { width: calc(50% - 12px) !important; }
+      @include media-sm() { width: 100% !important; }
+    }
+  }
+}
+
+// ── Nav sous-catégories (layout full) ────────
+.ms-catalog-hero--full {
+  padding-bottom: 0;
+}
+
+.ms-subcat-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-top: 20px;
+  padding-bottom: 28px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ms-subcat-nav__item {
+  flex-shrink: 0;
+  position: relative;
+  display: block;
+  width: 140px;
+  height: 90px;
+  overflow: hidden;
+  text-decoration: none !important;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    @include transition(transform);
+  }
+
+  &:hover img { transform: scale(1.05); }
+
+  // Overlay sombre
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba($color-black, 0.45);
+    z-index: 1;
+    @include transition(background);
+  }
+
+  &:hover::before { background: rgba($color-ktm, 0.55); }
+}
+
+.ms-subcat-nav__label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 6px;
+  text-align: center;
+  color: $color-white;
+  font-family: $font-heading;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.2;
+  z-index: 2;
+  background: linear-gradient(transparent, rgba($color-black, 0.6));
+}
+
+// ── Sidebar filtres ──────────────────────────
+.ms-catalog__sidebar {
+  width: 290px;
+  flex-shrink: 0;
+  order: -1; // sidebar à gauche en flex row ; en column-reverse mobile → reste sous les produits
+
+  @include media-md() { width: 100%; }
+
+  // ps_categorytree accroché sur displayLeftColumn — non voulu ici
+  .category-tree { display: none; }
+
+  // En-tête "Filtres actifs" PS — masqué
+  #js-active-search-filters { display: none; }
+
+  // PS génère deux versions par facet : hidden-sm-down (desktop) + hidden-md-up (mobile)
+  // Bootstrap 3 responsive classes non chargées → on les gère manuellement
+  .hidden-md-up { display: none !important; }
+
+  @include media-md() {
+    .hidden-sm-down { display: none !important; }
+    .hidden-md-up   { display: block !important; }
+  }
+}
+
+// ── Éléments PS à masquer ───────────────────
+.ms-catalog__main {
+  // "Retour en haut" Bootstrap 3 (hidden-md-up non supporté en BS4)
+  .up { display: none !important; }
+}
+
+// Label "Trier par :" dans sort-orders.tpl
+.ms-catalog-topbar .sort-by { display: none !important; }
+
+// ── Topbar : count + tri ─────────────────────
+.ms-catalog-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  &__count {
+    font-family: $font-main;
+    font-size: 12px;
+    font-weight: 400;
+    color: $color-black;
+    text-transform: uppercase;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  // Bouton "Filtrer" visible uniquement en mobile
+  &__filter-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid $color-black;
+    background: transparent;
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    @include transition(background, color);
+
+    &:hover {
+      background: $color-black;
+      color: $color-white;
+    }
+
+    @include media-md() { display: flex; }
+  }
+}
+
+// ── Dropdown tri ─────────────────────────────
+.products-sort-order {
+  position: relative;
+
+  .select-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid $color-gray-20;
+    background: $color-white;
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 400;
+    color: $color-black;
+    cursor: pointer;
+    white-space: nowrap;
+
+    .material-icons {
+      font-size: 18px;
+      margin-left: 4px;
+      line-height: 1;
+    }
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    right: 0;
+    z-index: 200;
+    min-width: 200px;
+    background: $color-white;
+    border: 1px solid $color-gray-20;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    display: none;
+
+    &.show { display: block; }
+  }
+
+  .select-list {
+    display: block;
+    padding: 10px 14px;
+    font-family: $font-main;
+    font-size: 13px;
+    color: $color-black;
+    text-decoration: none;
+    @include transition(background);
+
+    &:hover { background: $color-gray-5; }
+
+    &.current {
+      font-weight: 700;
+      color: $color-ktm;
+    }
+  }
+}
+
+// ── Filtres (ps_facetedsearch) ───────────────
+#search_filters {
+  display: flex;
+  flex-direction: column;
+
+  // Titres de section PS en double (doublons avec .facet-title) — masqués
+  > p.h6,
+  > .h6 {
+    display: none;
+  }
+
+  // Clearall global → poussé en bas
+  #_desktop_search_filters_clear_all {
+    order: 99;
+    margin-top: 8px;
+  }
+
+  .facet {
+    border-bottom: 1px solid $color-gray-20;
+    padding: 16px 0;
+
+    // Titre de section
+    .facet-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: $font-heading;
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.80);
+      margin: 0 0 12px;
+      letter-spacing: 0;
+
+      // Lien "Effacer" par section
+      a {
+        font-family: $font-main;
+        font-size: 11px;
+        font-weight: 400;
+        text-transform: none;
+        color: $color-gray-60;
+        text-decoration: underline;
+        letter-spacing: 0;
+        @include transition(color);
+
+        &:hover { color: $color-ktm; }
+      }
+    }
+
+    // Liste options
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    li { margin: 0; }
+
+    // Label de chaque filtre — checkbox à droite
+    .facet-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      margin: 0;
+
+      .search-link {
+        order: 1;
+        flex: 1;
+      }
+
+      .custom-checkbox,
+      .custom-radio {
+        order: 2;
+      }
+
+      &.active .search-link {
+        color: $color-black;
+        font-weight: 700;
+      }
+    }
+
+    // Texte du filtre
+    .search-link {
+      font-family: $font-main;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.80);
+      text-decoration: none;
+      @include transition(color);
+
+      &:hover { color: $color-ktm; }
+
+      .magnitude {
+        color: $color-gray-35;
+        font-size: 13px;
+      }
+    }
+
+    // Checkbox custom
+    .custom-checkbox {
+      position: relative;
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+
+      input[type="checkbox"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        z-index: 1;
+      }
+
+      > span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #000;
+        background: $color-white;
+        pointer-events: none;
+        @include transition(background, border-color);
+
+        i.material-icons {
+          display: none;
+          font-size: 13px;
+          color: $color-white;
+        }
+      }
+
+      input:checked + span {
+        background-color: $color-ktm;
+        border-color: $color-ktm;
+        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7' fill='none'><path d='M9.1543 0.197266L8.81543 0.564453C8.83232 0.580037 8.84624 0.599072 8.85547 0.620117C8.8647 0.641202 8.86914 0.664485 8.86914 0.6875C8.8691 0.710332 8.8646 0.732975 8.85547 0.753906C8.84623 0.774989 8.83235 0.793963 8.81543 0.80957L8.80859 0.816406L8.80078 0.823242L3.36133 6.26367L3.35938 6.26465C3.34393 6.28022 3.3259 6.2933 3.30566 6.30176C3.28536 6.31022 3.26321 6.31445 3.24121 6.31445C3.21923 6.31444 3.19704 6.31021 3.17676 6.30176C3.15657 6.2933 3.13846 6.28019 3.12305 6.26465L3.12109 6.26367L0.561523 3.7041L0.208008 4.05762L0.561523 3.70312L0.555664 3.69727L0.514648 3.63965C0.505159 3.61781 0.500412 3.59411 0.5 3.57031C0.499592 3.54659 0.504019 3.52306 0.512695 3.50098C0.5214 3.47889 0.534305 3.4585 0.550781 3.44141C0.567322 3.42428 0.587542 3.41086 0.609375 3.40137C0.631043 3.39197 0.654122 3.3862 0.677734 3.38574C0.701537 3.38533 0.725899 3.38971 0.748047 3.39844C0.769057 3.40675 0.788161 3.41919 0.804688 3.43457L2.88672 5.52344L3.24121 5.87891L3.59473 5.52344L8.56152 0.550781L8.5625 0.548828C8.57799 0.533211 8.59689 0.521154 8.61719 0.512695C8.63748 0.504246 8.65965 0.5 8.68164 0.5C8.70343 0.500047 8.72499 0.504352 8.74512 0.512695C8.76536 0.52113 8.78434 0.533272 8.7998 0.548828L9.1543 0.197266Z' fill='white' stroke='white'/></svg>");
+        background-repeat: no-repeat;
+        background-position: center;
+
+        i.material-icons { display: none; }
+      }
+    }
+
+    // Radio custom
+    .custom-radio {
+      position: relative;
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+
+      input[type="radio"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        z-index: 1;
+      }
+
+      > span {
+        display: block;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid $color-gray-20;
+        background: $color-white;
+        pointer-events: none;
+        @include transition(border-color);
+
+        &::after {
+          content: '';
+          display: block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: transparent;
+          margin: 3px auto;
+          @include transition(background);
+        }
+      }
+
+      input:checked + span {
+        border-color: $color-ktm;
+
+        &::after { background: $color-ktm; }
+      }
+    }
+
+    // "Voir plus / Voir moins" toggle
+    .js-more,
+    .facets-more-trigger,
+    [data-action="show-facets-more"],
+    [data-action="show-facets-less"] {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 10px;
+      font-family: $font-main;
+      font-size: 12px;
+      color: $color-gray-60;
+      text-decoration: none;
+      cursor: pointer;
+      @include transition(color);
+
+      &:hover { color: $color-ktm; }
+    }
+  }
+
+  // ── Slider prix (jQuery UI) ──────────────────
+  // PS utilise jQuery UI slider (ui-slider), pas noUiSlider
+  .ui-slider {
+    position: relative;
+    height: 4px;
+    background: $color-gray-20;
+    border: none;
+    border-radius: 2px;
+    margin: 16px 8px 20px;
+
+    .ui-slider-range {
+      position: absolute;
+      height: 100%;
+      background: $color-ktm;
+      border-radius: 2px;
+    }
+
+    a.ui-slider-handle {
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      margin-top: -9px;
+      margin-left: -9px;
+      border-radius: 50%;
+      background: $color-ktm;
+      border: 2px solid $color-white;
+      box-shadow: 0 0 0 1px $color-ktm;
+      cursor: pointer;
+      outline: none;
+      text-decoration: none;
+
+      &:focus { outline: none; }
+    }
+  }
+
+  // Label fourchette de prix (ex: "1 318,00 € - 11 480,00 €")
+  #facet_label_50800,
+  [id^="facet_label_"] {
+    font-family: $font-main;
+    font-size: 13px;
+    color: $color-black;
+    margin: 0 0 8px;
+    text-align: center;
+  }
+
+  // Bouton RÉINITIALISER / Clear all
+  .btn-tertiary,
+  .js-search-filters-clear-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    border: 1px solid $color-black;
+    background: transparent;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: $color-black;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    @include transition(background, color);
+
+    // Masque l'icône material-icons PS
+    i.material-icons { display: none; }
+
+    &:hover {
+      background: $color-black;
+      color: $color-white;
+    }
+  }
+}
+
+// ── Pagination ───────────────────────────────
+.ms-catalog__main .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 40px;
+
+  // Résumé textuel masqué (géré dans le topbar)
+  > div:first-child { display: none; }
+
+  .page-list {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      a,
+      span.spacer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 6px;
+        font-family: $font-main;
+        font-size: 14px;
+        font-weight: 400;
+        color: $color-black;
+        text-decoration: none;
+        border: 1px solid transparent;
+        @include transition(border-color, color);
+
+        &:hover { border-color: $color-gray-20; }
+      }
+
+      &.current a {
+        border-color: $color-black;
+        font-weight: 700;
+      }
+
+      a.previous,
+      a.next {
+        border: 1px solid $color-gray-20;
+
+        // Masque le texte "Précédent / Suivant", garde l'icône
+        font-size: 0;
+        i { font-size: 20px; }
+
+        &:hover { border-color: $color-black; }
+      }
+
+      span.spacer {
+        color: $color-gray-50;
+        border: none;
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -35,7 +36,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy via rsync
+      - name: Deploy theme via rsync
         run: |
           rsync -rtvz --delete \
             --no-perms --no-times \
@@ -43,3 +44,17 @@ jobs:
             -e "ssh -o StrictHostKeyChecking=yes" \
             megaservice/ \
             nuttyguru.com_j8g81qmwucn@93.90.201.182:/var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/themes/megaservice/
+
+      - name: Deploy overrides via rsync
+        run: |
+          rsync -rtvz \
+            --no-perms --no-times \
+            --exclude='.DS_Store' \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            override/ \
+            nuttyguru.com_j8g81qmwucn@93.90.201.182:/var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/override/
+
+      - name: Clear PrestaShop cache
+        run: |
+          ssh -o StrictHostKeyChecking=yes nuttyguru.com_j8g81qmwucn@93.90.201.182 \
+            "find /var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/var/cache -mindepth 1 -delete || true"

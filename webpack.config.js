@@ -4,11 +4,14 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   entry: {
     app: './megaservice/assets/scss/app.scss',
-    main: './megaservice/assets/js/app.js'
+    theme: './megaservice/assets/js/app.js'
   },
   output: {
     path: path.resolve(__dirname, 'megaservice/assets/dist'),
-    filename: '[name].js'
+    filename: (pathData) => {
+      // PS core cherche theme.js dans assets/js/ (chemin hardcodé)
+      return pathData.chunk.name === 'theme' ? '../js/theme.js' : '[name].js';
+    }
   },
   module: {
     rules: [

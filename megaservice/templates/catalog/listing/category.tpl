@@ -25,9 +25,13 @@
 {extends file='catalog/listing/product-list.tpl'}
 
 {block name='product_list_header'}
+  {if $ms_is_full_width}
+    {include file='catalog/_partials/category-header-full.tpl' listing=$listing category=$category}
+  {else}
     {include file='catalog/_partials/category-header.tpl' listing=$listing category=$category}
+  {/if}
 {/block}
 
 {block name='product_list_footer'}
-    {include file='catalog/_partials/category-footer.tpl' listing=$listing category=$category}
+  {include file='catalog/_partials/category-footer.tpl' listing=$listing category=$category}
 {/block}

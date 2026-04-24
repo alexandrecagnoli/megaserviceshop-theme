@@ -220,6 +220,33 @@
       text-decoration: none;
     }
   }
+
+  // Wrapper pour le badge compteur — position relative sur l'icône seulement
+  &__cart-icon {
+    position: relative;
+    display: inline-flex;
+    line-height: 0;
+  }
+
+  &__cart-count {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 9px;
+    background: $color-ktm;
+    color: $color-white;
+    font-family: $font-main;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+
+    &[hidden] { display: none; }
+  }
 }
 
 // ── Search Widget ─────────────────────────────
