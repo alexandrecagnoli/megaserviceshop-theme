@@ -1,0 +1,460 @@
+// ============================================
+// SÉLECTEUR DE MOTO — Modal & Bottomsheet
+// ============================================
+
+$model-modal-bg:     #FEF3EA;
+$model-tab-inactive: #F0F0F0;
+$model-visual-width: 340px;
+$model-panel-width:  440px;
+
+// ── Overlay ───────────────────────────────────
+.ms-model-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba($color-black, 0.5);
+  z-index: 900;
+
+  &[hidden] { display: none !important; }
+}
+
+// ── Modal desktop ─────────────────────────────
+.ms-model-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  z-index: 901;
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  &[hidden] { display: none !important; }
+
+  @include media-md() {
+    // Bottomsheet sur mobile
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}
+
+// ── Col gauche : image + texte (desktop) ──────
+.ms-model-modal__visual {
+  width: $model-visual-width;
+  flex-shrink: 0;
+  background-image: url('../img/parts-search-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: 40px 32px;
+
+  @include media-md() {
+    display: none;
+  }
+}
+
+.ms-model-modal__visual-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ms-model-modal__title {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: $color-white;
+  margin: 0;
+}
+
+.ms-model-modal__desc {
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 400;
+  color: $color-white;
+  margin: 0;
+  line-height: 1.5;
+}
+
+// ── Col droite : panel ─────────────────────────
+.ms-model-modal__panel {
+  width: $model-panel-width;
+  background: $model-modal-bg;
+  display: flex;
+  flex-direction: column;
+
+  @include media-md() {
+    width: 100%;
+  }
+}
+
+// ── Tabs ──────────────────────────────────────
+.ms-model-modal__tabs {
+  display: flex;
+  align-self: stretch;
+}
+
+.ms-model-modal__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 16px;
+  background: $model-tab-inactive;
+  border: none;
+  cursor: pointer;
+  color: $color-ktm;
+  transition: background 0.2s;
+
+  span {
+    font-family: $font-heading;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: left;
+    line-height: 1.3;
+    color: $color-gray-50;
+
+    strong {
+      display: block;
+      color: $color-gray-50;
+    }
+  }
+
+  &.is-active {
+    background: $color-white;
+
+    span,
+    span strong {
+      color: $color-black;
+    }
+  }
+
+  &:not(.is-active) {
+    svg { opacity: 0.4; }
+  }
+}
+
+// ── Forms ─────────────────────────────────────
+.ms-model-modal__form {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  flex: 1;
+
+  &.is-active { display: flex; }
+}
+
+// ── Selects ───────────────────────────────────
+.ms-model-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ms-model-modal__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ms-model-modal__select {
+  width: 100%;
+  height: 52px;
+  padding: 0 44px 0 16px;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+  font-family: $font-main;
+  font-size: 15px;
+  color: $color-black;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    border-color: $color-ktm;
+  }
+
+  @include media-md() {
+    border-color: $color-ktm;
+  }
+}
+
+.ms-model-modal__chevron {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+  color: $color-black;
+}
+
+// ── Résultat sélection ─────────────────────────
+.ms-model-modal__result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &[hidden] { display: none !important; }
+}
+
+.ms-model-modal__result-count {
+  font-family: $font-main;
+  font-size: 14px;
+  color: $color-black;
+  margin: 0;
+}
+
+.ms-model-modal__result-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+}
+
+.ms-model-modal__result-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ms-model-modal__result-icon {
+  position: relative;
+  flex-shrink: 0;
+
+  svg:first-child { display: block; }
+}
+
+.ms-model-modal__result-check {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+}
+
+.ms-model-modal__result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-black;
+  }
+
+  span {
+    font-family: $font-main;
+    font-size: 13px;
+    color: $color-gray-50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.ms-model-modal__result-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: $color-gray-50;
+  padding: 0;
+
+  &:hover { color: $color-black; }
+}
+
+// ── Boutons ────────────────────────────────────
+.ms-model-modal__btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  background: $color-ktm;
+  color: $color-white;
+  border: none;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+
+  &:hover { background: darken($color-ktm, 8%); }
+}
+
+.ms-model-modal__btn-icon {
+  flex-shrink: 0;
+}
+
+.ms-model-modal__btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  background: $color-white;
+  color: $color-black;
+  border: 2px solid $color-black;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: $color-black;
+    color: $color-white;
+  }
+
+  &[hidden] { display: none !important; }
+}
+
+// ── Champ VIN ─────────────────────────────────
+.ms-model-modal__vin-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ms-model-modal__vin-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 52px 0 16px;
+  border: 1px solid $color-gray-20;
+  background: $color-white;
+  font-family: $font-main;
+  font-size: 15px;
+  color: $color-black;
+  outline: none;
+
+  &::placeholder { color: $color-gray-50; }
+  &:focus { border-color: $color-ktm; }
+}
+
+.ms-model-modal__vin-search {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+// ── Barre fixe mobile ──────────────────────────
+.ms-model-bar {
+  display: none;
+
+  @include media-md() {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 800;
+    background: $color-black;
+    padding: 12px 20px;
+    cursor: pointer;
+  }
+}
+
+.ms-model-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.ms-model-bar__icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img { filter: brightness(0) invert(1); }
+}
+
+.ms-model-bar__plus {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: $color-ktm;
+  color: $color-white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.ms-model-bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-family: $font-main;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-white;
+  }
+
+  span {
+    font-family: $font-main;
+    font-size: 13px;
+    color: rgba($color-white, 0.65);
+  }
+}
+
+// ── Header button — état sélectionné ──────────
+.ms-header__model-btn {
+  &.has-model {
+    .ms-header__model-label { display: none; }
+    .ms-header__model-selected { display: flex; }
+  }
+}
