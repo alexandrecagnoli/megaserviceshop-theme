@@ -33,6 +33,8 @@
       </button>
     </div>
 
+    <div class="ms-model-modal__forms-wrap">
+
     {* Form : recherche par modèle *}
     <form class="ms-model-modal__form is-active" data-form="model" action="#" method="get">
 
@@ -127,6 +129,8 @@
       <button type="button" class="ms-model-modal__btn-secondary">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
 
     </form>
+
+    </div>{* fin forms-wrap *}
 
   </div>
 </div>

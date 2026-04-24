@@ -93,12 +93,19 @@ $model-panel-width:  472px;
   background: $color-white;
   display: flex;
   flex-direction: column;
-  min-height: 480px;
 
   @include media-md() {
     width: 100%;
-    min-height: 0;
   }
+}
+
+// Wrapper qui staque les deux forms dans la même cellule grid
+// → la hauteur est toujours le max des deux, jamais de saut
+.ms-model-modal__forms-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  flex: 1;
 }
 
 // ── Tabs ──────────────────────────────────────
@@ -151,13 +158,18 @@ $model-panel-width:  472px;
 
 // ── Forms ─────────────────────────────────────
 .ms-model-modal__form {
-  display: none;
+  grid-area: 1 / 1;
+  display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 24px;
-  flex: 1;
+  visibility: hidden;
+  pointer-events: none;
 
-  &.is-active { display: flex; }
+  &.is-active {
+    visibility: visible;
+    pointer-events: auto;
+  }
 }
 
 // ── Selects ───────────────────────────────────
