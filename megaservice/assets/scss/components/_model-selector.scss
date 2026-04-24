@@ -394,33 +394,24 @@ $model-panel-width:  472px;
   cursor: pointer;
 }
 
-// ── Barre fixe ────────────────────────────────
+// ── Barre fixe mobile ──────────────────────────
 .ms-model-bar {
-  display: flex;
-  position: fixed;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 800;
-  background: rgba(0, 0, 0, 0.80);
-  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(5px);
-  border-radius: 40px;
-  padding: 15px 16px;
-  cursor: pointer;
-  white-space: nowrap;
+  display: none;
 
   @include media-md() {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    border-radius: 0;
-    padding: 12px 20px;
-    width: 100%;
-    background: $color-black;
-    box-shadow: none;
-    backdrop-filter: none;
+    display: flex;
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 800;
+    background: rgba(0, 0, 0, 0.80);
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(5px);
+    border-radius: 40px;
+    padding: 15px 16px;
+    cursor: pointer;
+    white-space: nowrap;
   }
 }
 
