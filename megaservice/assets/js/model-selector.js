@@ -104,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if (resultBlock) resultBlock.removeAttribute('hidden');
 
       // Bouton secondaire → "Nouvelle recherche"
-      if (secondaryBtn)   secondaryBtn.removeAttribute('hidden');
       if (secondaryLabel) secondaryLabel.textContent = 'Nouvelle recherche';
 
       // Met à jour le bouton header
@@ -129,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function resetModel() {
     if (fieldsBlock) fieldsBlock.removeAttribute('hidden');
     if (resultBlock) resultBlock.setAttribute('hidden', '');
-    if (secondaryBtn) secondaryBtn.setAttribute('hidden', '');
 
     // Reset les selects
     var selects = modal.querySelectorAll('.js-model-select');

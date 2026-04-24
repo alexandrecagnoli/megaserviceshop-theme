@@ -106,7 +106,7 @@
           <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </button>
-      <button type="button" class="ms-model-modal__btn-secondary js-model-secondary" hidden>
+      <button type="button" class="ms-model-modal__btn-secondary js-model-secondary">
         <span class="js-model-secondary-label">{l s='Réinitialiser' d='Shop.Theme.Global'}</span>
       </button>
 

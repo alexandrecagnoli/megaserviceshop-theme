@@ -4,8 +4,8 @@
 
 $model-modal-bg:     #FEF3EA;
 $model-tab-inactive: #F0F0F0;
-$model-visual-width: 340px;
-$model-panel-width:  440px;
+$model-visual-width: 580px;
+$model-panel-width:  472px;
 
 // ── Overlay ───────────────────────────────────
 .ms-model-overlay {
@@ -71,8 +71,8 @@ $model-panel-width:  440px;
 .ms-model-modal__title {
   font-family: $font-heading;
   font-weight: 900;
-  font-size: 28px;
-  line-height: 1.1;
+  font-size: 64px;
+  line-height: 68px;
   text-transform: uppercase;
   color: $color-white;
   margin: 0;
@@ -80,17 +80,17 @@ $model-panel-width:  440px;
 
 .ms-model-modal__desc {
   font-family: $font-main;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 700;
   color: $color-white;
   margin: 0;
-  line-height: 1.5;
+  line-height: 28px;
 }
 
 // ── Col droite : panel ─────────────────────────
 .ms-model-modal__panel {
   width: $model-panel-width;
-  background: $model-modal-bg;
+  background: $color-white;
   display: flex;
   flex-direction: column;
 
