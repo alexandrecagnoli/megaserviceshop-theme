@@ -68,9 +68,8 @@
             <strong class="js-model-current-name"></strong>
           </span>
           <span class="ms-header__model-edit" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.293 6.94263L5.45117 12.7844C5.43108 12.8045 5.40521 12.8186 5.37695 12.8264L2.63379 13.3655L3.17285 10.6213C3.18069 10.594 3.19594 10.569 3.21582 10.5491L9.05762 4.70728L11.293 6.94263ZM11.4111 2.35376C11.7365 2.02846 12.2635 2.02846 12.5889 2.35376L13.6465 3.41138C13.9717 3.73677 13.9717 4.26377 13.6465 4.58911L12.9424 5.29321L10.707 3.05786L11.4111 2.35376Z" fill="#FE6604" stroke="#FE6604"/>
             </svg>
           </span>
         </span>

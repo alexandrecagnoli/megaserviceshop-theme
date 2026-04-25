@@ -494,21 +494,15 @@ $model-panel-width:  472px;
   .ms-header__model-filled { display: none; }
 
   &.has-model {
-    background: #FBE3CC;
-    padding: 6px 6px 6px 12px;
-    gap: 12px;
-
     .ms-header__model-empty  { display: none; }
     .ms-header__model-filled { display: flex; }
-
-    &:hover { background: #F8D5B0; }
   }
 }
 
 .ms-header__model-filled {
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: $spacing-sm;
 }
 
 .ms-header__model-icon-wrap {
@@ -528,7 +522,7 @@ $model-panel-width:  472px;
   width: 14px;
   height: 14px;
   background: #5BBE2C;
-  border: 2px solid #FBE3CC;
+  border: 2px solid $color-gray-5;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -562,14 +556,15 @@ $model-panel-width:  472px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: $color-ktm;
-  color: $color-white;
-  border-radius: 4px;
-  @include transition(background);
+  width: 25px;
+  height: 25px;
+  aspect-ratio: 1 / 1;
 
-  .ms-header__model-btn:hover & { background: darken($color-ktm, 6%); }
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
 }
 
 // ── Mobile bar — bascule des deux états ───────
