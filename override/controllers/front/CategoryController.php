@@ -12,6 +12,7 @@ class CategoryController extends CategoryControllerCore
      * Pour ajouter une catégorie : ajouter son ID (visible dans l'URL PS, ex: /15-equipements → 15)
      */
     private static $CATEGORY_TEMPLATES = [
+        14 => 'full', // Lifestyle (vêtements)
         15 => 'full', // Équipements pilotes
     ];
 
