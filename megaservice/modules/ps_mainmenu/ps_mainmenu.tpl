@@ -7,14 +7,16 @@
     <ul class="{if $depth === 0}ms-menu__list{else}ms-menu__submenu{/if}" data-depth="{$depth}">
       {foreach from=$nodes item=node}
         <li class="{if $depth === 0}ms-menu__item{else}ms-menu__subitem{/if}{if $node.current} is-current{/if}">
-          <a href="{$node.url}" class="{if $depth === 0}ms-menu__link{else}ms-menu__sublink{/if}"{if $node.children|count} data-toggle="true"{/if}{if $node.open_in_new_window} target="_blank"{/if}>
+          <a href="{$node.url}" class="{if $depth === 0}ms-menu__link{else}ms-menu__sublink{/if}"{if $node.open_in_new_window} target="_blank"{/if}>
             {$node.label}
-            {if $node.children|count}
+          </a>
+          {if $depth === 0 && $node.children|count}
+            <button type="button" class="ms-menu__toggle" data-toggle="true" aria-expanded="false" aria-label="{l s='Ouvrir le sous-menu' d='Shop.Theme.Actions'}">
               <svg class="ms-menu__chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
-            {/if}
-          </a>
+            </button>
+          {/if}
           {if $node.children|count}
             <div class="ms-menu__submenu-wrap">
               {ms_menu nodes=$node.children depth=$node.depth}

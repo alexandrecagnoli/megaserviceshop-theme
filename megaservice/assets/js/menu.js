@@ -10,8 +10,8 @@ class MenuToggle {
     this.menuClose = document.querySelector('.ms-menu__close');
     this.body = document.body;
     
-    // Dropdowns dans le menu
-    this.menuLinks = document.querySelectorAll('.ms-menu__link[data-toggle="true"]');
+    // Boutons chevron pour collapse — séparés des liens (qui restent navigables)
+    this.toggles = document.querySelectorAll('.ms-menu__toggle[data-toggle="true"]');
 
     this.init();
   }
@@ -30,11 +30,11 @@ class MenuToggle {
       if (e.target === this.menu) this.close();
     });
 
-    // Gestion des dropdowns
-    this.menuLinks.forEach((link) => {
-      link.addEventListener('click', (e) => {
+    // Gestion des dropdowns — uniquement sur le chevron
+    this.toggles.forEach((toggle) => {
+      toggle.addEventListener('click', (e) => {
         e.preventDefault();
-        this.toggleSubmenu(link);
+        this.toggleSubmenu(toggle);
       });
     });
 
@@ -57,33 +57,36 @@ class MenuToggle {
     this.body.classList.remove('menu-open');
   }
 
-  toggleSubmenu(link) {
-    const wrap = link.nextElementSibling;
-    if (!wrap || !wrap.classList.contains('ms-menu__submenu-wrap')) return;
+  toggleSubmenu(toggle) {
+    const wrap = toggle.parentElement.querySelector(':scope > .ms-menu__submenu-wrap');
+    if (!wrap) return;
 
     const isOpen = wrap.classList.contains('is-open');
 
     // Ferme tous les autres
-    this.menuLinks.forEach((l) => {
-      const w = l.nextElementSibling;
-      if (w && w.classList.contains('ms-menu__submenu-wrap')) {
+    this.toggles.forEach((t) => {
+      const w = t.parentElement.querySelector(':scope > .ms-menu__submenu-wrap');
+      if (w) {
         w.classList.remove('is-open');
-        l.classList.remove('is-open');
+        t.classList.remove('is-open');
+        t.setAttribute('aria-expanded', 'false');
       }
     });
 
     if (!isOpen) {
       wrap.classList.add('is-open');
-      link.classList.add('is-open');
+      toggle.classList.add('is-open');
+      toggle.setAttribute('aria-expanded', 'true');
     }
   }
 
   closeAllSubmenus() {
-    this.menuLinks.forEach((link) => {
-      const wrap = link.nextElementSibling;
-      if (wrap && wrap.classList.contains('ms-menu__submenu-wrap')) {
+    this.toggles.forEach((toggle) => {
+      const wrap = toggle.parentElement.querySelector(':scope > .ms-menu__submenu-wrap');
+      if (wrap) {
         wrap.classList.remove('is-open');
-        link.classList.remove('is-open');
+        toggle.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
       }
     });
   }
