@@ -782,30 +782,6 @@ body#category {
   &:hover { color: $color-white; }
 }
 
-// ── Sidebar : bouton retour ───────────────────
-.ms-catalog__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid $color-gray-20;
-  background: transparent;
-  font-family: $font-heading;
-  font-weight: 900;
-  font-size: 13px;
-  text-transform: uppercase;
-  color: $color-black;
-  text-decoration: none;
-  letter-spacing: 0.05em;
-  margin-bottom: 16px;
-  @include transition(background, color);
-
-  &:hover {
-    background: $color-black;
-    color: $color-white;
-  }
-}
-
 // ── Sidebar : bloc parent catégorie ───────────
 .ms-catalog__cat-card {
   display: none;

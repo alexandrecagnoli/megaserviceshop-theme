@@ -82,13 +82,6 @@
       {if $sidebar_content|trim}
         <aside class="ms-catalog__sidebar">
 
-          <a href="javascript:history.back()" class="ms-catalog__back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>{l s='Retour' d='Shop.Theme.Actions'}</span>
-          </a>
-
           {* Bloc parent catégorie — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
           {if isset($ms_show_moto_context) && $ms_show_moto_context}
           <div class="ms-catalog__cat-card">
