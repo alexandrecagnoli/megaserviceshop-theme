@@ -44,7 +44,7 @@ body#category {
   background: $color-black;
   padding: 16px 0 28px;
 
-  body.has-moto-selected & { padding-bottom: 0; }
+  body.has-moto-selected &.ms-catalog-hero--with-context { padding-bottom: 0; }
 
   &__inner {
     @include container();

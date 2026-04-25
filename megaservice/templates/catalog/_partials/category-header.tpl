@@ -1,4 +1,4 @@
-<div id="js-product-list-header" class="ms-catalog-hero">
+<div id="js-product-list-header" class="ms-catalog-hero{if isset($ms_show_moto_context) && $ms_show_moto_context} ms-catalog-hero--with-context{/if}">
   <div class="ms-catalog-hero__inner">
     <h1 class="ms-catalog-hero__title">
       {$category.name}<span class="ms-catalog-hero__title-suffix"> {l s='compatibles avec' d='Shop.Theme.Catalog'} <span class="js-model-current-name"></span></span>
