@@ -80,7 +80,7 @@
     {if !$ms_is_full_width}
       {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
       {if $sidebar_content|trim}
-        <aside class="ms-catalog__sidebar" id="js-search-filters-wrapper">
+        <aside class="ms-catalog__sidebar">
 
           <a href="javascript:history.back()" class="ms-catalog__back">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -91,10 +91,13 @@
 
           {* Bloc parent catégorie — visible uniquement quand body.has-moto-selected *}
           <div class="ms-catalog__cat-card">
+            <img src="{$urls.theme_assets}img/parts-search-bg.jpg" alt="" class="ms-catalog__cat-card-bg" loading="lazy">
             <span class="ms-catalog__cat-card-label">{l s='Accessoires powerparts' d='Shop.Theme.Catalog'}</span>
           </div>
 
-          {$sidebar_content nofilter}
+          <div id="js-search-filters-wrapper">
+            {$sidebar_content nofilter}
+          </div>
         </aside>
       {/if}
     {/if}
