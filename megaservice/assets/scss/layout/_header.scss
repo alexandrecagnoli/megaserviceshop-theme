@@ -187,7 +187,8 @@
       background: $color-white;
     }
 
-    span {
+    // Texte de l'état vide ("Sélectionnez / votre modèle")
+    .ms-header__model-empty > span {
       display: flex;
       flex-direction: column;
       font-size: $font-size-sm;
@@ -329,7 +330,7 @@
       display: none;
     }
 
-    &__model-btn span {
+    &__model-btn .ms-header__model-empty > span {
       display: none;
     }
 

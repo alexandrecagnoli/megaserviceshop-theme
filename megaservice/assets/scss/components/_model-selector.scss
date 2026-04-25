@@ -335,6 +335,14 @@ $model-panel-width:  472px;
   margin-top: auto;
 
   &:hover { background: darken($color-ktm, 8%); }
+
+  &:disabled,
+  &[disabled] {
+    background: $color-gray-20;
+    color: rgba($color-white, 0.7);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
 
 .ms-model-modal__btn-icon {
@@ -498,6 +506,7 @@ $model-panel-width:  472px;
 }
 
 .ms-header__model-filled {
+  flex-direction: row;
   align-items: center;
   gap: 12px;
 }

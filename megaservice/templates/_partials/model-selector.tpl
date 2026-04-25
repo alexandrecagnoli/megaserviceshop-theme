@@ -76,8 +76,33 @@
         </div>
       </div>
 
-      <div class="ms-model-modal__result js-model-result" hidden>
-        <p class="ms-model-modal__result-count js-model-result-count"></p>
+      <button type="submit" class="ms-model-modal__btn-primary js-model-submit" disabled>
+        {l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}
+        <svg class="ms-model-modal__btn-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button type="button" class="ms-model-modal__btn-secondary js-model-reset">
+        {l s='Réinitialiser' d='Shop.Theme.Global'}
+      </button>
+
+    </form>
+
+    {* Form : recherche par VIN *}
+    <form class="ms-model-modal__form" data-form="vin" action="#" method="get">
+
+      <div class="ms-model-modal__vin-field js-vin-fields">
+        <input type="text" class="ms-model-modal__vin-input js-vin-input" name="vin" placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}">
+        <button type="button" class="ms-model-modal__vin-search js-vin-search" aria-label="{l s='Rechercher' d='Shop.Theme.Actions'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="#1E1E1E" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      {* Bloc résultat — visible après recherche VIN réussie *}
+      <div class="ms-model-modal__result js-vin-result" hidden>
+        <p class="ms-model-modal__result-count">{l s='1 véhicule correspond à votre recherche' d='Shop.Theme.Global'}</p>
         <div class="ms-model-modal__result-card">
           <div class="ms-model-modal__result-card-left">
             <div class="ms-model-modal__result-icon">
@@ -90,11 +115,11 @@
               </svg>
             </div>
             <div class="ms-model-modal__result-info">
-              <strong class="js-model-result-name"></strong>
-              <span class="js-model-result-vin"></span>
+              <strong class="js-vin-result-name"></strong>
+              <span class="js-vin-result-vin"></span>
             </div>
           </div>
-          <button type="button" class="ms-model-modal__result-remove js-model-result-remove" aria-label="{l s='Supprimer' d='Shop.Theme.Actions'}">
+          <button type="button" class="ms-model-modal__result-remove js-vin-result-remove" aria-label="{l s='Supprimer' d='Shop.Theme.Actions'}">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
@@ -102,31 +127,8 @@
         </div>
       </div>
 
-      <button type="submit" class="ms-model-modal__btn-primary js-model-submit">
-        {l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}
-        <svg class="ms-model-modal__btn-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <button type="button" class="ms-model-modal__btn-secondary js-model-secondary">
-        <span class="js-model-secondary-label">{l s='Réinitialiser' d='Shop.Theme.Global'}</span>
-      </button>
-
-    </form>
-
-    {* Form : recherche par VIN *}
-    <form class="ms-model-modal__form" data-form="vin" action="#" method="get">
-
-      <div class="ms-model-modal__vin-field">
-        <input type="text" class="ms-model-modal__vin-input" name="vin" placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}">
-        <button type="submit" class="ms-model-modal__vin-search" aria-label="{l s='Rechercher' d='Shop.Theme.Actions'}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="#1E1E1E" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-      <button type="submit" class="ms-model-modal__btn-primary">{l s='Rechercher' d='Shop.Theme.Global'}</button>
-      <button type="button" class="ms-model-modal__btn-secondary">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
+      <button type="submit" class="ms-model-modal__btn-primary js-vin-submit" disabled>{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
+      <button type="button" class="ms-model-modal__btn-secondary js-vin-reset">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
 
     </form>
 
