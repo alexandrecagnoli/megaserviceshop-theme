@@ -48,8 +48,32 @@
     <div class="ms-header__right">
 
       <a href="#" class="ms-header__model-btn">
-        <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" aria-hidden="true" width="32" height="32">
-        <span>{l s='Sélectionnez' d='Shop.Theme.Global'}<strong>{l s='votre modèle' d='Shop.Theme.Global'}</strong></span>
+        {* État vide *}
+        <span class="ms-header__model-empty">
+          <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" aria-hidden="true" width="32" height="32">
+          <span>{l s='Sélectionnez' d='Shop.Theme.Global'}<strong>{l s='votre modèle' d='Shop.Theme.Global'}</strong></span>
+        </span>
+        {* État rempli — visible quand .has-model *}
+        <span class="ms-header__model-filled">
+          <span class="ms-header__model-icon-wrap">
+            <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" aria-hidden="true" width="32" height="32">
+            <span class="ms-header__model-check" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4.5L3.5 7L9 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </span>
+          <span class="ms-header__model-info">
+            <span class="ms-header__model-info-label">{l s='Catalogue filtré sur' d='Shop.Theme.Global'}</span>
+            <strong class="js-model-current-name"></strong>
+          </span>
+          <span class="ms-header__model-edit" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </span>
       </a>
 
       <div class="ms-header__actions">

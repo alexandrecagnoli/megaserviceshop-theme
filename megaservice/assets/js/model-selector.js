@@ -78,7 +78,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var secondaryBtn   = modal.querySelector('.js-model-secondary');
   var secondaryLabel = modal.querySelector('.js-model-secondary-label');
   var headerBtn      = document.querySelector('.ms-header__model-btn');
-  var headerSpan     = headerBtn ? headerBtn.querySelector('span') : null;
+  var mobileBarEl    = document.querySelector('.js-model-trigger-mobile');
+  var STORAGE_KEY    = 'ms_selected_moto';
+
+  // Restore depuis localStorage au chargement (en attendant le plugin serveur)
+  var stored = null;
+  try { stored = localStorage.getItem(STORAGE_KEY); } catch (err) {}
+  if (stored) applyFilled(stored);
 
   // Simule la sélection après soumission du form modèle
   var modelForm = modal.querySelector('[data-form="model"]');
@@ -95,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       var label = [annee, marque, modele].filter(Boolean).join(' ');
 
-      // Affiche le résultat
+      // Affiche le résultat dans le modal
       if (resultName)  resultName.textContent  = label;
       if (resultVin)   resultVin.textContent    = '';
       if (resultCount) resultCount.textContent  = '1 véhicule correspond à votre recherche';
@@ -103,56 +109,48 @@ document.addEventListener('DOMContentLoaded', function () {
       if (fieldsBlock) fieldsBlock.setAttribute('hidden', '');
       if (resultBlock) resultBlock.removeAttribute('hidden');
 
-      // Bouton secondaire → "Nouvelle recherche"
       if (secondaryLabel) secondaryLabel.textContent = 'Nouvelle recherche';
 
-      // Met à jour le bouton header
-      updateHeaderBtn(label, true);
+      applyFilled(label);
+      try { localStorage.setItem(STORAGE_KEY, label); } catch (err) {}
     });
   }
 
   // Réinitialiser / Nouvelle recherche
   if (secondaryBtn) {
-    secondaryBtn.addEventListener('click', function () {
-      resetModel();
-    });
+    secondaryBtn.addEventListener('click', resetModel);
   }
 
   // Supprimer le résultat
   if (resultRemove) {
-    resultRemove.addEventListener('click', function () {
-      resetModel();
-    });
+    resultRemove.addEventListener('click', resetModel);
   }
 
   function resetModel() {
     if (fieldsBlock) fieldsBlock.removeAttribute('hidden');
     if (resultBlock) resultBlock.setAttribute('hidden', '');
 
-    // Reset les selects
     var selects = modal.querySelectorAll('.js-model-select');
     selects.forEach(function (s) {
       s.selectedIndex = 0;
       if (s.name !== 'marque') s.disabled = true;
     });
 
-    updateHeaderBtn('', false);
+    applyEmpty();
+    try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
   }
 
-  function updateHeaderBtn(label, hasModel) {
-    if (!headerBtn) return;
+  function applyFilled(label) {
+    document.querySelectorAll('.js-model-current-name').forEach(function (el) {
+      el.textContent = label;
+    });
+    if (headerBtn)   headerBtn.classList.add('has-model');
+    if (mobileBarEl) mobileBarEl.classList.add('has-model');
+  }
 
-    if (hasModel) {
-      headerBtn.classList.add('has-model');
-      if (headerSpan) {
-        headerSpan.innerHTML = label;
-      }
-    } else {
-      headerBtn.classList.remove('has-model');
-      if (headerSpan) {
-        headerSpan.innerHTML = 'Sélectionnez<strong>votre modèle</strong>';
-      }
-    }
+  function applyEmpty() {
+    if (headerBtn)   headerBtn.classList.remove('has-model');
+    if (mobileBarEl) mobileBarEl.classList.remove('has-model');
   }
 
   // ── Cascade des selects ───────────────────────

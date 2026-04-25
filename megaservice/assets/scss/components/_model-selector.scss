@@ -479,10 +479,135 @@ $model-panel-width:  472px;
   }
 }
 
-// ── Header button — état sélectionné ──────────
+// ── Header button — bascule des deux états ────
 .ms-header__model-btn {
+  // États : par défaut empty visible, filled caché
+  .ms-header__model-empty  { display: flex; align-items: center; gap: $spacing-sm; }
+  .ms-header__model-filled { display: none; }
+
   &.has-model {
-    .ms-header__model-label { display: none; }
-    .ms-header__model-selected { display: flex; }
+    background: #FBE3CC;
+    padding: 6px 6px 6px 12px;
+    gap: 12px;
+
+    .ms-header__model-empty  { display: none; }
+    .ms-header__model-filled { display: flex; }
+
+    &:hover { background: #F8D5B0; }
+  }
+}
+
+.ms-header__model-filled {
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-header__model-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ms-header__model-check {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  background: #5BBE2C;
+  border: 2px solid #FBE3CC;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg { width: 8px; height: 6px; }
+}
+
+.ms-header__model-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+
+  &-label {
+    font-family: $font-main;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba($color-black, 0.65);
+  }
+
+  strong {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-black;
+  }
+}
+
+.ms-header__model-edit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: $color-ktm;
+  color: $color-white;
+  border-radius: 4px;
+  @include transition(background);
+
+  .ms-header__model-btn:hover & { background: darken($color-ktm, 6%); }
+}
+
+// ── Mobile bar — bascule des deux états ───────
+.ms-model-bar {
+  // Par défaut : empty visible, filled caché
+  .ms-model-bar__inner--empty  { display: flex; }
+  .ms-model-bar__inner--filled { display: none; }
+
+  &.has-model {
+    .ms-model-bar__inner--empty  { display: none; }
+    .ms-model-bar__inner--filled { display: flex; }
+  }
+}
+
+.ms-model-bar__inner--filled {
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-model-bar__check {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #5BBE2C;
+  border: 2px solid rgba(0, 0, 0, 0.80);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg { width: 8px; height: 6px; }
+}
+
+.ms-model-bar__inner--filled .ms-model-bar__text {
+  span {
+    font-family: $font-main;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba($color-white, 0.7);
+  }
+
+  strong {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-white;
   }
 }

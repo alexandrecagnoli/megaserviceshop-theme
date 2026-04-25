@@ -137,7 +137,8 @@
 
 {* ── Barre fixe mobile ── *}
 <div class="ms-model-bar js-model-trigger-mobile" role="button" tabindex="0">
-  <div class="ms-model-bar__inner">
+  {* État vide *}
+  <div class="ms-model-bar__inner ms-model-bar__inner--empty">
     <div class="ms-model-bar__icon-wrap">
       <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" width="46" height="46" aria-hidden="true">
       <span class="ms-model-bar__plus" aria-hidden="true">+</span>
@@ -145,6 +146,21 @@
     <div class="ms-model-bar__text">
       <strong>{l s='Ajoutez votre moto' d='Shop.Theme.Global'}</strong>
       <span>{l s='pour afficher les pièces compatibles' d='Shop.Theme.Global'}</span>
+    </div>
+  </div>
+  {* État rempli — visible quand .has-model *}
+  <div class="ms-model-bar__inner ms-model-bar__inner--filled">
+    <div class="ms-model-bar__icon-wrap">
+      <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" width="46" height="46" aria-hidden="true">
+      <span class="ms-model-bar__check" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <path d="M1 4.5L3.5 7L9 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </div>
+    <div class="ms-model-bar__text">
+      <span>{l s='Catalogue filtré sur' d='Shop.Theme.Global'}</span>
+      <strong class="js-model-current-name"></strong>
     </div>
   </div>
 </div>
