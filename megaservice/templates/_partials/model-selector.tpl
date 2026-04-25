@@ -139,7 +139,7 @@
 <div class="ms-model-bar js-model-trigger-mobile" role="button" tabindex="0">
   <div class="ms-model-bar__inner">
     <div class="ms-model-bar__icon-wrap">
-      <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" width="36" height="36" aria-hidden="true">
+      <img src="{$urls.theme_assets}img/ico-bike.svg" alt="" width="46" height="46" aria-hidden="true">
       <span class="ms-model-bar__plus" aria-hidden="true">+</span>
     </div>
     <div class="ms-model-bar__text">
