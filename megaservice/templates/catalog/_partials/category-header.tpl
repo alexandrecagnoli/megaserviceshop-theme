@@ -5,7 +5,8 @@
     </h1>
   </div>
 
-  {* État rempli — visible uniquement quand body.has-moto-selected *}
+  {* Bandeau moto — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
+  {if isset($ms_show_moto_context) && $ms_show_moto_context}
   <div class="ms-catalog-context">
     <img src="{$urls.theme_assets}img/moto-context.png" alt="" class="ms-catalog-context__moto-img">
     <div class="ms-catalog-context__inner">
@@ -26,5 +27,6 @@
 
     </div>
   </div>
+  {/if}
 
 </div>

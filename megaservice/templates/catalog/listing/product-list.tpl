@@ -89,11 +89,13 @@
             <span>{l s='Retour' d='Shop.Theme.Actions'}</span>
           </a>
 
-          {* Bloc parent catégorie — visible uniquement quand body.has-moto-selected *}
+          {* Bloc parent catégorie — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
+          {if isset($ms_show_moto_context) && $ms_show_moto_context}
           <div class="ms-catalog__cat-card">
             <img src="{$urls.theme_assets}img/akrapovic-exhaust.png" alt="" class="ms-catalog__cat-card-bg" loading="lazy">
             <span class="ms-catalog__cat-card-label">{l s='Accessoires powerparts' d='Shop.Theme.Catalog'}</span>
           </div>
+          {/if}
 
           <div id="js-search-filters-wrapper">
             {$sidebar_content nofilter}

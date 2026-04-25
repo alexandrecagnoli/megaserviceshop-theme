@@ -15,6 +15,15 @@ class CategoryController extends CategoryControllerCore
         15 => 'full', // Équipements pilotes
     ];
 
+    /**
+     * Catégories racines qui affichent le contexte "moto sélectionnée"
+     * (bandeau moto dans le header + cat-card dans la sidebar).
+     * S'applique à la racine ET à toutes ses sous-catégories (test nested set).
+     */
+    private static $MOTO_CONTEXT_ROOT_IDS = [
+        41, // Accessoires Powerparts
+    ];
+
     public function initContent()
     {
         parent::initContent();
@@ -25,8 +34,28 @@ class CategoryController extends CategoryControllerCore
             : 'default';
 
         $this->context->smarty->assign([
-            'ms_category_template' => $template,
-            'ms_is_full_width'     => $template === 'full',
+            'ms_category_template'  => $template,
+            'ms_is_full_width'      => $template === 'full',
+            'ms_show_moto_context'  => $this->isInMotoContextSubtree(),
         ]);
+    }
+
+    private function isInMotoContextSubtree()
+    {
+        if (empty(self::$MOTO_CONTEXT_ROOT_IDS) || !$this->category->id) {
+            return false;
+        }
+
+        foreach (self::$MOTO_CONTEXT_ROOT_IDS as $root_id) {
+            $root = new Category((int) $root_id);
+            if (!$root->id) {
+                continue;
+            }
+            if ($this->category->nleft >= $root->nleft && $this->category->nright <= $root->nright) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
