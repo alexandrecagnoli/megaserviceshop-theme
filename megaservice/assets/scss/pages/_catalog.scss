@@ -44,6 +44,8 @@ body#category {
   background: $color-black;
   padding: 16px 0 28px;
 
+  body.has-moto-selected & { padding-bottom: 0; }
+
   &__inner {
     @include container();
   }
@@ -696,7 +698,7 @@ body#category {
 .ms-catalog-context__moto-img {
   position: absolute;
   left: 0;
-  bottom: -28px;
+  bottom: 0;
   height: 130px;
   width: auto;
   z-index: 2;
@@ -705,7 +707,6 @@ body#category {
 
   @include media-md() {
     height: 90px;
-    bottom: -16px;
   }
 }
 
