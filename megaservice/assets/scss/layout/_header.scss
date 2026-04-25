@@ -251,6 +251,9 @@
 }
 
 // ── Search Widget ─────────────────────────────
+// Override du min-width: 16.5rem hérité du CSS PS core sur ≥992px qui écartait le bouton du cluster droite
+#search_widget { min-width: 0 !important; }
+
 .ms-search-widget {
   position: relative;
 
