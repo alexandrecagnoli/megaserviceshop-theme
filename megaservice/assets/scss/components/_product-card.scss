@@ -65,19 +65,19 @@
   gap: 60px 30px;
 
   > * {
-    width: calc(25% - 45px) !important;
+    width: calc((100% - 90px) / 4) !important; // 4 cols, 3 gaps de 30px
     padding-left: 0 !important;
     padding-right: 0 !important;
     margin-bottom: 0 !important;
   }
 
   @include media-lg() {
-    > * { width: calc(33.333% - 40px) !important; }
+    > * { width: calc((100% - 60px) / 3) !important; } // 3 cols, 2 gaps de 30px
   }
 
   @include media-md() {
     gap: 24px 30px;
-    > * { width: calc(50% - 15px) !important; }
+    > * { width: calc((100% - 30px) / 2) !important; } // 2 cols, 1 gap de 30px
   }
 
   @include media-sm() {
