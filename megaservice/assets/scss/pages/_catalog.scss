@@ -73,7 +73,7 @@ body#category {
   align-items: flex-start;
   gap: 40px;
   @include container();
-  padding-top: 32px;
+  padding-top: 64px;
   padding-bottom: 56px;
 
   @include media-lg() { gap: 24px; }
@@ -81,7 +81,7 @@ body#category {
   @include media-md() {
     flex-direction: column-reverse;
     gap: 24px;
-    padding-top: 24px;
+    padding-top: 48px;
     padding-bottom: 32px;
   }
 
@@ -687,7 +687,7 @@ body#category {
   display: none;
   position: relative;
   max-width: $container-width;
-  margin: 16px auto 0;
+  margin: 32px auto 0;
   background: #252525;
   border-top: 1px solid $color-black;
   border-radius: 0 8px 0 0;
