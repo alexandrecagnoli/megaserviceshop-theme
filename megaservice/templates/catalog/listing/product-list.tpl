@@ -91,7 +91,7 @@
 
           {* Bloc parent catégorie — visible uniquement quand body.has-moto-selected *}
           <div class="ms-catalog__cat-card">
-            <img src="{$urls.theme_assets}img/parts-search-bg.jpg" alt="" class="ms-catalog__cat-card-bg" loading="lazy">
+            <img src="{$urls.theme_assets}img/akrapovic-exhaust.png" alt="" class="ms-catalog__cat-card-bg" loading="lazy">
             <span class="ms-catalog__cat-card-label">{l s='Accessoires powerparts' d='Shop.Theme.Catalog'}</span>
           </div>
 

@@ -7,10 +7,12 @@
 
   {* État rempli — visible uniquement quand body.has-moto-selected *}
   <div class="ms-catalog-context">
-    <img src="{$urls.theme_assets}img/640733_MY26_KTM 990 DUKE R_ACTION_ACTION_2026 Street and Adventure models_KTM 990 DUKE R_ACTION 1.jpg" alt="" class="ms-catalog-context__moto-img">
+    <img src="{$urls.theme_assets}img/moto-context.png" alt="" class="ms-catalog-context__moto-img">
     <div class="ms-catalog-context__inner">
 
-      <span class="ms-catalog-context__brand" aria-hidden="true">KTM</span>
+      <span class="ms-catalog-context__brand" aria-hidden="true">
+        <img src="{$urls.theme_assets}img/brands/ktm-square.png" alt="">
+      </span>
 
       <div class="ms-catalog-context__text">
         <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Shop.Theme.Catalog'}</span>

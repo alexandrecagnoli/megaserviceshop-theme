@@ -732,12 +732,13 @@ body#category {
   flex-shrink: 0;
   width: 60px;
   height: 60px;
-  background: $color-ktm;
-  font-family: $font-heading;
-  font-weight: 900;
-  font-size: 22px;
-  color: $color-black;
-  letter-spacing: 0.02em;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 }
 
 .ms-catalog-context__text {
@@ -828,9 +829,9 @@ body#category {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  mix-blend-mode: luminosity;
-  opacity: 0.55;
+  object-fit: contain;
+  object-position: right center;
+  opacity: 0.85;
   z-index: 0;
 }
 
