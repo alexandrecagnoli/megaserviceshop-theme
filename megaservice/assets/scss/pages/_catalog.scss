@@ -93,10 +93,10 @@ body#category {
       gap: 40px 24px;
 
       > * {
-        width: calc(25% - 18px) !important;
+        width: calc((100% - 72px) / 4) !important; // 4 cols, 3 gaps de 24px
 
-        @include media-lg() { width: calc(33.333% - 16px) !important; }
-        @include media-md() { width: calc(50% - 12px) !important; }
+        @include media-lg() { width: calc((100% - 48px) / 3) !important; } // 3 cols, 2 gaps
+        @include media-md() { width: calc((100% - 24px) / 2) !important; } // 2 cols, 1 gap
         @include media-sm() { width: 100% !important; }
       }
     }
@@ -113,9 +113,9 @@ body#category {
     gap: 40px 24px;
 
     > * {
-      width: calc(33.333% - 16px) !important;
+      width: calc((100% - 48px) / 3) !important; // 3 cols, 2 gaps de 24px
 
-      @include media-lg() { width: calc(50% - 12px) !important; }
+      @include media-lg() { width: calc((100% - 24px) / 2) !important; } // 2 cols, 1 gap
       @include media-sm() { width: 100% !important; }
     }
   }
