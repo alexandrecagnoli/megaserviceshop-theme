@@ -20,6 +20,14 @@
     {if $product.has_discount && $product.discount_type === 'percentage'}
       <span class="ms-product-card__badge">{$product.discount_percentage}</span>
     {/if}
+
+    {* Badge "Compatible" — visible uniquement quand body.has-moto-selected *}
+    <span class="ms-product-card__compat" aria-hidden="true">
+      {l s='Compatible' d='Shop.Theme.Catalog'}
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12L10 17L20 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
   </a>
 
   {* ── Infos ── *}

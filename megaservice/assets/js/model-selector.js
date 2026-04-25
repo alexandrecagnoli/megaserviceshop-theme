@@ -78,11 +78,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     if (headerBtn)   headerBtn.classList.add('has-model');
     if (mobileBarEl) mobileBarEl.classList.add('has-model');
+    document.body.classList.add('has-moto-selected');
   }
 
   function applyEmpty() {
     if (headerBtn)   headerBtn.classList.remove('has-model');
     if (mobileBarEl) mobileBarEl.classList.remove('has-model');
+    document.body.classList.remove('has-moto-selected');
   }
 
   // Restore depuis localStorage (en attendant le plugin serveur)

@@ -81,6 +81,19 @@
       {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
       {if $sidebar_content|trim}
         <aside class="ms-catalog__sidebar" id="js-search-filters-wrapper">
+
+          <a href="javascript:history.back()" class="ms-catalog__back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{l s='Retour' d='Shop.Theme.Actions'}</span>
+          </a>
+
+          {* Bloc parent catégorie — visible uniquement quand body.has-moto-selected *}
+          <div class="ms-catalog__cat-card">
+            <span class="ms-catalog__cat-card-label">{l s='Accessoires powerparts' d='Shop.Theme.Catalog'}</span>
+          </div>
+
           {$sidebar_content nofilter}
         </aside>
       {/if}

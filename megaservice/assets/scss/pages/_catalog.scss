@@ -59,6 +59,10 @@ body#category {
 
     @include media-md() { font-size: 26px; }
   }
+
+  // Suffixe "compatibles avec [moto]" — caché par défaut
+  &__title-suffix { display: none; }
+  body.has-moto-selected &__title-suffix { display: inline; }
 }
 
 // ── Layout 2 colonnes (avec sidebar) ────────
@@ -670,4 +674,166 @@ body#category {
       }
     }
   }
+}
+
+// ============================================
+// MOTO SÉLECTIONNÉE — éléments visibles seulement avec body.has-moto-selected
+// ============================================
+
+// ── Bandeau contexte moto (sous le titre) ─────
+.ms-catalog-context {
+  display: none;
+
+  body.has-moto-selected & { display: block; }
+}
+
+.ms-catalog-context__inner {
+  @include container();
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+
+  @include media-md() {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+.ms-catalog-context__moto {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-catalog-context__moto-img {
+  height: 80px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.ms-catalog-context__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    height: 40px;
+    width: auto;
+    display: block;
+  }
+}
+
+.ms-catalog-context__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ms-catalog-context__label {
+  color: rgba($color-white, 0.80);
+  font-family: $font-main;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.ms-catalog-context__moto-name {
+  color: $color-ktm;
+  font-family: $font-main;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ms-catalog-context__actions {
+  display: flex;
+  gap: 24px;
+  margin-left: auto;
+
+  @include media-md() { margin-left: 0; }
+}
+
+.ms-catalog-context__link {
+  color: rgba($color-white, 0.80);
+  font-family: $font-main;
+  font-size: 16px;
+  font-weight: 400;
+  text-decoration: underline;
+
+  &:hover { color: $color-white; }
+}
+
+// ── Sidebar : bouton retour ───────────────────
+.ms-catalog__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid $color-gray-20;
+  background: transparent;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: $color-black;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  @include transition(background, color);
+
+  &:hover {
+    background: $color-black;
+    color: $color-white;
+  }
+}
+
+// ── Sidebar : bloc parent catégorie ───────────
+.ms-catalog__cat-card {
+  display: none;
+  height: 130px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%),
+    radial-gradient(105.79% 23.63% at 50% 50%, #666 0%, #000 100%);
+  margin-bottom: 24px;
+  overflow: hidden;
+
+  body.has-moto-selected & { display: flex; }
+}
+
+.ms-catalog__cat-card-label {
+  color: $color-white;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 18px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 16px;
+}
+
+// ── Badge "Compatible" sur les cartes produit ─
+.ms-product-card__compat {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #5BBE2C;
+  color: $color-white;
+  font-family: $font-main;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 2px;
+
+  body.has-moto-selected & { display: inline-flex; }
 }
