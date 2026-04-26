@@ -341,7 +341,7 @@ body.menu-open {
 // ============================================
 @include media-md() {
   .ms-menu {
-    max-width: 400px;
+    max-width: 100%;
   }
 }
 
