@@ -80,7 +80,20 @@
     {if !$ms_is_full_width}
       {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
       {if $sidebar_content|trim}
-        <aside class="ms-catalog__sidebar">
+        {* Overlay du bottom sheet — mobile uniquement *}
+        <div class="ms-filters-overlay js-filters-overlay" hidden aria-hidden="true"></div>
+
+        <aside class="ms-catalog__sidebar js-filters-sheet">
+
+          {* Header sheet — mobile uniquement *}
+          <header class="ms-catalog__sidebar-head">
+            <h2 class="ms-catalog__sidebar-title">{l s='Filtres' d='Shop.Theme.Catalog'}</h2>
+            <button type="button" class="ms-catalog__sidebar-close js-filters-close" aria-label="{l s='Fermer les filtres' d='Shop.Theme.Actions'}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </header>
 
           {* Bloc parent catégorie — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
           {if isset($ms_show_moto_context) && $ms_show_moto_context}
@@ -93,6 +106,13 @@
           <div id="js-search-filters-wrapper">
             {$sidebar_content nofilter}
           </div>
+
+          {* Footer sheet — mobile uniquement *}
+          <footer class="ms-catalog__sidebar-foot">
+            <button type="button" class="ms-catalog__sidebar-apply js-filters-apply">{l s='Appliquer les filtres' d='Shop.Theme.Actions'}</button>
+            <button type="button" class="ms-catalog__sidebar-reset js-filters-reset">{l s='Réinitialiser' d='Shop.Theme.Actions'}</button>
+          </footer>
+
         </aside>
       {/if}
     {/if}

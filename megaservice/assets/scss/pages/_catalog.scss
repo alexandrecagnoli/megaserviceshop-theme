@@ -208,6 +208,138 @@ body#category {
     .hidden-sm-down { display: none !important; }
     .hidden-md-up   { display: block !important; }
   }
+
+  // Header / footer du sheet — desktop seulement, masqué
+  .ms-catalog__sidebar-head,
+  .ms-catalog__sidebar-foot { display: none; }
+
+  // ── Bottom sheet mobile ──
+  @include media-md() {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 90vh;
+    background: $color-white;
+    z-index: 1000;
+    transform: translateY(100%);
+    @include transition(transform);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -8px 24px rgba($color-black, 0.18);
+
+    &.is-open { transform: translateY(0); }
+
+    .ms-catalog__sidebar-head,
+    .ms-catalog__sidebar-foot { display: flex; }
+
+    > .ms-catalog__cat-card,
+    > #js-search-filters-wrapper {
+      flex-shrink: 0;
+    }
+
+    > #js-search-filters-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
+.ms-catalog__sidebar-head {
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid $color-gray-20;
+  flex-shrink: 0;
+}
+
+.ms-catalog__sidebar-title {
+  margin: 0;
+  font-family: $font-main;
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-black;
+}
+
+.ms-catalog__sidebar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: $color-black;
+  @include transition(color);
+
+  &:hover { color: $color-ktm; }
+}
+
+.ms-catalog__sidebar-foot {
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid $color-gray-20;
+  flex-shrink: 0;
+  background: $color-white;
+}
+
+.ms-catalog__sidebar-apply,
+.ms-catalog__sidebar-reset {
+  width: 100%;
+  height: 50px;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  @include transition(background, color);
+}
+
+.ms-catalog__sidebar-apply {
+  background: $color-black;
+  color: $color-white;
+  border: 1px solid $color-black;
+
+  &:hover { background: lighten($color-black, 10%); }
+}
+
+.ms-catalog__sidebar-reset {
+  background: transparent;
+  color: $color-black;
+  border: 1px solid $color-black;
+
+  &:hover { background: $color-black; color: $color-white; }
+}
+
+// Overlay — mobile uniquement
+.ms-filters-overlay {
+  display: none;
+
+  @include media-md() {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba($color-black, 0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    @include transition(opacity);
+
+    &.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    &[hidden] { display: none; }
+  }
 }
 
 // ── Éléments PS à masquer ───────────────────
