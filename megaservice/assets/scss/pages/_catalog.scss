@@ -236,13 +236,11 @@ body#category {
     .ms-catalog__sidebar-head,
     .ms-catalog__sidebar-foot { display: flex; }
 
-    > .ms-catalog__cat-card,
-    > #js-search-filters-wrapper {
-      flex-shrink: 0;
-    }
+    > .ms-catalog__cat-card { flex-shrink: 0; }
 
     > #js-search-filters-wrapper {
-      flex: 1;
+      flex: 1 1 auto;
+      min-height: 0; // Critique : autorise le shrink sous la taille du contenu pour que overflow-y kicke
       overflow-y: auto;
       padding: 0 16px;
       -webkit-overflow-scrolling: touch;
