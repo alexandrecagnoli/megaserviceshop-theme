@@ -228,6 +228,7 @@ body#category {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border-radius: 16px 16px 0 0;
     box-shadow: 0 -8px 24px rgba($color-black, 0.18);
 
     &.is-open { transform: translateY(0); }
@@ -304,11 +305,11 @@ body#category {
 }
 
 .ms-catalog__sidebar-apply {
-  background: $color-black;
+  background: $color-ktm;
   color: $color-white;
-  border: 1px solid $color-black;
+  border: 1px solid $color-ktm;
 
-  &:hover { background: lighten($color-black, 10%); }
+  &:hover { background: darken($color-ktm, 8%); }
 }
 
 .ms-catalog__sidebar-reset {
@@ -317,6 +318,44 @@ body#category {
   border: 1px solid $color-black;
 
   &:hover { background: $color-black; color: $color-white; }
+}
+
+// ── Toast générique (réutilisable) ──
+.ms-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translate(-50%, 16px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: $color-black;
+  color: $color-white;
+  font-family: $font-main;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 24px rgba($color-black, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1100;
+  @include transition(opacity, transform);
+
+  &.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: $color-ktm;
+  }
 }
 
 // Overlay — mobile uniquement
