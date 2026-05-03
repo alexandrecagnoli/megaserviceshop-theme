@@ -417,6 +417,83 @@
     border-radius: 50%;
     inset: 4px !important;
   }
+
+  // ── Native checkbox/radio (rendus par smarty form_field, hors wrapper .custom-*) ──
+  // PS rend certaines checkbox sans .custom-checkbox (ex: use_same_address_for_invoice)
+  // → on style en HTML natif avec appearance: none pour garder le UI Kit cohérent
+  input[type="checkbox"]:not(.ps-shown-by-js):not(.binary),
+  input[type="radio"]:not(.ps-shown-by-js):not(.binary) {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+    border: 2px solid $color-gray-35;
+    background: $color-white;
+    cursor: pointer;
+    position: relative;
+    @include transition(border-color, background);
+
+    &:focus { outline: 2px solid $color-ktm; outline-offset: 2px; }
+
+    &:checked {
+      border-color: $color-ktm;
+      background: $color-ktm;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+      }
+    }
+  }
+
+  input[type="radio"]:not(.ps-shown-by-js):not(.binary) {
+    border-radius: 50%;
+
+    &:checked::after {
+      background: $color-white !important;
+      border-radius: 50%;
+      inset: 4px !important;
+    }
+  }
+
+  // ── form-group qui contient juste une checkbox/radio native + son label
+  // → layout inline (checkbox à gauche, label à droite, alignés au centre)
+  // Détection via :has() (Safari 15.4+ / Chrome 105+ / Firefox 121+)
+  .form-group:has(> input[type="checkbox"]),
+  .form-group:has(> input[type="radio"]),
+  .form-group:has(> div > input[type="checkbox"]),
+  .form-group:has(> div > input[type="radio"]) {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+
+    > .form-control-label,
+    > label {
+      flex: 1;
+      margin: 0;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      font-weight: 400;
+      color: $color-black;
+      text-transform: none;
+      letter-spacing: 0;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    > input[type="checkbox"],
+    > input[type="radio"],
+    > div > input[type="checkbox"],
+    > div > input[type="radio"] {
+      flex-shrink: 0;
+    }
+  }
 }
 
 // ── Carriers (delivery options) ────────────
