@@ -6,3 +6,26 @@ h1, h2, h3, h4, h5, h6 {
 p {
   margin: 0 0 1rem;
 }
+
+// ── Liens — défaut charte (jamais bleu navigateur) ──
+// Les composants spécifiques (boutons, nav, cards, etc.) overrident via une
+// specificity supérieure. Ici on garantit que tout <a> non stylé hérite de la
+// couleur du texte parent et passe orange au hover. Pas de bleu par défaut, jamais.
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  @include transition(color);
+
+  &:visited { color: inherit; }
+  &:hover, &:focus { color: $color-ktm; }
+  &:focus-visible { outline: 2px solid $color-ktm; outline-offset: 2px; }
+}
+
+// Liens utilitaires sans underline (boutons et CTAs)
+a.btn,
+a[class*="btn-"],
+a.button,
+a[class*="ms-btn"],
+button { text-decoration: none; }
