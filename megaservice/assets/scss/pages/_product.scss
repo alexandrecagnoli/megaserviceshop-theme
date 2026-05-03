@@ -592,16 +592,10 @@
 
 // ── Fiche technique ────────────────────────────
 .ms-product__features {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 0;
+  width: 100%;
   border: 1px solid $color-gray-20;
   border-radius: $border-radius;
   overflow: hidden;
-
-  @include media-md() {
-    grid-template-columns: 1fr;
-  }
 }
 
 .ms-product__features-nav {
@@ -669,7 +663,7 @@
   }
 
   tr {
-    border-bottom: 1px solid $color-gray-5;
+    border-bottom: 1px solid $color-gray-20;
 
     &:last-child {
       border-bottom: none;
@@ -677,22 +671,27 @@
   }
 
   td {
-    padding: 12px 20px;
-    font-family: $font-main;
-    font-size: 14px;
+    padding: 16px 24px;
     vertical-align: top;
+    line-height: normal;
   }
 }
 
 .ms-product__feature-name {
-  color: $color-gray-50;
-  font-weight: 400;
-  width: 45%;
+  width: 40%;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .ms-product__feature-value {
   color: $color-black;
-  font-weight: 700;
+  font-family: $font-main;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: right;
 }
 
 // ── Accessoires / produits liés ────────────────
