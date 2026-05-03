@@ -3,7 +3,7 @@
     <div class="ms-checkout-header__inner">
 
       <a href="{$urls.pages.index}" class="ms-checkout-header__logo" aria-label="{$shop.name}">
-        <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_LIGHT.png" alt="{$shop.name}" loading="eager">
+        <img src="{$urls.theme_assets}img/LOGO_MEGASERVICE_DARK.png" alt="{$shop.name}" loading="eager">
       </a>
 
       <span class="ms-checkout-header__secure">

@@ -223,9 +223,11 @@
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
+    gap: 4px;
+    margin-bottom: 10px;
     width: 100%;
+
+    &:last-child { margin-bottom: 0; }
 
     > [class*="col-"] {
       width: 100%;
@@ -235,11 +237,20 @@
     }
   }
 
+  // Form-fields wrapper PS
+  .form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    > .form-group { margin-bottom: 0; }
+  }
+
   .form-control-label {
     display: block;
-    margin-bottom: 4px;
+    margin: 0;
     font-family: $font-main;
-    font-size: $font-size-sm;
+    font-size: 12px;
     font-weight: 700;
     color: $color-black;
     text-transform: uppercase;
@@ -256,7 +267,7 @@
   textarea,
   .form-control {
     width: 100%;
-    height: 44px;
+    height: 42px;
     padding: 0 14px;
     background: $color-white;
     border: 1px solid $color-gray-20;
@@ -273,8 +284,8 @@
 
   textarea, .form-control[rows] {
     height: auto;
-    min-height: 80px;
-    padding: 12px 14px;
+    min-height: 72px;
+    padding: 10px 14px;
     resize: vertical;
   }
 
@@ -320,43 +331,70 @@
   }
 }
 
-// ── Custom radio / checkbox PS ─────────────
+// ── Custom radio / checkbox PS — UI Kit unifié ────
+// PS injecte 2 patterns selon les templates :
+//   A) <span class="custom-checkbox"><input><span></span><label>...</label></span>
+//      → label DANS le wrapper
+//   B) <span class="custom-checkbox"><input><span></span></span> + <label> séparé
+//      → label HORS du wrapper, géré au niveau du parent (cf. #conditions-to-approve)
 .ms-checkout {
   .custom-radio,
   .custom-checkbox {
     position: relative;
     display: inline-flex;
     align-items: center;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    gap: 10px;
     margin: 0 !important;
+    cursor: pointer;
+    float: none !important;
 
+    // Input invisible, occupe la zone du visuel uniquement (pas le label complet)
     input[type="radio"],
     input[type="checkbox"] {
       position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
       opacity: 0;
-      width: 100%;
-      height: 100%;
       margin: 0;
       cursor: pointer;
       z-index: 2;
     }
 
-    > span:not(.label) {
-      position: absolute;
-      inset: 0;
+    // Visuel checkbox/radio : 20×20 box
+    > span:not(.label):not(.text-muted) {
+      position: relative;
+      flex-shrink: 0;
+      display: inline-block;
       width: 20px;
       height: 20px;
       border: 2px solid $color-gray-35;
       background: $color-white;
-      pointer-events: none;
+      box-sizing: border-box;
       @include transition(border-color, background);
+      pointer-events: none;
 
       .material-icons { display: none !important; }
     }
 
-    input:checked ~ span:not(.label) {
+    // Label intégré (case A)
+    > label {
+      margin: 0 !important;
+      padding: 0 !important;
+      cursor: pointer;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      font-weight: 400;
+      color: $color-black;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.4;
+    }
+
+    // État checked
+    input:checked ~ span:not(.label):not(.text-muted) {
       border-color: $color-ktm;
       background: $color-ktm;
 
@@ -369,10 +407,15 @@
     }
   }
 
-  .custom-radio > span:not(.label) {
+  // Radio : cercle au lieu de carré, dot blanc au centre quand checked
+  .custom-radio > span:not(.label):not(.text-muted) {
     border-radius: 50%;
+  }
 
-    &::after { background-size: 10px 10px !important; }
+  .custom-radio input:checked ~ span:not(.label):not(.text-muted)::after {
+    background: $color-white !important;
+    border-radius: 50%;
+    inset: 4px !important;
   }
 }
 
@@ -451,21 +494,22 @@
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid $color-gray-20;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 
-    label { display: block; margin-bottom: 6px; font-family: $font-main; font-size: $font-size-sm; font-weight: 700; }
+    > div { display: flex; flex-direction: column; gap: 6px; }
 
-    textarea { margin-bottom: 12px; }
-
-    .custom-checkbox {
-      vertical-align: middle;
-      margin-right: 8px !important;
-
-      + label, ~ label {
-        display: inline;
-        font-weight: 400;
-        text-transform: none;
-        letter-spacing: 0;
-      }
+    > div > label,
+    label[for="delivery_message"],
+    label[for="gift_message"] {
+      margin: 0;
+      font-family: $font-main;
+      font-size: 12px;
+      font-weight: 700;
+      color: $color-black;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
   }
 }
@@ -535,20 +579,38 @@
     border-radius: $border-radius;
 
     ul { margin: 0; padding: 0; list-style: none; }
-    li { display: flex; align-items: flex-start; gap: 10px; }
-    li + li { margin-top: 8px; }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    li + li { margin-top: 10px; }
 
-    .float-xs-left { float: none !important; }
+    // Le float div PS contient juste la custom-checkbox
+    .float-xs-left {
+      float: none !important;
+      flex-shrink: 0;
+      display: inline-flex;
+    }
 
-    .condition-label label {
-      font-family: $font-main;
-      font-size: $font-size-sm;
-      color: $color-black;
-      margin: 0;
-      cursor: pointer;
-      line-height: 1.4;
+    .condition-label {
+      flex: 1;
+      min-width: 0;
 
-      a { color: $color-ktm; font-weight: 700; text-decoration: underline; }
+      label {
+        display: block;
+        font-family: $font-main;
+        font-size: $font-size-sm;
+        font-weight: 400;
+        color: $color-black;
+        margin: 0;
+        cursor: pointer;
+        line-height: 1.4;
+        text-transform: none;
+        letter-spacing: 0;
+
+        a { color: $color-ktm; font-weight: 700; text-decoration: underline; }
+      }
     }
   }
 
