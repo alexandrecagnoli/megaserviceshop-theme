@@ -898,7 +898,11 @@ body[class*="page-wishlist"] {
   max-width: none;
 }
 
-.ms-account .clearfix { display: none; }
+// Cache les <div class="clearfix"> vides que PS sème partout, mais PAS les
+// éléments structurels qui ont aussi la classe (ex: <footer class="form-footer clearfix">)
+.ms-account .clearfix:empty { display: none; }
+.ms-account .clearfix::before,
+.ms-account .clearfix::after { content: none; }
 
 // hidden-* Bootstrap helpers (BS3) — appliqués localement à l'espace client
 .ms-account .hidden-md-up { @media (min-width: 768px) { display: none !important; } }
