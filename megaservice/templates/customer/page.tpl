@@ -2,6 +2,9 @@
 
 {block name='notifications'}{/block}
 
+{* On supprime le header.page-header par défaut — le titre est rendu dans le layout custom *}
+{block name='page_header_container'}{/block}
+
 {block name='page_content_container'}
   <section id="content" class="ms-account">
 
