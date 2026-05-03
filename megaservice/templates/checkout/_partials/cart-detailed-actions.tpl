@@ -1,45 +1,18 @@
-{**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- *}
 {block name='cart_detailed_actions'}
-  <div class="checkout cart-detailed-actions js-cart-detailed-actions card-block">
+  <div class="ms-cart-actions checkout cart-detailed-actions js-cart-detailed-actions">
     {if $cart.minimalPurchaseRequired}
-      <div class="alert alert-warning" role="alert">
-        {$cart.minimalPurchaseRequired}
-      </div>
-      <div class="text-sm-center">
-        <button type="button" class="btn btn-primary disabled" disabled>{l s='Proceed to checkout' d='Shop.Theme.Actions'}</button>
-      </div>
-    {elseif empty($cart.products) }
-      <div class="text-sm-center">
-        <button type="button" class="btn btn-primary disabled" disabled>{l s='Proceed to checkout' d='Shop.Theme.Actions'}</button>
-      </div>
+      <p class="ms-cart-actions__alert">{$cart.minimalPurchaseRequired}</p>
+      <button type="button" class="ms-cart-actions__cta is-disabled" disabled>{l s='Passer ma commande' d='Shop.Theme.Actions'}</button>
+    {elseif empty($cart.products)}
+      <button type="button" class="ms-cart-actions__cta is-disabled" disabled>{l s='Passer ma commande' d='Shop.Theme.Actions'}</button>
     {else}
-      <div class="text-sm-center">
-        <a href="{$urls.pages.order}" class="btn btn-primary">{l s='Proceed to checkout' d='Shop.Theme.Actions'}</a>
-        {hook h='displayExpressCheckout'}
-      </div>
+      <a href="{$urls.pages.order}" class="ms-cart-actions__cta">
+        <span>{l s='Passer ma commande' d='Shop.Theme.Actions'}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="14" viewBox="0 0 24 16" fill="none" aria-hidden="true">
+          <path d="M1 8H23M23 8L16 1M23 8L16 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      {hook h='displayExpressCheckout'}
     {/if}
   </div>
 {/block}

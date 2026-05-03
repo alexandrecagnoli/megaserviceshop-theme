@@ -1,190 +1,141 @@
-{**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- *}
-<div class="product-line-grid">
-  <!--  product line left content: image-->
-  <div class="product-line-grid-left col-md-3 col-xs-4">
-    <span class="product-image media-middle">
-      {if $product.default_image}
-        <picture>
-          {if !empty($product.default_image.bySize.cart_default.sources.avif)}<source srcset="{$product.default_image.bySize.cart_default.sources.avif}" type="image/avif">{/if}
-          {if !empty($product.default_image.bySize.cart_default.sources.webp)}<source srcset="{$product.default_image.bySize.cart_default.sources.webp}" type="image/webp">{/if}
-          <img src="{$product.default_image.bySize.cart_default.url}" alt="{$product.name|escape:'quotes'}" loading="lazy">
-        </picture>
-      {else}
-        <picture>
-          {if !empty($urls.no_picture_image.bySize.cart_default.sources.avif)}<source srcset="{$urls.no_picture_image.bySize.cart_default.sources.avif}" type="image/avif">{/if}
-          {if !empty($urls.no_picture_image.bySize.cart_default.sources.webp)}<source srcset="{$urls.no_picture_image.bySize.cart_default.sources.webp}" type="image/webp">{/if}
-          <img src="{$urls.no_picture_image.bySize.cart_default.url}" loading="lazy" />
-        </picture>
-      {/if}
-    </span>
-  </div>
+<div class="ms-cart-line">
 
-  <!--  product line body: label, discounts, price, attributes, customizations -->
-  <div class="product-line-grid-body col-md-4 col-xs-8">
-    <div class="product-line-info">
-      <a class="label" href="{$product.url}" data-id_customization="{$product.id_customization|intval}">{$product.name}</a>
-    </div>
+  {* ── Image ── *}
+  <a class="ms-cart-line__media" href="{$product.url}">
+    {if $product.default_image}
+      <picture>
+        {if !empty($product.default_image.bySize.cart_default.sources.avif)}<source srcset="{$product.default_image.bySize.cart_default.sources.avif}" type="image/avif">{/if}
+        {if !empty($product.default_image.bySize.cart_default.sources.webp)}<source srcset="{$product.default_image.bySize.cart_default.sources.webp}" type="image/webp">{/if}
+        <img src="{$product.default_image.bySize.cart_default.url}" alt="{$product.name|escape:'html':'UTF-8'}" loading="lazy">
+      </picture>
+    {else}
+      <img src="{$urls.no_picture_image.bySize.cart_default.url}" alt="" loading="lazy">
+    {/if}
+  </a>
 
-    <div class="product-line-info product-price h5 {if $product.has_discount}has-discount{/if}">
+  {* ── Infos ── *}
+  <div class="ms-cart-line__body">
+
+    <a class="ms-cart-line__name" href="{$product.url}" data-id_customization="{$product.id_customization|intval}">{$product.name}</a>
+
+    {if $product.attributes}
+      <ul class="ms-cart-line__attrs">
+        {foreach from=$product.attributes key="attribute" item="value"}
+          <li><span class="ms-cart-line__attr-label">{$attribute}:</span> <span>{$value}</span></li>
+        {/foreach}
+      </ul>
+    {/if}
+
+    <div class="ms-cart-line__unit-price {if $product.has_discount}has-discount{/if}">
       {if $product.has_discount}
-        <div class="product-discount">
-          <span class="regular-price">{$product.regular_price}</span>
-          {if $product.discount_type === 'percentage'}
-            <span class="discount discount-percentage">
-                -{$product.discount_percentage_absolute}
-              </span>
-          {else}
-            <span class="discount discount-amount">
-                -{$product.discount_to_display}
-              </span>
-          {/if}
-        </div>
-      {/if}
-      <div class="current-price">
-        <span class="price">{$product.price}</span>
-        {if $product.unit_price_full}
-          <div class="unit-price-cart">{$product.unit_price_full}</div>
+        <span class="ms-cart-line__regular regular-price">{$product.regular_price}</span>
+        {if $product.discount_type === 'percentage'}
+          <span class="ms-cart-line__discount discount discount-percentage">-{$product.discount_percentage_absolute}</span>
+        {else}
+          <span class="ms-cart-line__discount discount discount-amount">-{$product.discount_to_display}</span>
         {/if}
-      </div>
+      {/if}
+      <span class="ms-cart-line__price price">{$product.price}</span>
+      {if $product.unit_price_full}
+        <span class="ms-cart-line__unit unit-price-cart">{$product.unit_price_full}</span>
+      {/if}
       {hook h='displayProductPriceBlock' product=$product type="unit_price"}
     </div>
 
-    <br/>
-
-    {foreach from=$product.attributes key="attribute" item="value"}
-      <div class="product-line-info {$attribute|lower}">
-        <span class="label">{$attribute}:</span>
-        <span class="value">{$value}</span>
-      </div>
-    {/foreach}
-
     {if is_array($product.customizations) && $product.customizations|count}
-      <br>
       {block name='cart_detailed_product_line_customization'}
-        {foreach from=$product.customizations item="customization"}
-          <a href="#" data-toggle="modal" data-target="#product-customizations-modal-{$customization.id_customization}">{l s='Product customization' d='Shop.Theme.Catalog'}</a>
-          <div class="modal fade customization-modal js-customization-modal" id="product-customizations-modal-{$customization.id_customization}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-label="{l s='Close' d='Shop.Theme.Global'}">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                  <h4 class="modal-title">{l s='Product customization' d='Shop.Theme.Catalog'}</h4>
-                </div>
-                <div class="modal-body">
-                  {foreach from=$customization.fields item="field"}
-                    <div class="product-customization-line row">
-                      <div class="col-sm-3 col-xs-4 label">
-                        {$field.label}
-                      </div>
-                      <div class="col-sm-9 col-xs-8 value">
-                        {if $field.type == 'text'}
-                          {if (int)$field.id_module}
-                            {$field.text nofilter}
-                          {else}
-                            {$field.text}
+        <div class="ms-cart-line__custom">
+          {foreach from=$product.customizations item="customization"}
+            <a href="#" data-toggle="modal" data-target="#product-customizations-modal-{$customization.id_customization}">{l s='Personnalisation produit' d='Shop.Theme.Catalog'}</a>
+            <div class="modal fade customization-modal js-customization-modal" id="product-customizations-modal-{$customization.id_customization}" tabindex="-1" role="dialog" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{l s='Fermer' d='Shop.Theme.Global'}">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">{l s='Personnalisation produit' d='Shop.Theme.Catalog'}</h4>
+                  </div>
+                  <div class="modal-body">
+                    {foreach from=$customization.fields item="field"}
+                      <div class="product-customization-line row">
+                        <div class="col-sm-3 col-xs-4 label">{$field.label}</div>
+                        <div class="col-sm-9 col-xs-8 value">
+                          {if $field.type == 'text'}
+                            {if (int)$field.id_module}{$field.text nofilter}{else}{$field.text}{/if}
+                          {elseif $field.type == 'image'}
+                            <img src="{$field.image.small.url}" loading="lazy">
                           {/if}
-                        {elseif $field.type == 'image'}
-                          <img src="{$field.image.small.url}" loading="lazy">
-                        {/if}
+                        </div>
                       </div>
-                    </div>
-                  {/foreach}
+                    {/foreach}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        {/foreach}
+          {/foreach}
+        </div>
       {/block}
+    {/if}
+
+  </div>
+
+  {* ── Quantité ── *}
+  <div class="ms-cart-line__qty">
+    {if !empty($product.is_gift)}
+      <span class="ms-cart-line__gift-qty">{$product.quantity}</span>
+    {else}
+      <input
+        class="ms-cart-line__qty-input js-cart-line-product-quantity"
+        data-down-url="{$product.down_quantity_url}"
+        data-up-url="{$product.up_quantity_url}"
+        data-update-url="{$product.update_quantity_url}"
+        data-product-id="{$product.id_product}"
+        type="number"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        min="1"
+        value="{$product.quantity}"
+        name="product-quantity-spin"
+        aria-label="{l s='Quantité de %productName%' sprintf=['%productName%' => $product.name] d='Shop.Theme.Checkout'}"
+      />
     {/if}
   </div>
 
-  <!--  product line right content: actions (quantity, delete), price -->
-  <div class="product-line-grid-right product-line-actions col-md-5 col-xs-12">
-    <div class="row">
-      <div class="col-xs-4 hidden-md-up"></div>
-      <div class="col-md-10 col-xs-6">
-        <div class="row">
-          <div class="col-md-6 col-xs-6 qty">
-            {if !empty($product.is_gift)}
-              <span class="gift-quantity">{$product.quantity}</span>
-            {else}
-              <input
-                class="js-cart-line-product-quantity"
-                data-down-url="{$product.down_quantity_url}"
-                data-up-url="{$product.up_quantity_url}"
-                data-update-url="{$product.update_quantity_url}"
-                data-product-id="{$product.id_product}"
-                type="number"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                value="{$product.quantity}"
-                name="product-quantity-spin"
-                aria-label="{l s='%productName% product quantity field' sprintf=['%productName%' => $product.name] d='Shop.Theme.Checkout'}"
-              />
-            {/if}
-          </div>
-          <div class="col-md-6 col-xs-2 price">
-            <span class="product-price">
-              <strong>
-                {if !empty($product.is_gift)}
-                  <span class="gift">{l s='Gift' d='Shop.Theme.Checkout'}</span>
-                {else}
-                  {$product.total}
-                {/if}
-              </strong>
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-xs-2 text-xs-right">
-        <div class="cart-line-product-actions">
-          <a
-              class                       = "remove-from-cart"
-              rel                         = "nofollow"
-              href                        = "{$product.remove_from_cart_url}"
-              data-link-action            = "delete-from-cart"
-              data-id-product             = "{$product.id_product|escape:'javascript'}"
-              data-id-product-attribute   = "{$product.id_product_attribute|escape:'javascript'}"
-              data-id-customization       = "{$product.id_customization|default|escape:'javascript'}"
-          >
-            {if empty($product.is_gift)}
-              <i class="material-icons float-xs-left">delete</i>
-            {/if}
-          </a>
-
-          {block name='hook_cart_extra_product_actions'}
-            {hook h='displayCartExtraProductActions' product=$product}
-          {/block}
-
-        </div>
-      </div>
-    </div>
+  {* ── Total ligne ── *}
+  <div class="ms-cart-line__total">
+    {if !empty($product.is_gift)}
+      <span class="ms-cart-line__gift">{l s='Cadeau' d='Shop.Theme.Checkout'}</span>
+    {else}
+      {$product.total}
+    {/if}
   </div>
 
-  <div class="clearfix"></div>
+  {* ── Supprimer ── *}
+  <div class="ms-cart-line__actions">
+    <a
+      class="ms-cart-line__remove remove-from-cart"
+      rel="nofollow"
+      href="{$product.remove_from_cart_url}"
+      data-link-action="delete-from-cart"
+      data-id-product="{$product.id_product|escape:'javascript'}"
+      data-id-product-attribute="{$product.id_product_attribute|escape:'javascript'}"
+      data-id-customization="{$product.id_customization|default|escape:'javascript'}"
+      aria-label="{l s='Supprimer du panier' d='Shop.Theme.Actions'}"
+    >
+      {if empty($product.is_gift)}
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      {/if}
+    </a>
+
+    {block name='hook_cart_extra_product_actions'}
+      {hook h='displayCartExtraProductActions' product=$product}
+    {/block}
+  </div>
+
 </div>
