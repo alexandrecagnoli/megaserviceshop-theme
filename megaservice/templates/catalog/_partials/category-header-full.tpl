@@ -5,16 +5,16 @@
     {if isset($subcategories) && $subcategories|@count > 0}
       <nav class="ms-subcat-nav" aria-label="{l s='Sous-catégories' d='Shop.Theme.Catalog'}">
         {foreach from=$subcategories item="subcat"}
-          {* Fallback chain — PS expose des paths variables selon les types d'image générés *}
+          {* Fallback chain — PS expose des paths variables selon les types d'image générés.
+             Cas observé : id_image vide en BDD malgré upload OK → on construit l'URL depuis id_category *}
           {assign var='_subcat_img' value=''}
           {if !empty($subcat.image.large.url)}{assign var='_subcat_img' value=$subcat.image.large.url}
           {elseif !empty($subcat.image.medium.url)}{assign var='_subcat_img' value=$subcat.image.medium.url}
           {elseif !empty($subcat.image.small.url)}{assign var='_subcat_img' value=$subcat.image.small.url}
-          {elseif !empty($subcat.image.url)}{assign var='_subcat_img' value=$subcat.image.url}
-          {elseif !empty($subcat.image_url)}{assign var='_subcat_img' value=$subcat.image_url}
-          {elseif !empty($subcat.id_category) && !empty($subcat.id_image)}
-            {* Dernier recours : path direct vers l'image originale uploadée *}
-            {assign var='_subcat_img' value="/img/c/`$subcat.id_image`.jpg"}
+          {elseif !empty($subcat.id_category)}
+            {* Dernier recours : path direct PS construit depuis id_category
+               (small_default est le seul type souvent généré pour les categories) *}
+            {assign var='_subcat_img' value="/img/c/`$subcat.id_category`-small_default.jpg"}
           {/if}
           <a href="{$subcat.url}"
              class="ms-subcat-nav__item"
