@@ -1,0 +1,829 @@
+// ============================================
+// PAGE CHECKOUT
+// ============================================
+
+.ms-checkout {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 32px $container-padding 48px;
+
+  @include media-md() { padding: 16px $container-padding 32px; }
+}
+
+.ms-checkout__title {
+  margin: 0 0 24px;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+
+  @include media-md() { font-size: 24px; margin-bottom: 16px; }
+}
+
+.ms-checkout__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+
+  @include media-lg() { gap: 24px; }
+  @include media-md() { flex-direction: column; gap: 16px; }
+}
+
+.ms-checkout__main { flex: 1; min-width: 0; }
+
+.ms-checkout__aside {
+  width: 360px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+
+  @include media-md() {
+    width: 100%;
+    position: static;
+  }
+}
+
+// ── Header simplifié ───────────────────────
+.ms-checkout-header {
+  background: $color-black;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba($color-white, 0.1);
+}
+
+.ms-checkout-header__inner {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 0 $container-padding;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ms-checkout-header__logo img {
+  height: 36px;
+  width: auto;
+  display: block;
+
+  @include media-md() { height: 28px; }
+}
+
+.ms-checkout-header__secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: $color-white;
+  font-family: $font-main;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  @include media-md() {
+    span { display: none; }
+  }
+}
+
+// ── Footer simplifié ───────────────────────
+.ms-checkout-footer {
+  margin-top: 48px;
+  padding: 24px $container-padding;
+  background: $color-gray-5;
+  text-align: center;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  color: $color-gray-60;
+
+  .js-terms {
+    display: block;
+    margin-bottom: 8px;
+    color: $color-black;
+
+    a { color: $color-ktm; text-decoration: underline; }
+  }
+}
+
+// ── Steps ──────────────────────────────────
+.checkout-step {
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  margin-bottom: 16px;
+  overflow: hidden;
+  @include transition(border-color);
+
+  &.-current { border-color: $color-black; }
+  &.-complete .step-edit { display: inline-flex; }
+}
+
+.step-title {
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+  margin: 0 !important;
+  padding: 18px 24px !important;
+  font-family: $font-heading !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: $color-black;
+  cursor: default;
+
+  @include media-md() { padding: 14px 16px !important; font-size: 16px !important; }
+
+  // Numéro circulaire (par défaut)
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $color-gray-5;
+    color: $color-black;
+    font-family: $font-heading;
+    font-size: 14px;
+    font-weight: 900;
+    border: 1.5px solid $color-gray-20;
+  }
+
+  // Icône check (material-icons "done") — remplacée visuellement
+  .material-icons.done {
+    display: none !important;
+  }
+
+  .step-edit {
+    display: none;
+    margin-left: auto;
+    align-items: center;
+    gap: 6px;
+    color: $color-ktm;
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-decoration: none;
+
+    .material-icons.edit { display: none !important; }
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FE6604' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E") no-repeat center / contain;
+    }
+  }
+}
+
+// État complete : numéro devient cercle vert avec check
+.checkout-step.-complete {
+  .step-title .step-number {
+    background: $color-ktm;
+    border-color: $color-ktm;
+    color: transparent;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center / 18px 18px;
+    }
+  }
+}
+
+// État courant : numéro devient noir
+.checkout-step.-current {
+  .step-title .step-number {
+    background: $color-black;
+    border-color: $color-black;
+    color: $color-white;
+  }
+}
+
+.checkout-step .content {
+  padding: 24px;
+  border-top: 1px solid $color-gray-20;
+
+  @include media-md() { padding: 16px; }
+}
+
+// Contenu masqué quand pas current/complete
+.checkout-step:not(.-current) .content { display: none; }
+
+// ── Forms (alias depuis _customer.scss styles) ──
+.ms-checkout {
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+    width: 100%;
+
+    > [class*="col-"] {
+      width: 100%;
+      max-width: none;
+      flex: 0 0 100%;
+      padding: 0;
+    }
+  }
+
+  .form-control-label {
+    display: block;
+    margin-bottom: 4px;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    color: $color-black;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea,
+  .form-control {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: $color-white;
+    border: 1px solid $color-gray-20;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-base;
+    color: $color-black;
+    appearance: none;
+    @include transition(border-color);
+
+    &:focus { outline: none; border-color: $color-black; }
+    &::placeholder { color: $color-gray-50; }
+  }
+
+  textarea, .form-control[rows] {
+    height: auto;
+    min-height: 80px;
+    padding: 12px 14px;
+    resize: vertical;
+  }
+
+  select, select.form-control {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%230A0A0A' stroke-width='2'%3E%3Cpolyline points='1 1 6 6 11 1'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  // Btn principal step (Continuer / Commander) en orange
+  .btn-primary,
+  button[type="submit"],
+  .form-control-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    padding: 0 28px;
+    background: $color-ktm;
+    color: $color-white;
+    border: none;
+    border-radius: $border-radius;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-decoration: none;
+    @include transition(background);
+
+    &:hover { background: darken($color-ktm, 8%); color: $color-white; text-decoration: none; }
+
+    &.disabled, &[disabled] {
+      background: $color-gray-20;
+      cursor: not-allowed;
+      &:hover { background: $color-gray-20; }
+    }
+
+    &.continue { float: none !important; margin-top: 8px; }
+  }
+}
+
+// ── Custom radio / checkbox PS ─────────────
+.ms-checkout {
+  .custom-radio,
+  .custom-checkbox {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin: 0 !important;
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    > span:not(.label) {
+      position: absolute;
+      inset: 0;
+      width: 20px;
+      height: 20px;
+      border: 2px solid $color-gray-35;
+      background: $color-white;
+      pointer-events: none;
+      @include transition(border-color, background);
+
+      .material-icons { display: none !important; }
+    }
+
+    input:checked ~ span:not(.label) {
+      border-color: $color-ktm;
+      background: $color-ktm;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+      }
+    }
+  }
+
+  .custom-radio > span:not(.label) {
+    border-radius: 50%;
+
+    &::after { background-size: 10px 10px !important; }
+  }
+}
+
+// ── Carriers (delivery options) ────────────
+.ms-checkout {
+  .delivery-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .delivery-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: $color-white;
+    border: 2px solid $color-gray-20;
+    border-radius: $border-radius;
+    cursor: pointer;
+    @include transition(border-color, background);
+
+    &:hover { border-color: $color-gray-50; }
+
+    // Lorsqu'un radio est checked à l'intérieur
+    &:has(input:checked) { border-color: $color-ktm; background: lighten($color-ktm, 42%); }
+
+    // Reset Bootstrap col-* width
+    > [class*="col-"] {
+      width: auto;
+      flex: initial;
+      max-width: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1; margin: 0; }
+
+    .carrier {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .carrier-logo img {
+      max-width: 60px;
+      height: auto;
+      display: block;
+    }
+
+    .carrier-name {
+      font-family: $font-main;
+      font-size: $font-size-base;
+      font-weight: 700;
+      color: $color-black;
+    }
+
+    .carrier-delay {
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      color: $color-gray-60;
+    }
+
+    .carrier-price {
+      font-family: $font-heading;
+      font-weight: 900;
+      font-size: 18px;
+      color: $color-ktm;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+  }
+
+  .order-options {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid $color-gray-20;
+
+    label { display: block; margin-bottom: 6px; font-family: $font-main; font-size: $font-size-sm; font-weight: 700; }
+
+    textarea { margin-bottom: 12px; }
+
+    .custom-checkbox {
+      vertical-align: middle;
+      margin-right: 8px !important;
+
+      + label, ~ label {
+        display: inline;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+    }
+  }
+}
+
+// ── Payment options ────────────────────────
+.ms-checkout {
+  .payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .payment-option {
+    display: flex !important;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: $color-white;
+    border: 2px solid $color-gray-20;
+    border-radius: $border-radius;
+    @include transition(border-color, background);
+
+    &:hover { border-color: $color-gray-50; }
+    &:has(input:checked) { border-color: $color-ktm; background: lighten($color-ktm, 42%); }
+
+    label {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      cursor: pointer;
+      margin: 0 !important;
+
+      span {
+        font-family: $font-main;
+        font-size: $font-size-base;
+        font-weight: 700;
+        color: $color-black;
+      }
+
+      img {
+        max-height: 28px;
+        width: auto;
+        margin-left: auto;
+      }
+    }
+  }
+
+  .additional-information,
+  .js-additional-information {
+    margin-top: -4px;
+    margin-bottom: 8px;
+    padding: 14px 18px;
+    background: $color-gray-5;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    color: $color-black;
+
+    &.ps-hidden { display: none; }
+  }
+
+  #conditions-to-approve {
+    margin-top: 20px;
+    padding: 16px;
+    background: $color-gray-5;
+    border-radius: $border-radius;
+
+    ul { margin: 0; padding: 0; list-style: none; }
+    li { display: flex; align-items: flex-start; gap: 10px; }
+    li + li { margin-top: 8px; }
+
+    .float-xs-left { float: none !important; }
+
+    .condition-label label {
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      color: $color-black;
+      margin: 0;
+      cursor: pointer;
+      line-height: 1.4;
+
+      a { color: $color-ktm; font-weight: 700; text-decoration: underline; }
+    }
+  }
+
+  #payment-confirmation {
+    margin-top: 20px;
+    text-align: center;
+
+    .btn-primary {
+      width: 100%;
+      max-width: none;
+      float: none !important;
+      height: 56px;
+      font-size: 16px;
+    }
+  }
+}
+
+// ── Summary card (right column) ────────────
+#js-checkout-summary,
+.ms-checkout__aside .card {
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+
+  .card-block { padding: 20px 24px; }
+}
+
+.ms-checkout__aside {
+  .cart-summary-products {
+    p { margin: 0 0 8px; font-family: $font-main; font-size: $font-size-base; font-weight: 700; color: $color-black; }
+
+    .js-show-details {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: $color-gray-60;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      text-decoration: underline;
+      cursor: pointer;
+
+      .material-icons { display: none !important; }
+
+      &::after {
+        content: '';
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23676767' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat center / contain;
+      }
+    }
+  }
+
+  .media-list {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid $color-gray-20;
+  }
+
+  .media {
+    display: flex !important;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid $color-gray-5;
+
+    &:last-child { border-bottom: none; }
+
+    .media-left {
+      flex-shrink: 0;
+      width: 56px;
+
+      img {
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
+        border: 1px solid $color-gray-20;
+        border-radius: $border-radius;
+        background: $color-white;
+        display: block;
+      }
+    }
+
+    .media-body {
+      flex: 1;
+      min-width: 0;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      line-height: 1.4;
+
+      .product-name a { color: $color-black; font-weight: 700; text-decoration: none; &:hover { color: $color-ktm; } }
+      .product-quantity { color: $color-gray-60; margin-left: 8px; }
+      .product-price { float: right !important; color: $color-ktm; font-weight: 700; }
+
+      .product-line-info { font-size: 12px; color: $color-gray-60; margin-top: 2px; }
+    }
+  }
+
+  .cart-summary-subtotals-container {
+    padding: 16px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cart-summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    font-family: $font-main;
+    font-size: $font-size-base;
+    color: $color-black;
+
+    .label { font-weight: 400; }
+    .value { font-weight: 700; white-space: nowrap; }
+  }
+
+  .cart-summary-totals,
+  .js-cart-summary-totals {
+    margin-top: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid $color-gray-20;
+    background: $color-gray-5;
+
+    .cart-summary-line.cart-total,
+    .cart-summary-line {
+      font-family: $font-heading;
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+
+      .value { color: $color-ktm; }
+    }
+  }
+}
+
+// Voucher accordion (réutilise _cart.scss styles)
+#js-checkout-summary .cart-voucher,
+#js-checkout-summary .block-promo {
+  padding: 16px 24px;
+  border-top: 1px solid $color-gray-20;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+
+  .promo-code-button a {
+    color: $color-black;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .promo-code form {
+    display: flex;
+    gap: 0;
+    margin-top: 8px;
+  }
+
+  .promo-input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid $color-gray-20;
+    border-right: none;
+    border-radius: $border-radius 0 0 $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+  }
+
+  .promo-code button {
+    height: 40px;
+    padding: 0 16px;
+    background: $color-black;
+    color: $color-white;
+    border: none;
+    border-radius: 0 $border-radius $border-radius 0;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 12px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .promo-name { margin: 0 0 8px; padding: 0; list-style: none; }
+}
+
+// ── Modal Bootstrap (checkout) ─────────────
+.ms-checkout .modal,
+.js-checkout-modal {
+  .modal-content {
+    background: $color-white;
+    border: none;
+    border-radius: $border-radius-lg;
+    padding: 24px;
+  }
+  .modal-dialog { max-width: 520px; margin: auto; }
+  .close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: $color-gray-60;
+    &:hover { color: $color-ktm; }
+  }
+}
+
+// ── Notifications / alerts ─────────────────
+.ms-checkout .alert,
+.checkout-step .alert {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: $border-radius;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  border-left: 3px solid;
+
+  &.alert-danger { background: #fdecea; border-color: #d93025; color: #5f2120; }
+  &.alert-warning { background: #fff8e1; border-color: #f9a825; color: #5d4037; }
+  &.alert-info { background: $color-gray-5; border-color: $color-ktm; color: $color-black; }
+}
+
+// ── Address selector (between addresses step) ─
+.ms-checkout {
+  .address-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    background: $color-white;
+    border: 2px solid $color-gray-20;
+    border-radius: $border-radius;
+    margin-bottom: 10px;
+    @include transition(border-color, background);
+
+    &:hover { border-color: $color-gray-50; }
+    &.selected,
+    &:has(input:checked) { border-color: $color-ktm; background: lighten($color-ktm, 42%); }
+
+    .address-alias { font-weight: 700; }
+    .address { font-family: $font-main; font-size: $font-size-sm; line-height: 1.4; color: $color-black; }
+  }
+
+  .add-address {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    color: $color-ktm;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: underline;
+
+    &:hover { color: darken($color-ktm, 12%); }
+  }
+}
+
+// ── Reset Bootstrap résiduel ───────────────
+.ms-checkout {
+  .row { display: block; margin: 0; }
+  .col-xs-12, .col-md-1, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-9, .col-md-11, .col-md-12,
+  .col-sm-1, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-9, .col-sm-11, .col-sm-12,
+  .col-lg-3, .col-lg-4, .col-lg-6, .col-lg-8, .col-lg-9, .col-lg-12 {
+    width: auto;
+    flex: initial;
+    max-width: none;
+    padding: 0;
+  }
+  .clearfix::before, .clearfix::after { content: none; }
+  .float-xs-right, .float-xs-left { float: none !important; }
+}
