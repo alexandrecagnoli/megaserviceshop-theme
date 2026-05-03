@@ -141,7 +141,8 @@
   @include media-sm() { grid-template-columns: 1fr; }
 }
 
-.ms-account-tile {
+.ms-account-tile,
+.ms-account-tiles > a {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -152,6 +153,12 @@
   border-radius: $border-radius-lg;
   color: $color-black;
   text-decoration: none;
+  font-family: $font-heading;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
   @include transition(border-color, transform);
 
   &:hover {
@@ -159,6 +166,15 @@
     color: $color-black;
     text-decoration: none;
     transform: translateY(-2px);
+  }
+
+  // Hook displayCustomerAccount : neutralise les wrappers Bootstrap + material-icons text
+  .material-icons { display: none; }
+
+  > .link-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
   }
 }
 
