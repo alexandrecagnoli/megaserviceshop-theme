@@ -1,83 +1,44 @@
-{**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- *}
 {extends file='customer/page.tpl'}
 
-{block name='page_title'}
-  {l s='Credit slips' d='Shop.Theme.Customeraccount'}
-{/block}
+{block name='page_title'}{l s='Mes avoirs' d='Shop.Theme.Customeraccount'}{/block}
 
 {block name='page_content'}
-  <h6>{l s='Credit slips you have received after canceled orders.' d='Shop.Theme.Customeraccount'}</h6>
-
   {if $credit_slips}
-    <table class="table table-striped table-bordered hidden-sm-down">
-      <thead class="thead-default">
+    <table class="ms-account-table">
+      <thead>
         <tr>
-          <th>{l s='Order' d='Shop.Theme.Customeraccount'}</th>
-          <th>{l s='Credit slip' d='Shop.Theme.Customeraccount'}</th>
-          <th>{l s='Date issued' d='Shop.Theme.Customeraccount'}</th>
-          <th>{l s='View credit slip' d='Shop.Theme.Customeraccount'}</th>
+          <th>{l s='Commande' d='Shop.Theme.Customeraccount'}</th>
+          <th>{l s='N° avoir' d='Shop.Theme.Customeraccount'}</th>
+          <th>{l s='Date' d='Shop.Theme.Customeraccount'}</th>
+          <th>{l s='Voir' d='Shop.Theme.Customeraccount'}</th>
         </tr>
       </thead>
       <tbody>
         {foreach from=$credit_slips item=slip}
           <tr>
-            <td><a href="{$slip.order_url_details}" data-link-action="view-order-details">{$slip.order_reference}</a></td>
-            <td scope="row">{$slip.credit_slip_number}</td>
+            <td><a class="ms-account-table__link" href="{$slip.order_url_details}" data-link-action="view-order-details">{$slip.order_reference}</a></td>
+            <td>{$slip.credit_slip_number}</td>
             <td>{$slip.credit_slip_date}</td>
-            <td class="text-sm-center">
-              <a href="{$slip.url}"><i class="material-icons">&#xE415;</i></a>
+            <td>
+              <a class="ms-account-table__icon-btn" href="{$slip.url}" aria-label="{l s='Voir l\'avoir' d='Shop.Theme.Customeraccount'}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </a>
             </td>
           </tr>
         {/foreach}
       </tbody>
     </table>
-    <div class="credit-slips hidden-md-up">
+
+    <div class="ms-account-list">
       {foreach from=$credit_slips item=slip}
-        <div class="credit-slip">
-          <ul>
-            <li>
-              <strong>{l s='Order' d='Shop.Theme.Customeraccount'}</strong>
-              <a href="{$slip.order_url_details}" data-link-action="view-order-details">{$slip.order_reference}</a>
-            </li>
-            <li>
-              <strong>{l s='Credit slip' d='Shop.Theme.Customeraccount'}</strong>
-              {$slip.credit_slip_number}
-            </li>
-            <li>
-              <strong>{l s='Date issued' d='Shop.Theme.Customeraccount'}</strong>
-              {$slip.credit_slip_date}
-            </li>
-            <li>
-              <a href="{$slip.url}">{l s='View credit slip' d='Shop.Theme.Customeraccount'}</a>
-            </li>
-          </ul>
-        </div>
+        <article class="ms-account-list__item">
+          <div class="ms-account-list__row"><a class="ms-account-table__link" href="{$slip.order_url_details}" data-link-action="view-order-details"><strong>{$slip.order_reference}</strong></a><span>{$slip.credit_slip_date}</span></div>
+          <div class="ms-account-list__row"><span>{l s='N° avoir' d='Shop.Theme.Customeraccount'}</span><span>{$slip.credit_slip_number}</span></div>
+          <div class="ms-account-list__row"><a class="ms-account-table__link" href="{$slip.url}">{l s='Télécharger' d='Shop.Theme.Customeraccount'}</a></div>
+        </article>
       {/foreach}
     </div>
   {else}
-    <div class="alert alert-info" role="alert" data-alert="info">{l s='You have not received any credit slips.' d='Shop.Notifications.Warning'}</div>
+    <div class="ms-account-empty">{l s='Vous n\'avez reçu aucun avoir.' d='Shop.Theme.Customeraccount'}</div>
   {/if}
 {/block}

@@ -1,0 +1,725 @@
+// ============================================
+// ESPACE CLIENT
+// ============================================
+
+// ── Container global ────────────────────────
+.ms-account {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 40px $container-padding 64px;
+
+  @include media-md() { padding: 24px $container-padding 32px; }
+}
+
+.ms-account__title {
+  margin: 0 0 32px;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 36px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+
+  @include media-md() { font-size: 26px; margin-bottom: 24px; }
+}
+
+// ── Layout 2 cols (sidebar + main) ──────────
+.ms-account__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+
+  @include media-lg() { gap: 24px; }
+  @include media-md() { flex-direction: column; gap: 16px; }
+}
+
+.ms-account__main {
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Sidebar nav ─────────────────────────────
+.ms-account__nav {
+  width: 260px;
+  flex-shrink: 0;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+
+  @include media-md() { width: 100%; }
+
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  li + li { border-top: 1px solid $color-gray-20; }
+}
+
+.ms-account__nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  color: $color-black;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  @include transition(background, color);
+
+  &:hover { background: $color-gray-5; color: $color-ktm; text-decoration: none; }
+
+  &.is-active {
+    background: $color-black;
+    color: $color-white;
+
+    &:hover { background: $color-black; color: $color-white; }
+  }
+
+  &--logout {
+    color: $color-gray-60;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+
+    &:hover { color: $color-ktm; }
+  }
+}
+
+.ms-account__nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+// ── Card générique ──────────────────────────
+.ms-account-card {
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+
+  & + & { margin-top: 16px; }
+}
+
+.ms-account-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid $color-gray-20;
+  background: $color-gray-5;
+
+  @include media-md() { padding: 14px 16px; }
+}
+
+.ms-account-card__title {
+  margin: 0;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ms-account-card__body { padding: 24px; @include media-md() { padding: 16px; } }
+
+// ── Dashboard : grille de tuiles ────────────
+.ms-account-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @include media-lg() { grid-template-columns: repeat(2, 1fr); }
+  @include media-sm() { grid-template-columns: 1fr; }
+}
+
+.ms-account-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  color: $color-black;
+  text-decoration: none;
+  @include transition(border-color, transform);
+
+  &:hover {
+    border-color: $color-ktm;
+    color: $color-black;
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+}
+
+.ms-account-tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: $color-gray-5;
+  border-radius: 50%;
+  color: $color-ktm;
+}
+
+.ms-account-tile__label {
+  font-family: $font-heading;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+
+// ── Tables (orders, slips, vouchers, returns) ─
+.ms-account-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  background: $color-white;
+
+  thead {
+    background: $color-gray-5;
+    color: $color-black;
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid $color-gray-20;
+  }
+
+  tbody tr:hover { background: $color-gray-5; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__link {
+    color: $color-black;
+    text-decoration: underline;
+    font-weight: 700;
+    @include transition(color);
+    &:hover { color: $color-ktm; }
+  }
+
+  &__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: $color-gray-60;
+    background: transparent;
+    border: none;
+    @include transition(color);
+    &:hover { color: $color-ktm; }
+  }
+
+  @include media-md() { display: none; }
+}
+
+// Liste mobile (cards) — alternative à la table
+.ms-account-list {
+  display: none;
+
+  @include media-md() {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.ms-account-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+}
+
+.ms-account-list__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  strong { font-weight: 700; }
+}
+
+// Status pill (PS injecte la couleur inline)
+.ms-status-pill,
+.label.label-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: $font-main;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: $color-white;
+  line-height: 1.4;
+}
+
+// ── Empty state ────────────────────────────
+.ms-account-empty,
+.alert-info,
+.alert-warning {
+  padding: 16px 20px;
+  background: $color-gray-5;
+  border-left: 3px solid $color-ktm;
+  border-radius: $border-radius;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  color: $color-black;
+
+  a {
+    color: $color-ktm;
+    font-weight: 700;
+    text-decoration: underline;
+    &:hover { color: darken($color-ktm, 12%); }
+  }
+}
+
+// ── Address card ───────────────────────────
+.ms-address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @include media-md() { grid-template-columns: 1fr; }
+}
+
+.ms-address-card {
+  display: flex;
+  flex-direction: column;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+}
+
+.ms-address-card__body {
+  flex: 1;
+  padding: 20px 24px;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  color: $color-black;
+  line-height: 1.5;
+
+  h4 {
+    margin: 0 0 8px;
+    font-family: $font-heading;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: $color-gray-60;
+    letter-spacing: 0.03em;
+  }
+
+  address {
+    margin: 0;
+    font-style: normal;
+  }
+}
+
+.ms-address-card__foot {
+  display: flex;
+  border-top: 1px solid $color-gray-20;
+
+  a {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    color: $color-black;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    background: $color-white;
+    @include transition(background, color);
+
+    & + a { border-left: 1px solid $color-gray-20; }
+    &:hover { background: $color-gray-5; color: $color-ktm; text-decoration: none; }
+  }
+}
+
+.ms-account__add-address {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 20px;
+  background: $color-black;
+  color: $color-white;
+  border-radius: $border-radius;
+  font-family: $font-heading;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  @include transition(background);
+
+  &:hover { background: lighten($color-black, 12%); color: $color-white; text-decoration: none; }
+}
+
+// ── Forms (override PS classes) ────────────
+.ms-account .form-group,
+.ms-auth .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  width: 100%;
+
+  // Reset col-md-* qui peuvent venir de PS
+  > [class*="col-"] {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 100%;
+    padding: 0;
+  }
+}
+
+.ms-account .form-control-label,
+.ms-auth .form-control-label {
+  display: block;
+  margin-bottom: 4px;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  font-weight: 700;
+  color: $color-black;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &.required::after,
+  &::before {
+    content: '';
+  }
+}
+
+.ms-account input[type="text"],
+.ms-account input[type="email"],
+.ms-account input[type="password"],
+.ms-account input[type="tel"],
+.ms-account input[type="number"],
+.ms-account input[type="search"],
+.ms-account input[type="url"],
+.ms-account input[type="date"],
+.ms-account select,
+.ms-account textarea,
+.ms-auth input[type="text"],
+.ms-auth input[type="email"],
+.ms-auth input[type="password"],
+.ms-auth input[type="tel"],
+.ms-auth input[type="number"],
+.ms-auth input[type="search"],
+.ms-auth select,
+.ms-auth textarea,
+.ms-account .form-control,
+.ms-auth .form-control {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  color: $color-black;
+  appearance: none;
+  @include transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: $color-black;
+  }
+
+  &::placeholder { color: $color-gray-50; }
+}
+
+.ms-account textarea,
+.ms-auth textarea,
+.ms-account .form-control[rows],
+.ms-auth .form-control[rows] {
+  height: auto;
+  min-height: 100px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.ms-account select,
+.ms-auth select,
+.ms-account select.form-control,
+.ms-auth select.form-control {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%230A0A0A' stroke-width='2'%3E%3Cpolyline points='1 1 6 6 11 1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.ms-account .checkbox,
+.ms-auth .checkbox,
+.ms-account .form-check,
+.ms-auth .form-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+
+  input[type="checkbox"], input[type="radio"] {
+    flex-shrink: 0;
+    margin-top: 3px;
+    accent-color: $color-ktm;
+  }
+
+  label { margin: 0; cursor: pointer; }
+}
+
+// Submit / btn-primary scoped ms-account & ms-auth
+.ms-account .form-control-submit,
+.ms-account .btn-primary,
+.ms-auth .form-control-submit,
+.ms-auth .btn-primary,
+.ms-account button[type="submit"],
+.ms-auth button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  padding: 0 24px;
+  background: $color-ktm;
+  color: $color-white;
+  border: none;
+  border-radius: $border-radius;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  cursor: pointer;
+  @include transition(background);
+
+  &:hover { background: darken($color-ktm, 8%); color: $color-white; }
+
+  &.disabled, &[disabled] {
+    background: $color-gray-20;
+    cursor: not-allowed;
+    &:hover { background: $color-gray-20; }
+  }
+}
+
+.ms-account .form-footer,
+.ms-auth .form-footer {
+  margin-top: 8px;
+}
+
+.ms-account .forgot-password {
+  margin-top: 8px;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+
+  a { color: $color-gray-60; text-decoration: underline; &:hover { color: $color-ktm; } }
+}
+
+// ps-alert-error / success
+.ms-account .ps-alert-error,
+.ms-account .ps-alert-success,
+.ms-auth .ps-alert-error,
+.ms-auth .ps-alert-success {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 12px 14px;
+    background: $color-white;
+    border-left: 3px solid $color-ktm;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    color: $color-black;
+
+    p { margin: 0; }
+
+    i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: $color-ktm;
+      border-radius: 50%;
+      flex-shrink: 0;
+
+      svg { width: 12px; height: 12px; }
+    }
+  }
+}
+
+.ms-account .ps-alert-success .item,
+.ms-auth .ps-alert-success .item {
+  border-left-color: #2ea043;
+  i { background: #2ea043; }
+}
+
+// ── Auth (login / register / password) ─────
+.ms-auth {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  padding: 48px $container-padding;
+
+  @include media-md() { padding: 24px $container-padding; min-height: 0; }
+}
+
+.ms-auth__card {
+  width: 100%;
+  max-width: 480px;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  padding: 40px;
+
+  @include media-md() { padding: 24px; }
+}
+
+.ms-auth__title {
+  margin: 0 0 24px;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.03em;
+
+  @include media-md() { font-size: 20px; }
+}
+
+.ms-auth__intro {
+  margin: 0 0 20px;
+  color: $color-gray-60;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.ms-auth__alt {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid $color-gray-20;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  color: $color-black;
+  text-align: center;
+
+  a { color: $color-ktm; font-weight: 700; text-decoration: underline; &:hover { color: darken($color-ktm, 12%); } }
+}
+
+.ms-auth__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: $color-gray-60;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  text-decoration: none;
+
+  &:hover { color: $color-ktm; text-decoration: none; }
+}
+
+// Le bouton submit en pleine largeur dans les formulaires d'auth
+.ms-auth .form-control-submit,
+.ms-auth .btn-primary,
+.ms-auth button[type="submit"] {
+  width: 100%;
+}
+
+// ── Order detail ───────────────────────────
+.ms-order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ms-order-detail__addresses {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @include media-md() { grid-template-columns: 1fr; }
+}
+
+.ms-order-detail__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// ── Backward compat : neutralise les classes Bootstrap qui traînent ──
+.ms-account .row,
+.ms-account .col-xs-12,
+.ms-account .col-sm-6,
+.ms-account .col-md-6,
+.ms-account .col-md-4,
+.ms-account .col-lg-4,
+.ms-account .col-lg-6,
+.ms-auth .row {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  flex: initial;
+  max-width: none;
+}
+
+.ms-account .clearfix { display: none; }
+
+// hidden-* Bootstrap helpers (BS3) — appliqués localement à l'espace client
+.ms-account .hidden-md-up { @media (min-width: 768px) { display: none !important; } }
+.ms-account .hidden-sm-down,
+.ms-account .hidden-xs-down { @media (max-width: 767px) { display: none !important; } }
+.ms-account .hidden-md-down { @media (max-width: 991px) { display: none !important; } }
