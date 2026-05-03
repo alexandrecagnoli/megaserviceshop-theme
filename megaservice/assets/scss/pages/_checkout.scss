@@ -740,9 +740,17 @@
         width: 12px;
         height: 12px;
         background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23676767' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat center / contain;
+        @include transition(transform);
       }
+
+      &.is-open::after { transform: rotate(180deg); }
     }
   }
+
+  // Bootstrap collapse — plié par défaut, révélé via .in (BS3) ou .show (BS4)
+  .collapse:not(.in):not(.show) { display: none; }
+  .collapse.in,
+  .collapse.show { display: block; }
 
   .media-list {
     margin: 12px 0 0;

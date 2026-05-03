@@ -10,6 +10,7 @@ import './parts-search.js';
 import './model-selector.js';
 import './product.js';
 import './filters.js';
+import './checkout.js';
 
 // Initialise l'EventEmitter sur l'objet prestashop — requis par core.js et tous les modules PS.
 // Défensif : si PS core (ou un module) a déjà initialisé prestashop.on/emit, on NE TOUCHE PAS.
