@@ -424,10 +424,17 @@
     border-radius: 50%;
   }
 
-  .custom-radio input:checked ~ span:not(.label):not(.text-muted)::after {
-    background: $color-white !important;
-    border-radius: 50%;
-    inset: 4px !important;
+  // Quand checked : bg orange + dot blanc au centre (override l'icône SVG check du checkbox)
+  .custom-radio input:checked ~ span:not(.label):not(.text-muted) {
+    background: $color-ktm !important;
+    border-color: $color-ktm !important;
+
+    &::after {
+      background: $color-white !important;
+      background-image: none !important;
+      border-radius: 50%;
+      inset: 4px !important;
+    }
   }
 
   // ── Native checkbox/radio (rendus par smarty form_field, hors wrapper .custom-*) ──
@@ -935,40 +942,177 @@
   &.alert-info { background: $color-gray-5; border-color: $color-ktm; color: $color-black; }
 }
 
-// ── Address selector (between addresses step) ─
+// ── Address selector (étape addresses) ────
 .ms-checkout {
+
   .address-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px 20px;
+    display: block;
     background: $color-white;
     border: 2px solid $color-gray-20;
     border-radius: $border-radius;
     margin-bottom: 10px;
+    overflow: hidden;
     @include transition(border-color, background);
 
     &:hover { border-color: $color-gray-50; }
     &.selected,
     &:has(input:checked) { border-color: $color-ktm; background: lighten($color-ktm, 42%); }
 
-    .address-alias { font-weight: 700; }
-    .address { font-family: $font-main; font-size: $font-size-sm; line-height: 1.4; color: $color-black; }
+    > header {
+      padding: 16px 20px 8px;
+    }
+
+    .radio-block {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
+      gap: 4px 12px;
+      align-items: start;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      font-weight: normal;
+    }
+
+    .custom-radio {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      align-self: start;
+      margin-top: 2px;
+    }
+
+    .address-alias {
+      grid-row: 1;
+      grid-column: 2;
+      font-family: $font-main;
+      font-size: $font-size-base;
+      font-weight: 700;
+      color: $color-black;
+      margin: 0;
+      padding: 0;
+    }
+
+    .address {
+      grid-row: 2;
+      grid-column: 2;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      font-weight: 400;
+      line-height: 1.5;
+      color: $color-black;
+      margin: 0;
+    }
+
+    // Séparateur + footer Modifier/Supprimer
+    > hr {
+      display: block;
+      height: 1px;
+      margin: 0 20px;
+      border: none;
+      background: rgba($color-black, 0.08);
+    }
+
+    > footer.address-footer {
+      display: flex;
+      gap: 20px;
+      justify-content: flex-end;
+      padding: 12px 20px 14px;
+
+      a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: $color-black;
+        font-family: $font-main;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        text-decoration: none;
+        @include transition(color);
+
+        &:hover { color: $color-ktm; text-decoration: none; }
+
+        .material-icons { display: none !important; }
+      }
+
+      // SVG inline avant chaque action (edit / delete)
+      .edit-address::before,
+      .delete-address::before {
+        content: '';
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+      }
+
+      .edit-address::before {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E");
+      }
+
+      .delete-address::before {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6M14 11v6'/%3E%3Cpath d='M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'/%3E%3C/svg%3E");
+      }
+    }
   }
 
-  .add-address {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    color: $color-ktm;
+  // ── "Ajouter une nouvelle adresse" ──
+  p.add-address {
+    margin: 16px 0 12px;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: $color-black;
+      font-family: $font-main;
+      font-size: $font-size-sm;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      @include transition(color);
+
+      &:hover { color: $color-ktm; }
+
+      .material-icons { display: none !important; }
+
+      &::before {
+        content: '';
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 1.5px solid currentColor;
+        border-radius: 50%;
+        background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'%3E%3Cline x1='12' y1='6' x2='12' y2='18'/%3E%3Cline x1='6' y1='12' x2='18' y2='12'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+      }
+    }
+  }
+
+  // ── "L'adresse de facturation est différente" / "Annuler" ──
+  a[data-link-action="different-invoice-address"],
+  a[data-link-action="cancel-different-invoice-address"] {
+    display: inline-block;
+    margin: 4px 0 16px;
+    color: $color-black;
     font-family: $font-main;
     font-size: $font-size-sm;
-    font-weight: 700;
-    text-transform: uppercase;
+    font-weight: 400;
+    text-decoration: underline;
+    @include transition(color);
+
+    &:hover { color: $color-ktm; }
+  }
+
+  // ── Liens génériques dans les étapes (fallback charte) ──
+  // Couvre tout <a> non typé dans les steps qui sortirait sinon en bleu navigateur
+  .checkout-step .content a:not(.btn):not(.btn-primary):not([class*="form-control"]):not([data-link-action="edit-address"]):not([data-link-action="delete-address"]) {
+    color: $color-black;
     text-decoration: underline;
 
-    &:hover { color: darken($color-ktm, 12%); }
+    &:hover { color: $color-ktm; }
   }
 }
 
