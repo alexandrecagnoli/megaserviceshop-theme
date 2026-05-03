@@ -237,11 +237,11 @@
     }
   }
 
-  // Form-fields wrapper PS
+  // Form-fields wrapper PS — espacement plus généreux entre groupes
   .form-fields {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 18px;
 
     > .form-group { margin-bottom: 0; }
   }
@@ -255,6 +255,18 @@
     color: $color-black;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+  }
+
+  // "Optionnel" et autres commentaires (form_field PS) — petit, gris, sous le champ
+  .form-control-comment {
+    margin: 0;
+    font-family: $font-main;
+    font-size: 11px;
+    font-weight: 400;
+    color: $color-gray-60;
+    line-height: 1.3;
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   input[type="text"],
