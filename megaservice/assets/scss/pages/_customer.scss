@@ -258,6 +258,81 @@
   border-radius: $border-radius-lg;
 }
 
+// ── Page wishlist (module PS natif sans override) ──
+// Le module rend ses propres templates qui n'utilisent pas notre customer/page.tpl
+// On améliore le rendu via le body.page-* et les selectors module
+body.page-mywishlist,
+body[class*="page-wishlist"] {
+  #main, #content {
+    max-width: $container-width;
+    margin: 0 auto;
+    padding: 40px $container-padding 64px;
+
+    @include media-md() { padding: 24px $container-padding 32px; }
+  }
+
+  h1, .h1 {
+    font-family: $font-heading;
+    font-size: 36px;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: $color-black;
+    line-height: 1.1;
+    margin: 0 0 24px;
+
+    @include media-md() { font-size: 26px; }
+  }
+
+  // Liens "Créer une nouvelle liste", "share", etc. sans material-icons text
+  .wishlist-list,
+  .wishlist-products,
+  ul.wishlist-list,
+  .wishlist-list-container {
+    margin: 16px 0;
+    padding: 0;
+    list-style: none;
+    background: $color-white;
+    border: 1px solid $color-gray-20;
+    border-radius: $border-radius-lg;
+    overflow: hidden;
+
+    > li, .wishlist-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid $color-gray-20;
+      font-family: $font-main;
+      font-size: $font-size-base;
+
+      &:last-child { border-bottom: none; }
+
+      a { color: $color-black; text-decoration: none; font-weight: 700; &:hover { color: $color-ktm; } }
+    }
+  }
+
+  // CTA "Créer une nouvelle liste" — typiquement avec material-icons add_circle_outline
+  a[href*="add"], a.wishlist-list-item-add, a.wishlist-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: $color-black;
+    color: $color-white;
+    border-radius: $border-radius;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    @include transition(background);
+
+    &:hover { background: lighten($color-black, 12%); color: $color-white; text-decoration: none; }
+  }
+}
+
 .ms-account-tile__icon {
   display: inline-flex;
   align-items: center;
