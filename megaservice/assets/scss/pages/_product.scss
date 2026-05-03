@@ -694,6 +694,98 @@
   text-align: right;
 }
 
+// ── Fallback : template product-details.tpl (PS standard) avec <dl class="data-sheet"> ──
+// Rendu quand $product.features est vide mais $product.grouped_features est présent
+.ms-product__features .data-sheet,
+.ms-product .data-sheet {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+
+  > dt,
+  > dd {
+    margin: 0;
+    padding: 16px 24px;
+    line-height: normal;
+    border-bottom: 1px solid $color-gray-20;
+  }
+
+  // Pour rétablir l'effet "row" (dt + dd partagent le même fond)
+  > dt {
+    color: $color-black;
+    font-family: $font-heading;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-right: none;
+  }
+
+  > dd {
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 16px;
+    font-weight: 400;
+    text-align: right;
+  }
+
+  > dt:nth-last-child(2),
+  > dd:last-child { border-bottom: none; }
+}
+
+// Quand product-details.tpl est rendu directement dans le panel features
+// → wrap visuel pour avoir la bordure et le radius comme .ms-product__features
+.ms-product__tab-panel[data-panel="features"] > .js-product-details {
+  width: 100%;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius;
+  overflow: hidden;
+  background: $color-white;
+  padding: 0;
+
+  > .product-features { border-bottom: 1px solid $color-gray-20; }
+  > .product-features:last-child { border-bottom: none; }
+
+  > .product-features > p.h6 {
+    margin: 0;
+    padding: 14px 24px;
+    background: $color-gray-5;
+    color: $color-black;
+    font-family: $font-heading;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid $color-gray-20;
+  }
+
+  > .product-manufacturer,
+  > .product-reference,
+  > .product-quantities,
+  > .product-availability-date,
+  > .product-condition {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 24px;
+    border-bottom: 1px solid $color-gray-20;
+    font-family: $font-main;
+    font-size: 16px;
+
+    .label, label.label {
+      color: $color-black;
+      font-family: $font-heading;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    span, > a { color: $color-black; font-weight: 400; text-align: right; }
+  }
+}
+
 // ── Accessoires / produits liés ────────────────
 // Le layout .products et les cards sont gérés par _product-card.scss
 
