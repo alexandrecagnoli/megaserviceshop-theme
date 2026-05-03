@@ -168,14 +168,89 @@
     transform: translateY(-2px);
   }
 
-  // Hook displayCustomerAccount : neutralise les wrappers Bootstrap + material-icons text
-  .material-icons { display: none; }
-
   > .link-item {
     display: inline-flex;
     align-items: center;
     gap: 12px;
   }
+}
+
+// Icônes pour les tuiles du hook displayCustomerAccount (wishlist, GDPR…)
+// Pseudo ::before avec rond gris et SVG en background
+.ms-account-tiles > a:not(.ms-account-tile)::before {
+  content: '';
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+  background: $color-gray-5 no-repeat center / 22px 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// Wishlist (heart)
+.ms-account-tiles > a[id*="wishlist" i]::before,
+.ms-account-tiles > a[id*="favorite" i]::before {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23FE6604' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E");
+}
+
+// GDPR (shield)
+.ms-account-tiles > a[id*="gdpr" i]::before,
+.ms-account-tiles > a[id*="data" i]::before {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23FE6604' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");
+}
+
+// Material Icons text affiché en clair (faute de font installée) — on les cache partout
+// Le thème utilise des SVG par design, ces glyphs PS sont toujours redondants
+.material-icons { display: none !important; }
+
+// Liens "Revenir à votre compte" / "Accueil" qui apparaissent en bas de certaines pages module
+// (ex: wishlist) — masqués car la sidebar nav s'en occupe
+.account-link[data-role="back-to-your-account"],
+.account-link[data-role="home"],
+.account-link#back-to-login {
+  display: none !important;
+}
+
+// ── Contenu brut des modules (GDPR, wishlist…) rendu dans .ms-account__main ──
+// Quand un module n'utilise pas notre design system, on lui applique des défauts décents
+.ms-account__main > h1,
+.ms-account__main > h2,
+.ms-account__main > h3,
+.ms-account__main > h4 {
+  margin: 24px 0 12px;
+  font-family: $font-heading;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: $color-black;
+  line-height: 1.2;
+
+  &:first-child { margin-top: 0; }
+}
+
+.ms-account__main > h1 { font-size: 22px; }
+.ms-account__main > h2 { font-size: 18px; }
+.ms-account__main > h3 { font-size: 16px; }
+.ms-account__main > h4 { font-size: 14px; }
+
+.ms-account__main > p {
+  margin: 0 0 12px;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  color: $color-black;
+  line-height: 1.5;
+}
+
+// Modules block GDPR / wishlist — wrap le contenu en card-like
+.ms-account__main .psgdpr_consentMessage,
+.ms-account__main .psgdpr-data-export,
+.ms-account__main #block-history,
+.ms-account__main .wishlist-list,
+.ms-account__main .wishlist-products {
+  margin-top: 16px;
+  padding: 20px 24px;
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
 }
 
 .ms-account-tile__icon {

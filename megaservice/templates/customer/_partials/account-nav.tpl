@@ -90,6 +90,28 @@
     {/if}
 
     <li>
+      <a class="ms-account__nav-link{if $ms_pn|strstr:'wishlist' || $ms_pn|strstr:'favorite'} is-active{/if}" href="{url entity='module' name='blockwishlist' controller='lists'}">
+        <span class="ms-account__nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </span>
+        <span>{l s='Mes listes d\'envies' d='Shop.Theme.Customeraccount'}</span>
+      </a>
+    </li>
+
+    <li>
+      <a class="ms-account__nav-link{if $ms_pn|strstr:'gdpr' || $ms_pn|strstr:'data'} is-active{/if}" href="{url entity='module' name='psgdpr' controller='accountdata'}">
+        <span class="ms-account__nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </span>
+        <span>{l s='Mes données personnelles' d='Shop.Theme.Customeraccount'}</span>
+      </a>
+    </li>
+
+    <li>
       <a class="ms-account__nav-link ms-account__nav-link--logout" href="{$urls.actions.logout}">
         <span class="ms-account__nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
