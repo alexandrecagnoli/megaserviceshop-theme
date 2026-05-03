@@ -23,9 +23,13 @@ p {
   &:focus-visible { outline: 2px solid $color-ktm; outline-offset: 2px; }
 }
 
-// Liens utilitaires sans underline (boutons et CTAs)
-a.btn,
-a[class*="btn-"],
-a.button,
-a[class*="ms-btn"],
-button { text-decoration: none; }
+// Liens utilitaires sans underline (boutons et CTAs) — :where pour rester spécif 0
+:where(
+  a.btn,
+  a[class*="btn-"],
+  a[class*="-btn"],
+  a[class$="__btn"],
+  a.button,
+  a[class*="ms-btn"],
+  button
+) { text-decoration: none; }
