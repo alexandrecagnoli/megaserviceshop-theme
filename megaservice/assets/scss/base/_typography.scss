@@ -8,10 +8,10 @@ p {
 }
 
 // ── Liens — défaut charte (jamais bleu navigateur) ──
-// Les composants spécifiques (boutons, nav, cards, etc.) overrident via une
-// specificity supérieure. Ici on garantit que tout <a> non stylé hérite de la
-// couleur du texte parent et passe orange au hover. Pas de bleu par défaut, jamais.
-a {
+// On utilise :where() pour neutraliser la specificity à 0 → n'importe quelle
+// classe component (.ms-header__action-link, .btn, etc.) override automatiquement
+// sans avoir à se battre avec :visited (qui ferait 0,1,1).
+:where(a) {
   color: inherit;
   text-decoration: underline;
   text-decoration-thickness: 1px;
