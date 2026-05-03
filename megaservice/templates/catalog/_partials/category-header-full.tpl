@@ -5,20 +5,15 @@
     {if isset($subcategories) && $subcategories|@count > 0}
       <nav class="ms-subcat-nav" aria-label="{l s='Sous-catégories' d='Shop.Theme.Catalog'}">
         {foreach from=$subcategories item="subcat"}
-          <a href="{$subcat.url}" class="ms-subcat-nav__item">
-            {if !empty($subcat.image.medium.url)}
-              <img
-                src="{$subcat.image.medium.url}"
-                alt="{$subcat.name|escape:'html':'UTF-8'}"
-                loading="lazy"
-              >
-            {elseif !empty($subcat.image.large.url)}
-              <img
-                src="{$subcat.image.large.url}"
-                alt="{$subcat.name|escape:'html':'UTF-8'}"
-                loading="lazy"
-              >
-            {/if}
+          {assign var='_subcat_img' value=''}
+          {if !empty($subcat.image.medium.url)}{assign var='_subcat_img' value=$subcat.image.medium.url}
+          {elseif !empty($subcat.image.large.url)}{assign var='_subcat_img' value=$subcat.image.large.url}
+          {elseif !empty($subcat.image.small.url)}{assign var='_subcat_img' value=$subcat.image.small.url}
+          {/if}
+          <a href="{$subcat.url}"
+             class="ms-subcat-nav__item"
+             aria-label="{$subcat.name|escape:'html':'UTF-8'}"
+             {if $_subcat_img}style="background-image:url('{$_subcat_img}');"{/if}>
             <span class="ms-subcat-nav__label">{$subcat.name}</span>
           </a>
         {/foreach}
