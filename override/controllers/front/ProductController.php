@@ -19,6 +19,7 @@ class ProductController extends ProductControllerCore
         parent::initContent();
 
         $this->assignPowerpartsTabs();
+        $this->assignSuggestedProducts();
 
         $customer = $this->context->customer;
         if (!$customer || !$customer->isLogged()) {
@@ -66,15 +67,34 @@ class ProductController extends ProductControllerCore
     {
         $isPowerparts = $this->isProductInPowerpartsSubtree();
 
+        // 🔧 FAKE DATA — pool de produits fictifs présentés au format miniature.
+        // À remplacer par la vraie source (custom feature, module, etc.)
+        $pool = $isPowerparts ? $this->presentProductsByIds($this->fetchFakeProductIds(12)) : [];
+
         $this->context->smarty->assign([
-            'ms_show_powerparts_tabs'   => $isPowerparts,
-            // 🔧 FAKE DATA — à remplacer par la vraie source (custom feature, module, etc.)
-            // On réutilise $accessories pour avoir des cards visibles tout de suite.
-            'ms_mandatory_products'     => $isPowerparts ? $this->getFakePowerpartsProducts(2) : [],
-            'ms_excluded_products'      => $isPowerparts ? $this->getFakePowerpartsProducts(1) : [],
-            'ms_recommended_products'   => $isPowerparts ? $this->getFakePowerpartsProducts(4) : [],
-            'ms_spare_products'         => $isPowerparts ? $this->getFakePowerpartsSpareParts(3) : [],
+            'ms_show_powerparts_tabs' => $isPowerparts,
+            'ms_mandatory_products'   => array_slice($pool, 0, 2),
+            'ms_excluded_products'    => array_slice($pool, 2, 1),
+            'ms_recommended_products' => array_slice($pool, 3, 4),
+            'ms_spare_products'       => $this->buildSpareRows(array_slice($pool, 7, 3)),
         ]);
+    }
+
+    /**
+     * Section "Produits qui pourraient vous plaire" sous les tabs.
+     * Utilise les accessoires PS si le BO en a linké, sinon fake data.
+     */
+    private function assignSuggestedProducts()
+    {
+        $accessories = $this->context->smarty->getTemplateVars('accessories');
+        if (!empty($accessories) && is_array($accessories)) {
+            $this->context->smarty->assign('ms_suggested_products', array_slice($accessories, 0, 4));
+            return;
+        }
+        $this->context->smarty->assign(
+            'ms_suggested_products',
+            $this->presentProductsByIds($this->fetchFakeProductIds(4))
+        );
     }
 
     private function isProductInPowerpartsSubtree()
@@ -108,34 +128,70 @@ class ProductController extends ProductControllerCore
     }
 
     /**
-     * 🔧 FAKE DATA — réutilise les accessoires PS du produit pour fournir des cards visuelles.
-     * À remplacer par la vraie source (relation custom, custom feature, module dédié, etc.)
+     * 🔧 Récupère N IDs de produits actifs du shop (excluant le produit courant).
+     * Sert uniquement pour la fake data des tabs Powerparts et "Produits suggérés".
      */
-    private function getFakePowerpartsProducts($limit = 4)
+    private function fetchFakeProductIds($limit)
     {
-        $accessories = $this->context->smarty->getTemplateVars('accessories');
-        if (empty($accessories) || !is_array($accessories)) {
-            return [];
-        }
-        return array_slice($accessories, 0, $limit);
+        $idShop      = (int) $this->context->shop->id;
+        $idCurrent   = (int) $this->product->id;
+        $sql = 'SELECT p.`id_product` FROM `' . _DB_PREFIX_ . 'product` p
+                INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps ON p.`id_product` = ps.`id_product`
+                WHERE ps.`id_shop` = ' . $idShop . ' AND ps.`active` = 1
+                AND p.`id_product` != ' . $idCurrent . '
+                ORDER BY p.`id_product` DESC
+                LIMIT ' . (int) $limit;
+        $rows = Db::getInstance()->executeS($sql);
+        return is_array($rows) ? array_map('intval', array_column($rows, 'id_product')) : [];
     }
 
     /**
-     * 🔧 FAKE DATA — pièces de rechange en list view. Format minimal pour le rendu.
+     * 🔧 Présente une liste d'IDs de produits au format miniature (mêmes clés
+     * que $accessories), via le ProductListingPresenter de PS.
      */
-    private function getFakePowerpartsSpareParts($count = 3)
+    private function presentProductsByIds(array $productIds)
     {
-        $accessories = $this->context->smarty->getTemplateVars('accessories');
-        $sample = (!empty($accessories) && is_array($accessories)) ? array_slice($accessories, 0, $count) : [];
+        if (empty($productIds)) {
+            return [];
+        }
 
+        $assembler = new \PrestaShop\PrestaShop\Adapter\Product\ProductAssembler($this->context);
+        $factory   = new \PrestaShop\PrestaShop\Core\Product\Search\ProductPresenterFactory($this->context);
+        $settings  = $factory->getPresentationSettings();
+        $presenter = new \PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter(
+            new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link),
+            $this->context->link,
+            new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter(),
+            new \PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever(),
+            $this->context->getTranslator()
+        );
+
+        $out = [];
+        foreach ($productIds as $id) {
+            try {
+                $raw = $assembler->assembleProduct(['id_product' => (int) $id]);
+                $out[] = $presenter->present($settings, $raw, $this->context->language);
+            } catch (\Exception $e) {
+                // Silencieusement skip les produits qui plantent au présentation
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * 🔧 Convertit une liste de produits présentés en lignes "spare parts"
+     * (format minimal pour la list view : nom, ref, prix, dispo, qty reco).
+     */
+    private function buildSpareRows(array $presentedProducts)
+    {
         $rows = [];
-        foreach ($sample as $i => $p) {
+        foreach ($presentedProducts as $p) {
             $rows[] = [
-                'id_product'     => isset($p['id_product']) ? (int) $p['id_product'] : 0,
-                'name'           => isset($p['name']) ? $p['name'] : 'Ressort échappement FMF',
-                'reference'      => isset($p['reference']) && $p['reference'] ? $p['reference'] : 'P97268',
-                'price'          => isset($p['price']) ? $p['price'] : '240,00 €',
-                'availability'   => 'available',
+                'id_product'      => isset($p['id_product']) ? (int) $p['id_product'] : 0,
+                'name'            => isset($p['name']) ? $p['name'] : 'Pièce',
+                'reference'       => !empty($p['reference']) ? $p['reference'] : 'P00000',
+                'price'           => isset($p['price']) ? $p['price'] : '0,00 €',
+                'availability'    => isset($p['availability']) ? $p['availability'] : 'available',
                 'recommended_qty' => 1,
                 'add_to_cart_url' => isset($p['add_to_cart_url']) ? $p['add_to_cart_url'] : '#',
             ];

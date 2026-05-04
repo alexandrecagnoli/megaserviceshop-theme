@@ -199,17 +199,18 @@
     {include file='catalog/_partials/product-related-tabs.tpl'}
   {/if}
 
-  {* ── Produits qui pourraient vous plaire (accessoires PS standards) ── *}
+  {* ── Produits qui pourraient vous plaire ── *}
+  {* Utilise $accessories si linkés en BO, sinon fake data (cf. controller override) *}
   {block name='product_accessories'}
-    {if $accessories}
+    {if isset($ms_suggested_products) && $ms_suggested_products|count > 0}
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">
             <h2 class="ms-products-section__title">{l s='Produits qui pourraient vous plaire' d='Shop.Theme.Catalog'}</h2>
           </div>
           <div class="products">
-            {foreach from=$accessories item="product_accessory" key="position"}
-              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position}
+            {foreach from=$ms_suggested_products item="product_accessory" key="position"}
+              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position productClasses="ms-product-card--related"}
             {/foreach}
           </div>
         </div>
