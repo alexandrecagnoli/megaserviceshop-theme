@@ -151,9 +151,10 @@
   .wishlist-product {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap; // permet au bandeau dispo (flex 0 0 100%) de passer sur sa propre ligne
     justify-content: flex-start;
     align-items: stretch;
-    gap: 24px;
+    gap: 16px 24px;
     width: 100%;
     max-width: none;
     height: auto;
@@ -170,7 +171,6 @@
     }
 
     @include media-md() {
-      flex-wrap: wrap;
       gap: 16px;
       padding: 16px;
     }
