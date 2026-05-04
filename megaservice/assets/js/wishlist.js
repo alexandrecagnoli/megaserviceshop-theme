@@ -168,18 +168,24 @@ document.addEventListener('click', function (e) {
   })
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      console.log('[megaservice] wishlist delete response:', data);
       if (data && data.success) {
+        // Toast immédiat
+        if (window.msToast) {
+          window.msToast('Produit retiré de votre liste');
+        } else {
+          console.warn('[megaservice] window.msToast not available');
+        }
+        // Fade puis remove + décrémente compteur
         item.style.opacity = '0';
         item.style.transform = 'translateX(20px)';
         setTimeout(function () {
           item.remove();
-          // Décrémente le compteur affiché
           var countEl = document.querySelector('.wishlist-products-count');
           if (countEl) {
             var current = parseInt(countEl.textContent.replace(/[^\d]/g, ''), 10);
             if (!isNaN(current) && current > 0) countEl.textContent = '(' + (current - 1) + ')';
           }
-          if (window.msToast) window.msToast('Produit retiré de votre liste');
         }, 250);
       } else {
         item.classList.remove('is-removing');
