@@ -346,16 +346,25 @@
   }
 
   // Bouton "delete" (la classe s'appelle wishlist-button-add — naming module bizarre)
+  // ⚠️ Le bundle force position:absolute top-right + border-radius:50% + box-shadow
+  // → on reset complètement pour le garder à côté de l'add-to-cart
   .wishlist-button-add {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
+    position: static;
+    top: auto;
+    right: auto;
     width: 44px;
+    min-width: 44px;
     height: 44px;
+    margin: 0;
+    padding: 0;
     background: transparent;
-    color: rgba($color-black, 0.5);
+    color: $color-black;
     border: 1px solid $color-gray-20;
     border-radius: 0;
+    box-shadow: none;
     cursor: pointer;
     @include transition(background, color, border-color);
 
@@ -363,9 +372,16 @@
       background: $color-white;
       color: $color-ktm;
       border-color: $color-ktm;
+      opacity: 1; // override bundle :hover { opacity: .7 }
     }
 
-    i.material-icons { font-size: 18px; }
+    &:active { transform: none; } // override bundle scale(1.2)
+
+    i.material-icons {
+      font-size: 18px;
+      color: inherit;
+      margin: 0;
+    }
   }
 
   // ── Ligne dispo "responsive" — affichée comme info sur toute la largeur, sous l'item
