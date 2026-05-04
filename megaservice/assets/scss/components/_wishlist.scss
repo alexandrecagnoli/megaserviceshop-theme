@@ -1,53 +1,69 @@
 // ============================================
 // Wishlist — vue détail d'une liste
-// Le module rend du DOM via Vue (productslist.bundle.js) dans
-// <div class="wishlist-products-container"> — on style le rendu.
+// Le contrôleur view du module utilise un chemin de template relatif qui
+// bypasse l'override system de PS, donc le template original est rendu :
+//   - <div class="wishlist-products-container"> (mount point Vue)
+//   - <div class="wishlist-products-container-header"> (titre + tri)
+//   - <section id="content" class="page-content card card-block">
+//     - <ul class="wishlist-products-list">
+//       - <li class="wishlist-products-item">
+//         - <div class="wishlist-product"> (image, infos, actions)
+// On style donc directement le DOM rendu, sans wrapper customer.
 // ============================================
 
-.ms-account__main {
-  // ── Header de la liste : on masque le h1 du module (doublon avec ms-account__title)
-  // mais on garde le compteur, qu'on remontera visuellement à côté du titre via JS plus tard
-  .wishlist-products-container-header {
+.wishlist-products-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+
+  // ── Header : titre + tri
+  &-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 16px;
     padding-bottom: 16px;
     margin-bottom: 24px;
     border-bottom: 1px solid $color-gray-20;
 
     h1 {
-      // h1 redondant avec page_title — masqué mais on laisse le compteur s'afficher autrement
-      font-family: $font-heading;
-      font-size: 0;
       margin: 0;
-      color: transparent;
+      color: $color-black;
+      font-family: $font-heading;
+      font-size: 28px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1;
 
       .wishlist-products-count {
+        margin-left: 8px;
+        color: rgba($color-black, 0.5);
         font-family: $font-main;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 400;
-        color: rgba($color-black, 0.6);
+        text-transform: none;
+        letter-spacing: 0;
       }
     }
   }
 
-  // ── Sort dropdown : style cohérent avec le tri catalogue
+  // ── Sort dropdown
   .sort-by-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 0;
 
     .sort-by {
+      flex-shrink: 0;
+      width: auto !important;
+      padding: 0 !important;
       font-family: $font-main;
       font-size: 13px;
       color: rgba($color-black, 0.6);
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      flex-shrink: 0;
-      width: auto !important;
-      padding: 0 !important;
     }
 
     .products-sort-order {
@@ -107,8 +123,8 @@
     }
   }
 
-  // ── Reset du wrapper card du module
-  .wishlist-products-container > #content.page-content {
+  // ── Reset du wrapper card "page-content card card-block"
+  > #content.page-content {
     background: transparent;
     border: 0;
     padding: 0;
@@ -116,7 +132,7 @@
     margin: 0;
   }
 
-  // ── Liste des items
+  // ── Liste
   .wishlist-products-list {
     list-style: none;
     padding: 0;
@@ -126,12 +142,12 @@
     gap: 16px;
   }
 
-  // ── Une ligne wishlist : image | infos | actions
   .wishlist-products-item { margin: 0; }
 
+  // ── Item : image | infos | actions
   .wishlist-product {
     display: grid;
-    grid-template-columns: 120px 1fr auto;
+    grid-template-columns: 140px 1fr auto;
     gap: 24px;
     align-items: stretch;
     padding: 20px;
@@ -145,30 +161,30 @@
     }
 
     @include media-md() {
-      grid-template-columns: 80px 1fr;
+      grid-template-columns: 90px 1fr;
       grid-template-rows: auto auto;
       gap: 16px;
       padding: 16px;
     }
   }
 
-  // Lien wrapper : image + infos
+  // Le <a> qui wrappe image + right utilise display:contents pour rester en grid
   .wishlist-product-link {
     display: contents;
     color: $color-black;
     text-decoration: none;
   }
 
-  // ── Image
+  // ── Image avec badge dispo absolu
   .wishlist-product-image {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     background: $color-gray-5;
     overflow: hidden;
     flex-shrink: 0;
 
-    @include media-md() { width: 80px; height: 80px; }
+    @include media-md() { width: 90px; height: 90px; }
 
     img {
       width: 100%;
@@ -185,11 +201,11 @@
       left: 0;
       right: 0;
       margin: 0;
-      padding: 4px 8px;
+      padding: 4px 6px;
       background: rgba($color-black, 0.85);
       color: $color-white;
       font-family: $font-main;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -198,12 +214,13 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
+      line-height: 1.2;
 
-      i.material-icons { font-size: 14px; }
+      i.material-icons { font-size: 12px; }
     }
   }
 
-  // ── Bloc infos (titre, prix, attrs)
+  // ── Infos
   .wishlist-product-right {
     display: flex;
     flex-direction: column;
@@ -216,7 +233,7 @@
     margin: 0;
     color: $color-black;
     font-family: $font-main;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.2;
     text-transform: uppercase;
@@ -226,7 +243,7 @@
     margin: 0;
     color: $color-ktm;
     font-family: $font-main;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1;
 
@@ -258,8 +275,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       color: rgba($color-black, 0.4);
       @include transition(color);
 
@@ -294,6 +311,7 @@
     background: $color-ktm;
     color: $color-white;
     border: 0;
+    border-radius: 0;
     font-family: $font-heading;
     font-size: 13px;
     font-weight: 900;
@@ -301,7 +319,7 @@
     letter-spacing: 0.04em;
     cursor: pointer;
     white-space: nowrap;
-    @include transition(background, color);
+    @include transition(background);
 
     @include media-md() { flex: 1; }
 
@@ -332,6 +350,7 @@
     background: transparent;
     color: rgba($color-black, 0.5);
     border: 1px solid $color-gray-20;
+    border-radius: 0;
     cursor: pointer;
     @include transition(background, color, border-color);
 
@@ -344,7 +363,7 @@
     i.material-icons { font-size: 18px; }
   }
 
-  // ── Ligne dispo responsive (uniquement affichée sur mobile par le module)
+  // ── Ligne dispo en double pour responsive (rendue par le composant Vue)
   .wishlist-product-availability-responsive {
     grid-column: 1 / -1;
     margin: 0;
@@ -355,17 +374,24 @@
     font-family: $font-main;
     font-size: 13px;
     font-weight: 400;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: none; // masquée desktop, le badge sur l'image suffit
+
+    @include media-md() {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     i.material-icons { font-size: 16px; }
   }
 
-  // ── Loader (skeleton SVG du module pendant fetch initial)
-  .wishlist-list-loader { width: 100%; max-width: 100%; }
+  // ── Loader skeleton
+  .wishlist-list-loader {
+    width: 100%;
+    max-width: 100%;
+  }
 
-  // ── Pagination du module (templates/components/pagination.tpl)
+  // ── Pagination du module (wishlist-pagination)
   .wishlist-pagination {
     display: flex;
     align-items: center;
@@ -391,9 +417,7 @@
       cursor: pointer;
       @include transition(background, color, border-color);
 
-      &:hover {
-        border-color: $color-black;
-      }
+      &:hover { border-color: $color-black; }
 
       &.current,
       &.active {
@@ -418,5 +442,32 @@
     font-family: $font-main;
     font-size: 15px;
     background: $color-gray-5;
+  }
+}
+
+// ── Footer links rendu par le template original (en dehors du conteneur Vue)
+.wishlist-footer-links {
+  max-width: 1280px;
+  margin: 24px auto 48px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    @include transition(color);
+
+    &:hover { color: $color-ktm; }
+
+    i.material-icons { font-size: 18px; }
   }
 }
