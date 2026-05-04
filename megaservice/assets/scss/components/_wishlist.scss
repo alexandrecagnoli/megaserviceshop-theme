@@ -144,12 +144,11 @@
 
   .wishlist-products-item { margin: 0; }
 
-  // ── Item : image | infos | actions
+  // ── Item : flex container, image | infos | actions
   .wishlist-product {
-    display: grid;
-    grid-template-columns: 140px 1fr auto;
-    gap: 24px;
+    display: flex;
     align-items: stretch;
+    gap: 24px;
     padding: 20px;
     background: $color-white;
     border: 1px solid $color-gray-20;
@@ -161,21 +160,29 @@
     }
 
     @include media-md() {
-      grid-template-columns: 90px 1fr;
-      grid-template-rows: auto auto;
+      flex-wrap: wrap;
       gap: 16px;
       padding: 16px;
     }
   }
 
-  // Le <a> qui wrappe image + right utilise display:contents pour rester en grid
+  // Le <a> wrappe image + infos — flex enfant qui prend toute la largeur dispo
   .wishlist-product-link {
-    display: contents;
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+    gap: 20px;
     color: $color-black;
     text-decoration: none;
+    min-width: 0;
+
+    @include media-md() {
+      width: 100%;
+      flex: 0 0 100%;
+    }
   }
 
-  // ── Image avec badge dispo absolu
+  // ── Image (le badge dispo dessus est masqué, on garde l'image propre)
   .wishlist-product-image {
     position: relative;
     width: 140px;
@@ -195,33 +202,14 @@
       &.wishlist-product-unavailable { opacity: 0.5; }
     }
 
-    .wishlist-product-availability {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      margin: 0;
-      padding: 4px 6px;
-      background: rgba($color-black, 0.85);
-      color: $color-white;
-      font-family: $font-main;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      line-height: 1.2;
-
-      i.material-icons { font-size: 12px; }
-    }
+    // Le composant Vue rend un <p> de dispo dans l'image — on le masque
+    // (l'info est rendue plus proprement comme ligne dans .wishlist-product-right)
+    .wishlist-product-availability { display: none; }
   }
 
-  // ── Infos
+  // ── Infos (titre, prix, attrs)
   .wishlist-product-right {
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -286,16 +274,18 @@
     }
   }
 
-  // ── Bottom : add-to-cart + delete
+  // ── Bottom : add-to-cart + delete (à droite en desktop, full-width en mobile)
   .wishlist-product-bottom {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
     align-self: center;
+    flex-shrink: 0;
 
     @include media-md() {
-      grid-column: 1 / -1;
+      width: 100%;
+      flex: 0 0 100%;
       flex-direction: row;
       align-items: center;
     }
@@ -363,10 +353,13 @@
     i.material-icons { font-size: 18px; }
   }
 
-  // ── Ligne dispo en double pour responsive (rendue par le composant Vue)
+  // ── Ligne dispo "responsive" — affichée comme info sur toute la largeur, sous l'item
+  // Le composant Vue rend ce 2e <p> en plus du badge image (qu'on masque)
   .wishlist-product-availability-responsive {
-    grid-column: 1 / -1;
-    margin: 0;
+    width: 100%;
+    flex: 0 0 100%;
+    order: 99;
+    margin: 4px 0 0;
     padding: 8px 12px;
     background: $color-gray-5;
     border-left: 3px solid $color-ktm;
@@ -374,13 +367,10 @@
     font-family: $font-main;
     font-size: 13px;
     font-weight: 400;
-    display: none; // masquée desktop, le badge sur l'image suffit
-
-    @include media-md() {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
 
     i.material-icons { font-size: 16px; }
   }
