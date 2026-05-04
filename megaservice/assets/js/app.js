@@ -9,6 +9,7 @@ import './menu.js';
 import './parts-search.js';
 import './model-selector.js';
 import './product.js';
+import './wishlist.js';
 import './filters.js';
 import './checkout.js';
 
