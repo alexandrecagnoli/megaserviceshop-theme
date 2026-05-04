@@ -107,6 +107,85 @@ document.addEventListener('click', function (e) {
     });
 });
 
+// ── Wishlist VIEW page : bouton poubelle sur chaque item ────────────────────
+// Le composant Vue émet un event showDeleteWishlist censé ouvrir une modal,
+// mais cette modal n'est pas montée sur la page view → clic inopérant.
+// On intercepte directement et on appelle deleteProductFromWishList en AJAX.
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('.wishlist-products-container .wishlist-button-add');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  var item      = btn.closest('.wishlist-products-item');
+  var container = btn.closest('.wishlist-products-container');
+  if (!item || !container) return;
+
+  var listId = parseInt(container.dataset.listId, 10) || 0;
+
+  // Extrait l'id_product depuis l'URL du produit ( /xxx/<id>-<slug>.html )
+  var link = item.querySelector('.wishlist-product-link');
+  var href = link ? link.getAttribute('href') : '';
+  var match = href.match(/\/(\d+)-[^\/]+\.html(?:[?#]|$)/);
+  var idProduct = match ? parseInt(match[1], 10) : 0;
+
+  if (!listId || !idProduct) {
+    console.error('[megaservice] wishlist delete: missing listId or idProduct', { listId: listId, idProduct: idProduct, href: href });
+    return;
+  }
+
+  // Anti double-click
+  if (item.classList.contains('is-removing')) return;
+  item.classList.add('is-removing');
+  item.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+  item.style.opacity = '0.4';
+
+  var actionUrl = window.location.origin + '/index.php?fc=module&module=blockwishlist&controller=action';
+  var body = new URLSearchParams();
+  body.append('action', 'deleteProductFromWishList');
+  body.append('params[idWishList]', String(listId));
+  body.append('params[id_product]', String(idProduct));
+  body.append('params[id_product_attribute]', '0');
+
+  fetch(actionUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body.toString()
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && data.success) {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(20px)';
+        setTimeout(function () {
+          item.remove();
+          // Décrémente le compteur affiché
+          var countEl = document.querySelector('.wishlist-products-count');
+          if (countEl) {
+            var current = parseInt(countEl.textContent.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(current) && current > 0) countEl.textContent = '(' + (current - 1) + ')';
+          }
+          if (window.msToast) window.msToast('Produit retiré de votre liste');
+        }, 250);
+      } else {
+        item.classList.remove('is-removing');
+        item.style.opacity = '';
+        if (window.msToast) window.msToast((data && data.message) || 'Erreur lors du retrait');
+      }
+    })
+    .catch(function (err) {
+      item.classList.remove('is-removing');
+      item.style.opacity = '';
+      console.error('[megaservice] wishlist delete error:', err);
+      if (window.msToast) window.msToast('Erreur lors du retrait');
+    });
+});
+
 function postWishlistAction(url, action, params) {
   var body = new URLSearchParams();
   body.append('action', action);
