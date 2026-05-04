@@ -49,11 +49,12 @@
     }
   }
 
-  // ── Sort dropdown
+  // ── Sort dropdown (calé à droite, look comme un select avec caret droite)
   .sort-by-row {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-left: auto; // pousse à droite, peu importe le titre à gauche
 
     .sort-by {
       flex-shrink: 0;
@@ -74,8 +75,10 @@
       .select-title {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
+        justify-content: space-between; // texte à gauche, chevron à droite
+        gap: 24px;
+        min-width: 200px;
+        padding: 10px 14px;
         background: transparent;
         border: 1px solid $color-black;
         font-family: $font-main;
@@ -86,7 +89,10 @@
         text-transform: uppercase;
         letter-spacing: 0.02em;
 
-        i.material-icons { font-size: 18px; }
+        i.material-icons {
+          font-size: 18px;
+          margin-left: auto; // au cas où, plaque à droite
+        }
       }
 
       .dropdown-menu {
@@ -368,6 +374,21 @@
     cursor: pointer;
     @include transition(background, color, border-color);
 
+    // SVG poubelle injecté en ::before sur le bouton (Material Icons font absente)
+    // Plus robuste que de cibler le <i> interne stylé par le bundle.
+    &::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 20px;
+      background-color: currentColor;
+      -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
+              mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
+    }
+
+    // Cache le <i> interne du bundle (la font Material Icons ne se charge pas → vide)
+    i.material-icons { display: none !important; }
+
     &:hover {
       background: $color-white;
       color: $color-ktm;
@@ -376,21 +397,6 @@
     }
 
     &:active { transform: none; } // override bundle scale(1.2)
-
-    // Le <i class="material-icons">delete</i> compte sur la font Material Icons
-    // qui n'est pas chargée → rien ne s'affiche. On le masque et on injecte un
-    // SVG poubelle via mask-image, couleur pilotée par background = currentColor.
-    i.material-icons {
-      display: block;
-      width: 20px;
-      height: 20px;
-      font-size: 0;          // masque le texte "delete" rendu par le DOM
-      color: inherit;        // hérite du parent (.wishlist-button-add) → noir, hover orange
-      background: currentColor; // donne sa couleur au mask SVG
-      margin: 0;
-      -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='black'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
-              mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='black'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
-    }
   }
 
   // ── Ligne dispo "responsive" — affichée comme info sur toute la largeur, sous l'item

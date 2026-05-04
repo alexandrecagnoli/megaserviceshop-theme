@@ -258,33 +258,28 @@ document.addEventListener('submit', function(e) {
     });
 });
 
-function initializeSortDropdown() {
-  document.querySelectorAll('.products-sort-order').forEach(function(dropdown) {
-    const trigger = dropdown.querySelector('.select-title');
-    const menu = dropdown.querySelector('.dropdown-menu');
-    if (!trigger || !menu) return;
-
-    trigger.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const isOpen = menu.classList.contains('show');
-      closeAllSortDropdowns();
-      if (!isOpen) menu.classList.add('show');
-    });
+// Event delegation : marche pour tout .products-sort-order, même ajouté
+// dynamiquement par un bundle Vue après DOMContentLoaded (cas wishlist).
+function closeAllSortDropdowns() {
+  document.querySelectorAll('.products-sort-order .dropdown-menu').forEach(function(m) {
+    m.classList.remove('show');
   });
-
-  document.addEventListener('click', closeAllSortDropdowns);
-
-  function closeAllSortDropdowns() {
-    document.querySelectorAll('.products-sort-order .dropdown-menu').forEach(function(m) {
-      m.classList.remove('show');
-    });
-  }
 }
 
-(function() {
-  'use strict';
+document.addEventListener('click', function(e) {
+  var trigger = e.target.closest('.products-sort-order .select-title');
+  if (trigger) {
+    e.stopPropagation();
+    var menu = trigger.closest('.products-sort-order').querySelector('.dropdown-menu');
+    if (!menu) return;
+    var isOpen = menu.classList.contains('show');
+    closeAllSortDropdowns();
+    if (!isOpen) menu.classList.add('show');
+    return;
+  }
+  // Clic ailleurs → ferme tous les dropdowns
+  closeAllSortDropdowns();
+});
 
-  document.addEventListener('DOMContentLoaded', function() {
-    initializeSortDropdown();
-  });
-})();
+// Stub pour compat avec les appels existants (updateProductList le call encore)
+function initializeSortDropdown() { /* noop : l'event delegation fait tout */ }
