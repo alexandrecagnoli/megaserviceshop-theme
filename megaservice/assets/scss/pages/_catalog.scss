@@ -453,10 +453,20 @@ body#category {
     cursor: pointer;
     white-space: nowrap;
 
-    .material-icons {
-      font-size: 18px;
-      margin-left: auto; // plaque le chevron contre le bord droit
-      line-height: 1;
+    // Le bundle utilise <i class="material-icons">arrow_drop_down</i> mais la
+    // font Material Icons n'est pas chargée → on masque le <i> et on injecte
+    // un chevron SVG en ::after, couleur via background = currentColor.
+    .material-icons { display: none; }
+
+    &::after {
+      content: '';
+      display: block;
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      background-color: currentColor;
+      -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5L6 7.5L9 4.5' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>") no-repeat center / contain;
+              mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5L6 7.5L9 4.5' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>") no-repeat center / contain;
     }
   }
 
