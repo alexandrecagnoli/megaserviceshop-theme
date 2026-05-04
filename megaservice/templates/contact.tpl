@@ -2,6 +2,17 @@
 
 {block name='page_header_container'}{/block}
 
+{* On force le layout à pleine largeur — les hooks displayLeftColumn / displayRightColumn
+   (qui rendent ps_categorytree etc.) ne doivent pas apparaître ici, on a déjà notre
+   propre aside avec les infos de contact. *}
+{block name='left_column'}{/block}
+{block name='right_column'}{/block}
+{block name='content_wrapper'}
+  <div id="content-wrapper" class="js-content-wrapper col-xs-12">
+    {block name='content'}{/block}
+  </div>
+{/block}
+
 {block name='page_content_container'}
   <section id="content" class="ms-contact">
 
@@ -61,12 +72,6 @@
             </a>
           {/if}
         </div>
-
-        {if $layout === 'layouts/layout-left-column.tpl'}
-          {block name="left_column"}<div class="ms-contact__hooks">{hook h='displayContactLeftColumn'}</div>{/block}
-        {elseif $layout === 'layouts/layout-right-column.tpl'}
-          {block name="right_column"}<div class="ms-contact__hooks">{hook h='displayContactRightColumn'}</div>{/block}
-        {/if}
 
       </aside>
 
