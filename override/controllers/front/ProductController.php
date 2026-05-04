@@ -22,13 +22,13 @@ class ProductController extends ProductControllerCore
         $idCustomer = (int) $customer->id;
         $idShop     = (int) $this->context->shop->id;
 
-        // Récupère la wishlist par défaut (sans la créer si absente — seul le clic la créera)
+        // Récupère la wishlist par défaut (sans la créer si absente — seul le clic la créera).
+        // ATTENTION : Db::getValue() ajoute automatiquement LIMIT 1 → ne pas le mettre dans le SQL.
         $idWishList = (int) Db::getInstance()->getValue(
             'SELECT `id_wishlist` FROM `' . _DB_PREFIX_ . 'wishlist`
              WHERE `id_customer` = ' . $idCustomer . '
              AND `id_shop` = ' . $idShop . '
-             AND `default` = 1
-             LIMIT 1'
+             AND `default` = 1'
         );
 
         if (!$idWishList) {
@@ -42,8 +42,7 @@ class ProductController extends ProductControllerCore
             'SELECT 1 FROM `' . _DB_PREFIX_ . 'wishlist_product`
              WHERE `id_wishlist` = ' . $idWishList . '
              AND `id_product` = ' . $idProduct . '
-             AND `id_product_attribute` = ' . $idProductAttribute . '
-             LIMIT 1'
+             AND `id_product_attribute` = ' . $idProductAttribute
         );
 
         $this->context->smarty->assign([
