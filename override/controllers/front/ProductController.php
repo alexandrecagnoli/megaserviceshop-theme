@@ -155,8 +155,8 @@ class ProductController extends ProductControllerCore
             return [];
         }
 
-        $assembler = new \PrestaShop\PrestaShop\Adapter\Product\ProductAssembler($this->context);
-        $factory   = new \PrestaShop\PrestaShop\Core\Product\Search\ProductPresenterFactory($this->context);
+        $assembler = new \ProductAssembler($this->context);
+        $factory   = new \ProductPresenterFactory($this->context);
         $settings  = $factory->getPresentationSettings();
         $presenter = new \PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter(
             new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link),
