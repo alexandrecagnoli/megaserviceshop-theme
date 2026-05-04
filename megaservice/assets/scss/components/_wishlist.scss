@@ -1,0 +1,422 @@
+// ============================================
+// Wishlist — vue détail d'une liste
+// Le module rend du DOM via Vue (productslist.bundle.js) dans
+// <div class="wishlist-products-container"> — on style le rendu.
+// ============================================
+
+.ms-account__main {
+  // ── Header de la liste : on masque le h1 du module (doublon avec ms-account__title)
+  // mais on garde le compteur, qu'on remontera visuellement à côté du titre via JS plus tard
+  .wishlist-products-container-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid $color-gray-20;
+
+    h1 {
+      // h1 redondant avec page_title — masqué mais on laisse le compteur s'afficher autrement
+      font-family: $font-heading;
+      font-size: 0;
+      margin: 0;
+      color: transparent;
+
+      .wishlist-products-count {
+        font-family: $font-main;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba($color-black, 0.6);
+      }
+    }
+  }
+
+  // ── Sort dropdown : style cohérent avec le tri catalogue
+  .sort-by-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+
+    .sort-by {
+      font-family: $font-main;
+      font-size: 13px;
+      color: rgba($color-black, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      width: auto !important;
+      padding: 0 !important;
+    }
+
+    .products-sort-order {
+      position: relative;
+      width: auto !important;
+      padding: 0 !important;
+
+      .select-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: transparent;
+        border: 1px solid $color-black;
+        font-family: $font-main;
+        font-size: 14px;
+        font-weight: 700;
+        color: $color-black;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+
+        i.material-icons { font-size: 18px; }
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        min-width: 220px;
+        margin: 0;
+        padding: 6px 0;
+        background: $color-white;
+        border: 1px solid $color-gray-20;
+        box-shadow: 0 4px 16px rgba($color-black, 0.08);
+        z-index: 10;
+        display: none;
+
+        &.show { display: block; }
+
+        .select-list {
+          display: block;
+          padding: 10px 16px;
+          font-family: $font-main;
+          font-size: 14px;
+          color: $color-black;
+          text-decoration: none;
+          cursor: pointer;
+          @include transition(background, color);
+
+          &:hover {
+            background: $color-gray-5;
+            color: $color-ktm;
+          }
+        }
+      }
+    }
+  }
+
+  // ── Reset du wrapper card du module
+  .wishlist-products-container > #content.page-content {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    box-shadow: none;
+    margin: 0;
+  }
+
+  // ── Liste des items
+  .wishlist-products-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  // ── Une ligne wishlist : image | infos | actions
+  .wishlist-products-item { margin: 0; }
+
+  .wishlist-product {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 24px;
+    align-items: stretch;
+    padding: 20px;
+    background: $color-white;
+    border: 1px solid $color-gray-20;
+    @include transition(border-color, box-shadow);
+
+    &:hover {
+      border-color: $color-black;
+      box-shadow: 0 2px 12px rgba($color-black, 0.06);
+    }
+
+    @include media-md() {
+      grid-template-columns: 80px 1fr;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      padding: 16px;
+    }
+  }
+
+  // Lien wrapper : image + infos
+  .wishlist-product-link {
+    display: contents;
+    color: $color-black;
+    text-decoration: none;
+  }
+
+  // ── Image
+  .wishlist-product-image {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    background: $color-gray-5;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    @include media-md() { width: 80px; height: 80px; }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+
+      &.wishlist-product-unavailable { opacity: 0.5; }
+    }
+
+    .wishlist-product-availability {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 4px 8px;
+      background: rgba($color-black, 0.85);
+      color: $color-white;
+      font-family: $font-main;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+
+      i.material-icons { font-size: 14px; }
+    }
+  }
+
+  // ── Bloc infos (titre, prix, attrs)
+  .wishlist-product-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .wishlist-product-title {
+    margin: 0;
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .wishlist-product-price {
+    margin: 0;
+    color: $color-ktm;
+    font-family: $font-main;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+
+    .wishlist-product-price-promo {
+      display: inline-block;
+      margin-right: 8px;
+      color: rgba($color-black, 0.5);
+      font-size: 13px;
+      font-weight: 400;
+      text-decoration: line-through;
+    }
+  }
+
+  .wishlist-product-combinations {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+
+    &-text {
+      margin: 0;
+      color: rgba($color-black, 0.6);
+      font-family: $font-main;
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    > a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: rgba($color-black, 0.4);
+      @include transition(color);
+
+      &:hover { color: $color-ktm; }
+
+      i.material-icons { font-size: 16px; }
+    }
+  }
+
+  // ── Bottom : add-to-cart + delete
+  .wishlist-product-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    align-self: center;
+
+    @include media-md() {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  .wishlist-product-addtocart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 22px;
+    background: $color-ktm;
+    color: $color-white;
+    border: 0;
+    font-family: $font-heading;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    @include transition(background, color);
+
+    @include media-md() { flex: 1; }
+
+    &:hover:not(:disabled) {
+      background: darken($color-ktm, 8%);
+      color: $color-white;
+    }
+
+    &:disabled {
+      background: $color-gray-20;
+      color: $color-white;
+      cursor: not-allowed;
+    }
+
+    i.material-icons {
+      font-size: 18px;
+      line-height: 1;
+    }
+  }
+
+  // Bouton "delete" (la classe s'appelle wishlist-button-add — naming module bizarre)
+  .wishlist-button-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: rgba($color-black, 0.5);
+    border: 1px solid $color-gray-20;
+    cursor: pointer;
+    @include transition(background, color, border-color);
+
+    &:hover {
+      background: $color-white;
+      color: $color-ktm;
+      border-color: $color-ktm;
+    }
+
+    i.material-icons { font-size: 18px; }
+  }
+
+  // ── Ligne dispo responsive (uniquement affichée sur mobile par le module)
+  .wishlist-product-availability-responsive {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 8px 12px;
+    background: $color-gray-5;
+    border-left: 3px solid $color-ktm;
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    i.material-icons { font-size: 16px; }
+  }
+
+  // ── Loader (skeleton SVG du module pendant fetch initial)
+  .wishlist-list-loader { width: 100%; max-width: 100%; }
+
+  // ── Pagination du module (templates/components/pagination.tpl)
+  .wishlist-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 16px 0;
+
+    a, span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      font-family: $font-main;
+      font-size: 14px;
+      font-weight: 700;
+      color: $color-black;
+      text-decoration: none;
+      border: 1px solid $color-gray-20;
+      background: $color-white;
+      cursor: pointer;
+      @include transition(background, color, border-color);
+
+      &:hover {
+        border-color: $color-black;
+      }
+
+      &.current,
+      &.active {
+        background: $color-ktm;
+        border-color: $color-ktm;
+        color: $color-white;
+      }
+
+      &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
+  }
+
+  // ── Empty state
+  .wishlist-products-no-products {
+    padding: 48px 24px;
+    text-align: center;
+    color: rgba($color-black, 0.6);
+    font-family: $font-main;
+    font-size: 15px;
+    background: $color-gray-5;
+  }
+}
