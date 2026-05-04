@@ -145,11 +145,21 @@
   .wishlist-products-item { margin: 0; }
 
   // ── Item : flex container, image | infos | actions
+  // ⚠️ Le bundle Vue du module injecte des règles à runtime sur .wishlist-product
+  // (flex-direction: column, max-width: 250px, height: 100%, etc.). On override
+  // explicitement chaque propriété qu'il déclare pour ne pas hériter de ses valeurs.
   .wishlist-product {
     display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: stretch;
     gap: 24px;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0;
     padding: 20px;
+    position: relative;
     background: $color-white;
     border: 1px solid $color-gray-20;
     @include transition(border-color, box-shadow);
@@ -182,11 +192,12 @@
     }
   }
 
-  // ── Image (le badge dispo dessus est masqué, on garde l'image propre)
+  // ── Image (override bundle qui force 250×250 + margin-right)
   .wishlist-product-image {
     position: relative;
     width: 140px;
     height: 140px;
+    margin: 0;
     background: $color-gray-5;
     overflow: hidden;
     flex-shrink: 0;
@@ -203,7 +214,7 @@
     }
 
     // Le composant Vue rend un <p> de dispo dans l'image — on le masque
-    // (l'info est rendue plus proprement comme ligne dans .wishlist-product-right)
+    // (l'info est rendue plus proprement comme ligne resp en bas)
     .wishlist-product-availability { display: none; }
   }
 
@@ -225,6 +236,7 @@
     font-weight: 700;
     line-height: 1.2;
     text-transform: uppercase;
+    letter-spacing: 0;
   }
 
   .wishlist-product-price {
@@ -253,10 +265,12 @@
 
     &-text {
       margin: 0;
+      min-height: 0; // override bundle qui force 50px
       color: rgba($color-black, 0.6);
       font-family: $font-main;
       font-size: 13px;
       font-weight: 400;
+      line-height: 1.3;
     }
 
     > a {
@@ -296,6 +310,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    width: auto; // override bundle qui force 100%
     height: 44px;
     padding: 0 22px;
     background: $color-ktm;
