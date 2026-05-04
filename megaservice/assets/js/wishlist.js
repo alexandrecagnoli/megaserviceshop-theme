@@ -121,7 +121,13 @@ document.addEventListener('click', function (e) {
   var container = btn.closest('.wishlist-products-container');
   if (!item || !container) return;
 
+  // ID de la liste : Vue remplace son mount point donc data-list-id de l'origine
+  // est perdu. On le récupère depuis l'URL ?id_wishlist=N
   var listId = parseInt(container.dataset.listId, 10) || 0;
+  if (!listId) {
+    var urlParams = new URLSearchParams(window.location.search);
+    listId = parseInt(urlParams.get('id_wishlist'), 10) || 0;
+  }
 
   // Extrait l'id_product depuis l'URL du produit ( /xxx/<id>-<slug>.html )
   var link = item.querySelector('.wishlist-product-link');
@@ -129,8 +135,11 @@ document.addEventListener('click', function (e) {
   var match = href.match(/\/(\d+)-[^\/]+\.html(?:[?#]|$)/);
   var idProduct = match ? parseInt(match[1], 10) : 0;
 
+  console.log('[megaservice] wishlist delete', { listId: listId, idProduct: idProduct, href: href });
+
   if (!listId || !idProduct) {
     console.error('[megaservice] wishlist delete: missing listId or idProduct', { listId: listId, idProduct: idProduct, href: href });
+    if (window.msToast) window.msToast('Impossible d\'identifier le produit');
     return;
   }
 
