@@ -40,12 +40,14 @@
 
         <button
           type="button"
-          class="ms-product__btn-wishlist js-add-to-wishlist"
+          class="ms-product__btn-wishlist js-add-to-wishlist{if isset($ms_product_in_wishlist) && $ms_product_in_wishlist} is-active{/if}"
           data-action-url="{url entity='module' name='blockwishlist' controller='action'}"
           data-login-url="{url entity='authentication'}?back={$urls.current_url|escape:'url'}"
           data-customer-logged="{if isset($customer.is_logged) && $customer.is_logged}1{else}0{/if}"
           data-id-product="{$product.id}"
           data-id-product-attribute="{$product.id_product_attribute}"
+          data-wishlist-id="{if isset($ms_wishlist_id)}{$ms_wishlist_id}{/if}"
+          data-in-wishlist="{if isset($ms_product_in_wishlist) && $ms_product_in_wishlist}1{else}0{/if}"
           aria-label="{l s='Ajouter aux favoris' d='Shop.Theme.Actions'}"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
