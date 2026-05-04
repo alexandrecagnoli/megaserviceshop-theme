@@ -1,0 +1,266 @@
+// ============================================
+// PAGE CONTACT
+// ============================================
+
+.ms-contact {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 40px $container-padding 64px;
+
+  @include media-md() { padding: 24px $container-padding 32px; }
+}
+
+.ms-contact__title {
+  margin: 0 0 8px;
+  color: $color-black;
+  font-family: $font-heading;
+  font-size: 36px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+
+  @include media-md() { font-size: 26px; }
+}
+
+.ms-contact__intro {
+  margin: 0 0 32px;
+  color: $color-gray-60;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  max-width: 720px;
+
+  @include media-md() { margin-bottom: 24px; font-size: $font-size-sm; }
+}
+
+.ms-contact__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+
+  @include media-lg() { gap: 24px; }
+  @include media-md() { flex-direction: column; gap: 24px; }
+}
+
+.ms-contact__main { flex: 1; min-width: 0; }
+
+.ms-contact__aside {
+  width: 340px;
+  flex-shrink: 0;
+
+  @include media-md() { width: 100%; }
+}
+
+// ── Form card ─────────────────────────────
+.ms-contact-form {
+  background: $color-white;
+  border: 1px solid $color-gray-20;
+  border-radius: $border-radius-lg;
+  padding: 32px;
+
+  @include media-md() { padding: 20px; }
+
+  &__head { margin-bottom: 20px; }
+
+  &__title {
+    margin: 0 0 6px;
+    color: $color-black;
+    font-family: $font-heading;
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__intro {
+    margin: 0;
+    color: $color-gray-60;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+  }
+
+  &__notif {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-sm;
+    border-left: 3px solid;
+
+    ul { margin: 0; padding-left: 18px; }
+
+    &--error { background: #fdecea; border-color: #d93025; color: #5f2120; }
+    &--success { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  &__foot { margin-top: 20px; }
+
+  &__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    height: 50px;
+    padding: 0 24px;
+    background: $color-ktm;
+    color: $color-white;
+    border: none;
+    border-radius: $border-radius;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    @include transition(background);
+
+    &:hover { background: darken($color-ktm, 8%); }
+  }
+}
+
+// ── Form fields scoping (réutilise le pattern .ms-account/.ms-checkout) ──
+.ms-contact {
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .form-control-label {
+    display: block;
+    margin: 0;
+    font-family: $font-main;
+    font-size: 12px;
+    font-weight: 700;
+    color: $color-black;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="file"],
+  select,
+  textarea,
+  .form-control {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: $color-white;
+    border: 1px solid $color-gray-20;
+    border-radius: $border-radius;
+    font-family: $font-main;
+    font-size: $font-size-base;
+    color: $color-black;
+    appearance: none;
+    @include transition(border-color);
+
+    &:focus { outline: none; border-color: $color-black; }
+    &::placeholder { color: $color-gray-50; }
+  }
+
+  textarea, .form-control[rows] {
+    height: auto;
+    min-height: 140px;
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input[type="file"] {
+    height: auto;
+    padding: 10px 14px;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+
+  select, select.form-control {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%230A0A0A' stroke-width='2'%3E%3Cpolyline points='1 1 6 6 11 1'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+}
+
+// ── Contact info card ────────────────────
+.ms-contact-info {
+  background: $color-black;
+  color: $color-white;
+  border-radius: $border-radius-lg;
+  padding: 28px 24px;
+
+  @include media-md() { padding: 20px; }
+
+  &__title {
+    margin: 0 0 20px;
+    font-family: $font-heading;
+    font-size: 16px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $color-white;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba($color-white, 0.12);
+    color: $color-white;
+    text-decoration: none;
+    @include transition(color);
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__row--link:hover { color: $color-ktm; text-decoration: none; }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba($color-ktm, 0.18);
+    color: $color-ktm;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.3;
+
+    small {
+      font-family: $font-main;
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba($color-white, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    strong {
+      font-family: $font-main;
+      font-size: $font-size-base;
+      font-weight: 700;
+    }
+  }
+}
+
+.ms-contact__hooks { margin-top: 16px; }
