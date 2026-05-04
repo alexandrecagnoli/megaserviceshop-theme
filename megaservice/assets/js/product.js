@@ -24,6 +24,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ── Tabs Powerparts (obligatoires / exclues / recommandées / rechange) ─────
+  document.querySelectorAll('.ms-related-tabs').forEach(function (section) {
+    var tabBtns = section.querySelectorAll('.js-related-tab-btn');
+    var tabPanels = section.querySelectorAll('.js-related-tab-panel');
+
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = btn.dataset.tab;
+        tabBtns.forEach(function (b) { b.classList.remove('is-active'); });
+        tabPanels.forEach(function (p) { p.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        var panel = section.querySelector('[data-panel="' + target + '"]');
+        if (panel) panel.classList.add('is-active');
+      });
+    });
+  });
+
   // ── Feature group nav (fiche technique) ─────────────────────────────────────
   document.querySelectorAll('.ms-product__features').forEach(function (features) {
     var groupBtns = features.querySelectorAll('.js-feature-group-btn');

@@ -193,22 +193,15 @@
     </div>
   {/block}
 
-  {* ── Accessoires Powerparts + Produits associés ── *}
-  {* TODO: filtrer powerparts vs produits associés quand les données seront prêtes *}
+  {* ── Tabs Powerparts (obligatoires / exclues / recommandées / rechange) ── *}
+  {* Affiché uniquement pour les produits dans la sous-arborescence Accessoires Powerparts *}
+  {if isset($ms_show_powerparts_tabs) && $ms_show_powerparts_tabs}
+    {include file='catalog/_partials/product-related-tabs.tpl'}
+  {/if}
+
+  {* ── Produits qui pourraient vous plaire (accessoires PS standards) ── *}
   {block name='product_accessories'}
     {if $accessories}
-      <section class="ms-products-section">
-        <div class="ms-container">
-          <div class="ms-products-section__header">
-            <h2 class="ms-products-section__title">{l s='Accessoires Powerparts associés' d='Shop.Theme.Catalog'}</h2>
-          </div>
-          <div class="products">
-            {foreach from=$accessories item="product_accessory" key="position"}
-              {include file='catalog/_partials/miniatures/product.tpl' product=$product_accessory position=$position}
-            {/foreach}
-          </div>
-        </div>
-      </section>
       <section class="ms-products-section">
         <div class="ms-container">
           <div class="ms-products-section__header">

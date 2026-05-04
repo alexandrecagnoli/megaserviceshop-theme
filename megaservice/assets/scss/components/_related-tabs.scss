@@ -1,0 +1,311 @@
+// ============================================
+// Tabs Powerparts (page produit, catégorie Accessoires Powerparts)
+// 4 onglets : obligatoires / exclues / recommandées / rechange
+// ============================================
+
+.ms-related-tabs {
+  margin: 32px 0;
+
+  // ── Nav onglets : ligne sous-titres + barre orange sous l'actif
+  &__nav {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border-bottom: 1px solid $color-gray-20;
+    margin-bottom: 24px;
+
+    @include media-md() {
+      overflow-x: auto;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+    }
+  }
+
+  &__btn {
+    flex: 1;
+    padding: 16px 12px;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px; // chevauche la border du nav pour effet souligné
+    color: rgba($color-black, 0.4);
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    @include transition(color, border-color);
+
+    &:hover { color: rgba($color-black, 0.7); }
+
+    &.is-active {
+      color: $color-black;
+      border-bottom-color: $color-ktm;
+    }
+
+    @include media-md() {
+      flex: 0 0 auto;
+      padding: 14px 16px;
+      font-size: 12px;
+    }
+  }
+
+  &__count {
+    color: inherit;
+    font-weight: 700;
+  }
+
+  // ── Panels
+  &__panels { position: relative; }
+
+  &__panel {
+    display: none;
+    &.is-active { display: block; }
+  }
+
+  &__empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: rgba($color-black, 0.6);
+    font-family: $font-main;
+    font-size: 14px;
+  }
+
+  // ── Bandeau d'alerte (onglets obligatoires + exclues)
+  &__alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    background: #fbe2cd; // pêche clair, derived from #FE6604
+    border: 0;
+    color: $color-black;
+    font-family: $font-main;
+    font-size: 14px;
+    line-height: 1.4;
+
+    svg { flex-shrink: 0; margin-top: 2px; }
+    p   { margin: 0; }
+  }
+
+  // ── Grille produits (3 ou 4 colonnes selon contenu)
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+
+    @include media-lg() { grid-template-columns: repeat(3, 1fr); }
+    @include media-md() { grid-template-columns: repeat(2, 1fr); }
+    @include media-sm() { grid-template-columns: 1fr; }
+  }
+}
+
+// ============================================
+// Variantes des cards produit dans les tabs
+// ============================================
+
+// Card "compatible" — badge vert sur l'image (override du badge orange par défaut)
+.ms-product-card--compatible {
+  .ms-product-card__compat {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    background: #2bb04a; // vert
+    padding: 4px 8px;
+    color: $color-white;
+    font-family: $font-main;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+    letter-spacing: 0;
+
+    svg { display: block; }
+  }
+}
+
+// Card "exclue" — pas de CTA, prix barré, légère opacité
+.ms-product-card--excluded {
+  .ms-product-card__add-form,
+  .ms-product-card__add { display: none !important; }
+
+  .ms-product-card__name { opacity: 0.7; }
+  .ms-product-card__media { pointer-events: none; }
+}
+
+// Card "related" — plein de personnalisation au besoin
+.ms-product-card--related {
+  // Le bouton AJOUTER prend toute la largeur, fond noir uppercase Blender Pro
+  .ms-product-card__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    background: $color-black;
+    color: $color-white;
+    border: 0;
+    font-family: $font-heading;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    @include transition(background);
+
+    &:hover { background: $color-ktm; }
+  }
+}
+
+// ============================================
+// List view "Pièces de rechange"
+// ============================================
+
+.ms-spare-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 0.8fr 0.6fr 0.8fr auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: $color-gray-5;
+
+    @include media-lg() {
+      grid-template-columns: 1.4fr 1fr 0.7fr 0.6fr;
+      grid-template-areas:
+        "name ref avail price"
+        "qtyl qtyl qty add";
+      row-gap: 12px;
+    }
+
+    @include media-md() {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "name name"
+        "ref price"
+        "avail qty"
+        "add add";
+    }
+  }
+
+  &__name {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-black;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    @include media-lg() { grid-area: name; }
+  }
+
+  &__ref {
+    font-family: $font-main;
+    font-size: 13px;
+    color: rgba($color-black, 0.7);
+    @include media-lg() { grid-area: ref; }
+  }
+
+  &__avail {
+    font-family: $font-main;
+    font-size: 13px;
+    font-weight: 400;
+    @include media-lg() { grid-area: avail; }
+
+    &--available             { color: #2bb04a; }
+    &--last_remaining_items  { color: #e0871a; }
+    &--unavailable           { color: #c0392b; }
+  }
+
+  &__price {
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-ktm;
+    text-align: right;
+    @include media-lg() { grid-area: price; text-align: left; }
+  }
+
+  &__qty-label {
+    font-family: $font-main;
+    font-size: 12px;
+    color: rgba($color-black, 0.6);
+    line-height: 1.2;
+    @include media-lg() { grid-area: qtyl; }
+    @include media-md() { display: none; }
+  }
+
+  &__qty-wrap {
+    position: relative;
+    display: inline-block;
+    @include media-lg() { grid-area: qty; }
+  }
+
+  &__qty {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 64px;
+    height: 38px;
+    padding: 0 24px 0 12px;
+    border: 1px solid $color-black;
+    border-radius: 0;
+    background: $color-white;
+    font-family: $font-main;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-black;
+    cursor: pointer;
+    line-height: 1;
+
+    &:focus { outline: none; border-color: $color-ktm; }
+  }
+
+  &__qty-chevron {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: $color-black;
+  }
+
+  &__add-form {
+    margin: 0;
+    @include media-lg() { grid-area: add; }
+    @include media-md() { width: 100%; }
+  }
+
+  &__add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 18px;
+    background: $color-black;
+    color: $color-white;
+    border: 0;
+    font-family: $font-heading;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    @include transition(background);
+
+    @include media-md() { width: 100%; }
+
+    &:hover { background: $color-ktm; }
+    svg { flex-shrink: 0; }
+  }
+}
