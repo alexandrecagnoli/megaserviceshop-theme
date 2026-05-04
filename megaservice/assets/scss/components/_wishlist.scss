@@ -49,12 +49,13 @@
     }
   }
 
-  // ── Sort dropdown (calé à droite, look comme un select avec caret droite)
+  // ── Sort dropdown : on hérite des règles globales de _catalog.scss
+  // (.products-sort-order .select-title), on n'override que la position du row
   .sort-by-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-left: auto; // pousse à droite, peu importe le titre à gauche
+    margin-left: auto; // plaque tout le bloc tri à droite, indépendamment du titre
 
     .sort-by {
       flex-shrink: 0;
@@ -68,64 +69,8 @@
     }
 
     .products-sort-order {
-      position: relative;
       width: auto !important;
       padding: 0 !important;
-
-      .select-title {
-        display: inline-flex;
-        align-items: center;
-        justify-content: space-between; // texte à gauche, chevron à droite
-        gap: 24px;
-        min-width: 200px;
-        padding: 10px 14px;
-        background: transparent;
-        border: 1px solid $color-black;
-        font-family: $font-main;
-        font-size: 14px;
-        font-weight: 700;
-        color: $color-black;
-        cursor: pointer;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-
-        i.material-icons {
-          font-size: 18px;
-          margin-left: auto; // au cas où, plaque à droite
-        }
-      }
-
-      .dropdown-menu {
-        position: absolute;
-        top: calc(100% + 4px);
-        right: 0;
-        min-width: 220px;
-        margin: 0;
-        padding: 6px 0;
-        background: $color-white;
-        border: 1px solid $color-gray-20;
-        box-shadow: 0 4px 16px rgba($color-black, 0.08);
-        z-index: 10;
-        display: none;
-
-        &.show { display: block; }
-
-        .select-list {
-          display: block;
-          padding: 10px 16px;
-          font-family: $font-main;
-          font-size: 14px;
-          color: $color-black;
-          text-decoration: none;
-          cursor: pointer;
-          @include transition(background, color);
-
-          &:hover {
-            background: $color-gray-5;
-            color: $color-ktm;
-          }
-        }
-      }
     }
   }
 

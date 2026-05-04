@@ -439,7 +439,9 @@ body#category {
   .select-title {
     display: flex;
     align-items: center;
+    justify-content: space-between; // libellé gauche, caret droite
     gap: 8px;
+    min-width: 200px;
     height: 36px;
     padding: 0 12px;
     border: 1px solid $color-gray-20;
@@ -453,7 +455,7 @@ body#category {
 
     .material-icons {
       font-size: 18px;
-      margin-left: 4px;
+      margin-left: auto; // plaque le chevron contre le bord droit
       line-height: 1;
     }
   }
