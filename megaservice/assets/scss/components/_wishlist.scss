@@ -377,10 +377,19 @@
 
     &:active { transform: none; } // override bundle scale(1.2)
 
+    // Le <i class="material-icons">delete</i> compte sur la font Material Icons
+    // qui n'est pas chargée → rien ne s'affiche. On le masque et on injecte un
+    // SVG poubelle via mask-image, couleur pilotée par background = currentColor.
     i.material-icons {
-      font-size: 18px;
-      color: inherit;
+      display: block;
+      width: 20px;
+      height: 20px;
+      font-size: 0;
+      color: transparent;
+      background: currentColor;
       margin: 0;
+      -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='black'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
+              mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='black'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>") no-repeat center / contain;
     }
   }
 
