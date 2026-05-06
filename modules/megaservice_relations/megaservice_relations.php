@@ -75,19 +75,88 @@ class Megaservice_relations extends Module
     }
 
     /**
-     * Hook page produit BO — Phase 3 : panneau autocomplete + drag-drop.
+     * Hook page produit BO — onglet "Relations Powerparts" avec 4 panneaux.
      */
     public function hookDisplayAdminProductsExtra($params)
     {
-        // TODO Phase 3
-        return '';
+        $idProduct = (int) $params['id_product'];
+        if (!$idProduct) {
+            return '';
+        }
+
+        // Pré-charge les relations existantes pour les passer au JS en JSON
+        // (évite un AJAX au boot de l'UI)
+        $relations = [];
+        foreach (MsProductRelationService::allTypes() as $type) {
+            $rows = MsProductRelationService::getRelations($idProduct, $type);
+            $items = [];
+            foreach ($rows as $r) {
+                $idTarget = (int) $r['id_product_target'];
+                $items[] = [
+                    'id_product'      => $idTarget,
+                    'name'            => $this->getProductName($idTarget),
+                    'reference'       => $this->getProductReference($idTarget),
+                    'cover_url'       => $this->getProductCoverUrl($idTarget),
+                    'recommended_qty' => (int) $r['recommended_qty'],
+                ];
+            }
+            $relations[$type] = $items;
+        }
+
+        $this->context->smarty->assign([
+            'ms_id_product'       => $idProduct,
+            'ms_ajax_url'         => $this->context->link->getModuleLink(
+                'megaservice_relations',
+                'admin',
+                [],
+                true
+            ),
+            'ms_admin_token'      => Tools::getAdminTokenLite('AdminProducts'),
+            'ms_relations_json'   => json_encode($relations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]);
+
+        return $this->display(__FILE__, 'admin-products-extra.tpl');
     }
 
     /**
-     * Hook header BO — charge JS/CSS sur la page produit. Phase 3.
+     * Hook header BO — charge le CSS/JS de l'onglet relations sur la page produit.
      */
     public function hookDisplayBackOfficeHeader()
     {
-        // TODO Phase 3
+        $controller = Tools::getValue('controller');
+        // PS 8 : page produit = AdminProducts (legacy) OU AdminProductsV2 (modern)
+        if (!in_array($controller, ['AdminProducts', 'AdminProductsV2'])) {
+            return;
+        }
+        $this->context->controller->addCSS($this->_path . 'views/css/admin-product-relations.css');
+        $this->context->controller->addJS($this->_path . 'views/js/admin-product-relations.js');
+    }
+
+    private function getProductName($idProduct)
+    {
+        $idLang = (int) $this->context->language->id;
+        $sql = 'SELECT `name` FROM `' . _DB_PREFIX_ . 'product_lang`
+                WHERE `id_product` = ' . (int) $idProduct . ' AND `id_lang` = ' . $idLang;
+        return (string) Db::getInstance()->getValue($sql);
+    }
+
+    private function getProductReference($idProduct)
+    {
+        $sql = 'SELECT `reference` FROM `' . _DB_PREFIX_ . 'product`
+                WHERE `id_product` = ' . (int) $idProduct;
+        return (string) Db::getInstance()->getValue($sql);
+    }
+
+    private function getProductCoverUrl($idProduct)
+    {
+        $sql = 'SELECT i.`id_image` FROM `' . _DB_PREFIX_ . 'image` i
+                WHERE i.`id_product` = ' . (int) $idProduct . ' AND i.`cover` = 1
+                LIMIT 1';
+        $idImage = (int) Db::getInstance()->getValue($sql);
+        if (!$idImage) {
+            return '';
+        }
+        $product = new Product($idProduct, false, $this->context->language->id);
+        return $this->context->link->getImageLink($product->link_rewrite, $idImage, 'small_default');
     }
 }
