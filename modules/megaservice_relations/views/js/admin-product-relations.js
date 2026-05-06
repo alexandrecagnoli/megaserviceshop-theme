@@ -167,17 +167,41 @@
     pane.innerHTML = panelHTML;
     tabContent.appendChild(pane);
 
-    // 3. Click handler — switch d'onglet manuel (compatible avec PS et Bootstrap)
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      // Désactive tous les autres onglets
-      nav.querySelectorAll('a, button').forEach(function (b) { b.classList.remove('active'); });
+    // 3. Click handler — on contourne Vue (qui regère ses tabs en réactivité)
+    // en forçant display:none sur les autres tab-panes + display:block sur le nôtre.
+    // Vue ne peut plus repasser dessus tant qu'on tient l'override.
+    pane.style.display = 'none'; // caché par défaut
+
+    function activateOurTab(e) {
+      if (e) e.preventDefault();
+      // Hide tous les autres panes (Vue les laissera display: par défaut sinon)
       tabContent.querySelectorAll('.tab-pane').forEach(function (p) {
-        p.classList.remove('active', 'show');
+        if (p !== pane) p.style.display = 'none';
       });
-      // Active le nôtre
-      btn.classList.add('active');
+      // Affiche le nôtre
+      pane.style.display = 'block';
       pane.classList.add('active', 'show');
+      // Active visuel : on retire active des autres, on ajoute au nôtre
+      nav.querySelectorAll('a, button').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    }
+
+    function deactivateOurTab() {
+      // Restaure le display sur tous les panes (Vue reprend la main pour montrer le bon)
+      tabContent.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.style.display = '';
+      });
+      pane.style.display = 'none';
+      pane.classList.remove('active', 'show');
+      btn.classList.remove('active');
+    }
+
+    btn.addEventListener('click', activateOurTab);
+
+    // Quand l'utilisateur clique un AUTRE onglet → on libère le contrôle
+    nav.querySelectorAll('a, button').forEach(function (otherBtn) {
+      if (otherBtn === btn) return;
+      otherBtn.addEventListener('click', deactivateOurTab);
     });
 
     return true;
