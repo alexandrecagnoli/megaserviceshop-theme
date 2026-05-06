@@ -60,24 +60,83 @@ class ProductController extends ProductControllerCore
 
     /**
      * Détecte si le produit courant est dans une catégorie Powerparts et,
-     * si oui, expose les 4 listes de produits liés (pour l'instant en dur,
-     * à brancher sur la vraie source de données plus tard).
+     * si oui, expose les 4 listes de produits liés.
+     *
+     * Source de données : module `megaservice_relations` (table polymorphe).
+     * Si le module n'est pas installé OU si aucune relation n'est définie pour
+     * un type donné, on retombe sur de la fake data pour garder du visuel
+     * pendant la phase de dev/intégration.
      */
     private function assignPowerpartsTabs()
     {
         $isPowerparts = $this->isProductInPowerpartsSubtree();
 
-        // 🔧 FAKE DATA — pool de produits fictifs présentés au format miniature.
-        // À remplacer par la vraie source (custom feature, module, etc.)
-        $pool = $isPowerparts ? $this->presentProductsByIds($this->fetchFakeProductIds(12)) : [];
+        if (!$isPowerparts) {
+            $this->context->smarty->assign([
+                'ms_show_powerparts_tabs' => false,
+                'ms_mandatory_products'   => [],
+                'ms_excluded_products'    => [],
+                'ms_recommended_products' => [],
+                'ms_spare_products'       => [],
+            ]);
+            return;
+        }
+
+        $idProduct = (int) $this->product->id;
+        $hasService = $this->loadRelationService();
+
+        // Mandatory
+        $mandatory = $hasService
+            ? \MsProductRelationService::getPresentedRelations($idProduct, 'mandatory', $this->context)
+            : [];
+        // Excluded
+        $excluded = $hasService
+            ? \MsProductRelationService::getPresentedRelations($idProduct, 'excluded', $this->context)
+            : [];
+        // Recommended
+        $recommended = $hasService
+            ? \MsProductRelationService::getPresentedRelations($idProduct, 'recommended', $this->context)
+            : [];
+        // Spare (avec qty)
+        $spare = $hasService
+            ? \MsProductRelationService::getSpareRows($idProduct, $this->context)
+            : [];
+
+        // 🔧 FALLBACK FAKE DATA — uniquement si aucune relation réelle n'existe
+        // pour faciliter la validation visuelle. À retirer quand toutes les
+        // catégories Powerparts auront leurs relations en BDD.
+        if (empty($mandatory) && empty($excluded) && empty($recommended) && empty($spare)) {
+            $pool = $this->presentProductsByIds($this->fetchFakeProductIds(12));
+            $mandatory   = array_slice($pool, 0, 2);
+            $excluded    = array_slice($pool, 2, 1);
+            $recommended = array_slice($pool, 3, 4);
+            $spare       = $this->buildSpareRows(array_slice($pool, 7, 3));
+        }
 
         $this->context->smarty->assign([
-            'ms_show_powerparts_tabs' => $isPowerparts,
-            'ms_mandatory_products'   => array_slice($pool, 0, 2),
-            'ms_excluded_products'    => array_slice($pool, 2, 1),
-            'ms_recommended_products' => array_slice($pool, 3, 4),
-            'ms_spare_products'       => $this->buildSpareRows(array_slice($pool, 7, 3)),
+            'ms_show_powerparts_tabs' => true,
+            'ms_mandatory_products'   => $mandatory,
+            'ms_excluded_products'    => $excluded,
+            'ms_recommended_products' => $recommended,
+            'ms_spare_products'       => $spare,
         ]);
+    }
+
+    /**
+     * Charge la classe MsProductRelationService du module si installé/présent.
+     * Retourne true si la classe est utilisable.
+     */
+    private function loadRelationService()
+    {
+        if (class_exists('MsProductRelationService', false)) {
+            return true;
+        }
+        $path = _PS_MODULE_DIR_ . 'megaservice_relations/classes/ProductRelationService.php';
+        if (!file_exists($path)) {
+            return false;
+        }
+        require_once $path;
+        return class_exists('MsProductRelationService', false);
     }
 
     /**
