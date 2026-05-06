@@ -170,12 +170,25 @@
 
     .control-label {
       font-family: $font-main;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 400;
       color: $color-black;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
+
+      strong { font-weight: 700; }
+      &__value { font-weight: 400; }
     }
+  }
+
+  // Variante "color" : label à gauche, cercles à droite (cf. maquette Touring Top Case)
+  .product-variants-item--color {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    .control-label { flex-shrink: 0; }
+    ul { margin: 0; }
   }
 
   ul {
@@ -281,33 +294,53 @@
 .ms-product__price-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   align-self: stretch;
 }
 
+// ── Mention "Livraison offerte" — sous le prix
 .ms-product__delivery-badge {
-  display: flex;
-  height: 50px;
-  padding: 10px 16px;
-  justify-content: center;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 0;
 
   svg { flex-shrink: 0; }
 
   span {
     font-family: $font-main;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
     color: $color-black;
-    white-space: nowrap;
 
-    strong {
-      font-weight: 700;
-    }
+    strong { font-weight: 700; }
   }
+}
+
+// ── Bandeau "Compatible avec [moto]" — Powerparts + moto sélectionnée
+.ms-product__compat-banner {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #2bb04a; // vert "compatible"
+  color: $color-white;
+  font-family: $font-main;
+  font-size: 15px;
+  font-weight: 400;
+  margin-bottom: 16px;
+
+  body.has-moto-selected & { display: flex; }
+
+  span {
+    flex: 1;
+    line-height: 1.3;
+  }
+  strong { font-weight: 700; }
+  svg { flex-shrink: 0; }
 }
 
 // ── Accordion livraison ────────────────────────

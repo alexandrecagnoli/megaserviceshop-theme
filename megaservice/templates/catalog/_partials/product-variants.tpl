@@ -25,11 +25,13 @@
 <div class="product-variants js-product-variants">
   {foreach from=$groups key=id_attribute_group item=group}
     {if !empty($group.attributes)}
-    <div class="clearfix product-variants-item">
-      <span class="control-label">{$group.name}{l s=': ' d='Shop.Theme.Catalog'}
+    <div class="clearfix product-variants-item product-variants-item--{$group.group_type|escape:'htmlall'}">
+      <span class="control-label">
+        <strong>{$group.name}</strong>{l s=' : ' d='Shop.Theme.Catalog'}<span class="control-label__value">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
             {if $group_attribute.selected}{$group_attribute.name}{/if}
           {/foreach}
+        </span>
       </span>
       {if $group.group_type == 'select'}
         <select

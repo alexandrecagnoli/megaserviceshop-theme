@@ -35,6 +35,20 @@
     {* Colonne droite — infos *}
     <div class="ms-product__info">
 
+      {* Bandeau "Compatible avec [moto]" — visible uniquement sur Powerparts
+         quand une moto est sélectionnée (body.has-moto-selected via model-selector.js) *}
+      {if isset($ms_show_powerparts_tabs) && $ms_show_powerparts_tabs}
+      <div class="ms-product__compat-banner">
+        <span>
+          {l s='Compatible avec' d='Shop.Theme.Catalog'}
+          <strong class="js-model-current-name"></strong>
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12L10 17L20 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      {/if}
+
       <div class="ms-product__identity">
         <h1 class="ms-product__name">{$product.name}</h1>
 
