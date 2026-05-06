@@ -1,0 +1,16 @@
+id_product_source,relation_type,id_product_target,position,recommended_qty
+29,mandatory,30,1,1
+29,mandatory,37,2,1
+29,mandatory,40,3,1
+29,excluded,73,1,1
+29,recommended,30,1,1
+29,recommended,37,2,1
+29,recommended,40,3,1
+29,recommended,73,4,1
+29,spare,30,1,2
+29,spare,37,2,4
+29,spare,40,3,1
+29,spare,73,4,2
+29,mandatory,29,99,1
+29,recommended,99999,99,1
+29,supercategorie,30,99,1
