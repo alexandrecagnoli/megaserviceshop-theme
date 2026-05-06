@@ -54,6 +54,19 @@ jobs:
             override/ \
             nuttyguru.com_j8g81qmwucn@93.90.201.182:/var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/override/
 
+      - name: Deploy custom modules via rsync
+        # Pas de --delete : on n'écrase pas les modules tiers présents sur le serveur,
+        # on synchronise uniquement nos modules custom du repo.
+        run: |
+          if [ -d "modules" ]; then
+            rsync -rtvz \
+              --no-perms --no-times \
+              --exclude='.DS_Store' \
+              -e "ssh -o StrictHostKeyChecking=yes" \
+              modules/ \
+              nuttyguru.com_j8g81qmwucn@93.90.201.182:/var/www/vhosts/nuttyguru.com/megaserviceshop.nuttyguru.com/modules/
+          fi
+
       - name: Clear PrestaShop cache
         run: |
           ssh -o StrictHostKeyChecking=yes nuttyguru.com_j8g81qmwucn@93.90.201.182 \
