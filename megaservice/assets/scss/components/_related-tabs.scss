@@ -128,10 +128,12 @@
   }
 }
 
-// Card "exclue" — pas de CTA, prix barré, légère opacité
+// Card "exclue" — pas de CTA ni prix ni dispo (juste image + nom), pointer désactivé
 .ms-product-card--excluded {
   .ms-product-card__add-form,
-  .ms-product-card__add { display: none !important; }
+  .ms-product-card__add,
+  .ms-product-card__prices,
+  .ms-product-card__availability { display: none !important; }
 
   .ms-product-card__name { opacity: 0.7; }
   .ms-product-card__media { pointer-events: none; }
