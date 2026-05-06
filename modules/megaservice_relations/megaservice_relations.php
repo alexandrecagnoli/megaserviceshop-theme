@@ -90,7 +90,10 @@ class Megaservice_relations extends Module
      */
     public function hookDisplayAdminProductsMainStepLeftColumnBottom($params)
     {
-        return $this->renderRelationsPanel($params);
+        // 🔧 DEBUG : marqueur visible pour vérifier que le hook fire vraiment
+        $idProduct = (int) ($params['id_product'] ?? 0);
+        $debug = '<div style="background:#ff0;padding:8px;border:2px solid red;font-size:14px;">HOOK FIRED — id_product=' . $idProduct . ' — Powerparts=' . ($idProduct && $this->isProductInPowerpartsSubtree($idProduct) ? 'YES' : 'NO') . '</div>';
+        return $debug . $this->renderRelationsPanel($params);
     }
 
     /**
