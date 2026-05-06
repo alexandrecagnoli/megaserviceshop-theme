@@ -7,15 +7,30 @@
 (function () {
   'use strict';
 
-  document.addEventListener('DOMContentLoaded', init);
+  // Try init dès que possible
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
+  } else {
+    tryInit();
+  }
 
-  function init() {
+  // PS 8 page produit moderne : le hook displayAdminProductsExtra est rendu
+  // dans l'onglet "Modules" derrière un bouton "Configurer". Le contenu peut
+  // donc apparaître plus tard. On observe le DOM pour détecter l'arrivée du panneau.
+  var observer = new MutationObserver(function () { tryInit(); });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  function tryInit() {
     var root = document.querySelector('.ms-relations');
-    if (!root) return;
+    if (!root || root.dataset.msInited === '1') return;
+    init(root);
+  }
 
+  function init(root) {
     var idProduct = parseInt(root.dataset.msIdProduct, 10) || 0;
     var ajaxUrl   = root.dataset.msAjaxUrl;
     if (!idProduct || !ajaxUrl) return;
+    root.dataset.msInited = '1'; // évite double init si l'observer retire+remet
 
     var initialDataEl = root.querySelector('.ms-relations__data');
     var state = initialDataEl ? safeParse(initialDataEl.textContent) : {};
