@@ -189,4 +189,42 @@ class Megaservice_relations extends Module
         $product = new Product($idProduct, false, $this->context->language->id);
         return $this->context->link->getImageLink($product->link_rewrite, $idImage, 'small_default');
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Page config du module — import CSV des relations
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public function getContent()
+    {
+        $output = '';
+
+        if (Tools::isSubmit('submitImportRelations')) {
+            $output .= $this->processCsvImport();
+        }
+
+        $this->context->smarty->assign([
+            'ms_form_action' => AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+        ]);
+
+        return $output . $this->display(__FILE__, 'config-import.tpl');
+    }
+
+    private function processCsvImport()
+    {
+        if (empty($_FILES['csv_file']['tmp_name']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            return $this->displayError($this->l('Aucun fichier reçu ou erreur d\'upload.'));
+        }
+
+        $mode = Tools::getValue('import_mode', 'append');
+        if (!in_array($mode, ['append', 'replace_for_listed', 'full_replace'], true)) {
+            return $this->displayError($this->l('Mode d\'import invalide.'));
+        }
+
+        require_once __DIR__ . '/classes/CsvImporter.php';
+        $importer = new MsRelationsCsvImporter();
+        $stats = $importer->import($_FILES['csv_file']['tmp_name'], $mode);
+
+        $this->context->smarty->assign('ms_import_stats', $stats);
+        return $this->display(__FILE__, 'config-import-result.tpl');
+    }
 }
