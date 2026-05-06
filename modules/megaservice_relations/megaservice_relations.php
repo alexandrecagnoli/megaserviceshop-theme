@@ -35,10 +35,19 @@ class Megaservice_relations extends Module
         $this->description = 'Gère les liaisons obligatoires / exclues / recommandées / pièces de rechange pour les produits Powerparts.';
     }
 
+    /**
+     * Catégories racines Powerparts — la fiche du module ne s'affiche que pour
+     * les produits dans cette sous-arborescence. Cohérent avec ProductController override.
+     */
+    private static $POWERPARTS_ROOT_IDS = [41];
+
     public function install()
     {
         return parent::install()
             && $this->createTable()
+            // Hook inline (page produit moderne PS 8, en bas du step "Description")
+            && $this->registerHook('displayAdminProductsMainStepLeftColumnBottom')
+            // Hook legacy pour compat éventuelle (apparaît dans l'onglet "Modules")
             && $this->registerHook('displayAdminProductsExtra')
             && $this->registerHook('displayBackOfficeHeader');
     }
@@ -75,17 +84,36 @@ class Megaservice_relations extends Module
     }
 
     /**
-     * Hook page produit BO — onglet "Relations Powerparts" avec 4 panneaux.
+     * Hook moderne PS 8 — affiche le panneau INLINE en bas du step Description
+     * (toujours visible, pas besoin de cliquer "Configurer"). Uniquement pour
+     * les produits dans la sous-arborescence Powerparts.
+     */
+    public function hookDisplayAdminProductsMainStepLeftColumnBottom($params)
+    {
+        return $this->renderRelationsPanel($params);
+    }
+
+    /**
+     * Hook legacy — fallback pour les versions PS où le hook moderne n'est pas dispo.
+     * Apparaît dans l'onglet Modules avec un bouton "Configurer".
      */
     public function hookDisplayAdminProductsExtra($params)
     {
+        return $this->renderRelationsPanel($params);
+    }
+
+    /**
+     * Render commun aux deux hooks. N'affiche le panneau que si le produit
+     * appartient à la sous-arborescence Accessoires Powerparts.
+     */
+    private function renderRelationsPanel($params)
+    {
         $idProduct = (int) $params['id_product'];
-        if (!$idProduct) {
+        if (!$idProduct || !$this->isProductInPowerpartsSubtree($idProduct)) {
             return '';
         }
 
         // Pré-charge les relations existantes pour les passer au JS en JSON
-        // (évite un AJAX au boot de l'UI)
         $relations = [];
         foreach (MsProductRelationService::allTypes() as $type) {
             $rows = MsProductRelationService::getRelations($idProduct, $type);
@@ -104,18 +132,44 @@ class Megaservice_relations extends Module
         }
 
         $this->context->smarty->assign([
-            'ms_id_product'       => $idProduct,
-            'ms_ajax_url'         => $this->context->link->getModuleLink(
+            'ms_id_product'     => $idProduct,
+            'ms_ajax_url'       => $this->context->link->getModuleLink(
                 'megaservice_relations',
                 'admin',
                 [],
                 true
             ),
-            'ms_admin_token'      => Tools::getAdminTokenLite('AdminProducts'),
-            'ms_relations_json'   => json_encode($relations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'ms_relations_json' => json_encode($relations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]);
 
         return $this->display(__FILE__, 'admin-products-extra.tpl');
+    }
+
+    /**
+     * Vérifie si le produit appartient à la sous-arborescence Powerparts
+     * (mêmes critères que le ProductController override).
+     */
+    private function isProductInPowerpartsSubtree($idProduct)
+    {
+        if (empty(self::$POWERPARTS_ROOT_IDS)) {
+            return false;
+        }
+        $productCategories = Product::getProductCategories((int) $idProduct);
+        if (empty($productCategories)) {
+            return false;
+        }
+        foreach (self::$POWERPARTS_ROOT_IDS as $rootId) {
+            $root = new Category((int) $rootId);
+            if (!$root->id) continue;
+            foreach ($productCategories as $catId) {
+                $cat = new Category((int) $catId);
+                if (!$cat->id) continue;
+                if ($cat->nleft >= $root->nleft && $cat->nright <= $root->nright) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
