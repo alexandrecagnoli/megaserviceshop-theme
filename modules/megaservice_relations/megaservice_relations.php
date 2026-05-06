@@ -178,9 +178,10 @@ class Megaservice_relations extends Module
 
     private function getProductCoverUrl($idProduct)
     {
+        // ⚠️ Pas de LIMIT 1 explicite : Db::getValue() en ajoute un automatiquement
+        // (cf. classes/db/Db.php) → 'LIMIT 1 LIMIT 1' = syntax error MariaDB.
         $sql = 'SELECT i.`id_image` FROM `' . _DB_PREFIX_ . 'image` i
-                WHERE i.`id_product` = ' . (int) $idProduct . ' AND i.`cover` = 1
-                LIMIT 1';
+                WHERE i.`id_product` = ' . (int) $idProduct . ' AND i.`cover` = 1';
         $idImage = (int) Db::getInstance()->getValue($sql);
         if (!$idImage) {
             return '';
