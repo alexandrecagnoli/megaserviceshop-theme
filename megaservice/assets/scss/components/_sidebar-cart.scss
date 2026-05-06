@@ -19,9 +19,9 @@
   background: rgba($color-black, 0.4);
 }
 
-// Bouton de fermeture (plugin le prepend avec <i class="material-icons">)
-// On remplace le glyph material par notre SVG via mask-image, pour conserver
-// un hover couleur orange sans devoir écraser le HTML généré par le plugin.
+// Bouton de fermeture — plugin génère <div class="sb-close-btn"><i class="material-icons">…</i></div>
+// On masque le <i> et on dessine la croix en CSS pur (deux barres rotées).
+// Approche plus fiable que mask-image (pas de bug fill='none'/stroke selon les renderers).
 .sb-close-btn {
   position: absolute;
   top: 20px;
@@ -34,20 +34,28 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: $color-black;
+  @include transition(color);
 
-  i {
-    display: block;
-    width: 24px;
-    height: 24px;
-    font-size: 0; // masque le caractère material-icons
-    background: $color-black;
-    // SVG path REMPLI (fill) au lieu de stroke pour fiabilité du mask
-    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>") no-repeat center / contain;
-            mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>") no-repeat center / contain;
-    @include transition(background);
+  // Cache le contenu Material Icons généré par le plugin
+  i { display: none !important; }
+
+  // Dessine la croix : deux barres 2×20px rotées à ±45°, color via background = currentColor
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
   }
+  &::before { transform: translate(-50%, -50%) rotate(45deg); }
+  &::after  { transform: translate(-50%, -50%) rotate(-45deg); }
 
-  &:hover i { background: $color-ktm; }
+  &:hover { color: $color-ktm; }
 }
 
 // Contenu du sidebar — flex column pour épingler le CTA en bas

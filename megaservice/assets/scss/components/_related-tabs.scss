@@ -5,6 +5,8 @@
 
 .ms-related-tabs {
   margin: 32px 0;
+  padding-bottom: 32px;
+  border-bottom: 1px solid $color-gray-20; // sépare la section des "Produits qui pourraient vous plaire" en dessous (cohérent avec border-top de .ms-reassurance)
 
   // ── Nav onglets : ligne sous-titres + barre orange sous l'actif
   &__nav {
