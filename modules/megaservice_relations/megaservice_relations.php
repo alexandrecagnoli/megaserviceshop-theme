@@ -206,7 +206,7 @@ class Megaservice_relations extends Module
             'ms_form_action' => AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
         ]);
 
-        return $output . $this->display(__FILE__, 'config-import.tpl');
+        return $output . $this->display(__FILE__, 'views/templates/admin/config-import.tpl');
     }
 
     private function processCsvImport()
@@ -225,6 +225,6 @@ class Megaservice_relations extends Module
         $stats = $importer->import($_FILES['csv_file']['tmp_name'], $mode);
 
         $this->context->smarty->assign('ms_import_stats', $stats);
-        return $this->display(__FILE__, 'config-import-result.tpl');
+        return $this->display(__FILE__, 'views/templates/admin/config-import-result.tpl');
     }
 }
