@@ -28,6 +28,9 @@ class Megaservice_relationsAdminModuleFrontController extends ModuleFrontControl
 
         $action = Tools::getValue('action');
         switch ($action) {
+            case 'getState':
+                $this->actionGetState();
+                break;
             case 'search':
                 $this->actionSearch();
                 break;
@@ -37,6 +40,17 @@ class Megaservice_relationsAdminModuleFrontController extends ModuleFrontControl
             default:
                 $this->respond(['success' => false, 'message' => 'Unknown action']);
         }
+    }
+
+    private function actionGetState()
+    {
+        $idProduct = (int) Tools::getValue('id_product');
+        if (!$idProduct) {
+            $this->respond(['success' => false, 'message' => 'Missing id_product']);
+        }
+        $module = Module::getInstanceByName('megaservice_relations');
+        $state = $module ? $module->buildPanelState($idProduct) : ['is_powerparts' => false];
+        $this->respond(['success' => true] + $state);
     }
 
     private function actionSearch()

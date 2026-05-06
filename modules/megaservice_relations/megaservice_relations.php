@@ -45,10 +45,9 @@ class Megaservice_relations extends Module
     {
         return parent::install()
             && $this->createTable()
-            // Hook inline (page produit moderne PS 8, en bas du step "Description")
-            && $this->registerHook('displayAdminProductsMainStepLeftColumnBottom')
-            // Hook legacy pour compat éventuelle (apparaît dans l'onglet "Modules")
-            && $this->registerHook('displayAdminProductsExtra')
+            // Un seul hook : displayBackOfficeHeader. Le panneau est injecté
+            // via JS dans la page produit (Plan B après échec des hooks "Step"
+            // qui ne dispatchent pas dans la page produit moderne PS 8).
             && $this->registerHook('displayBackOfficeHeader');
     }
 
@@ -84,39 +83,34 @@ class Megaservice_relations extends Module
     }
 
     /**
-     * Hook moderne PS 8 — affiche le panneau INLINE en bas du step Description
-     * (toujours visible, pas besoin de cliquer "Configurer"). Uniquement pour
-     * les produits dans la sous-arborescence Powerparts.
+     * Hook header BO — charge le CSS/JS qui injecte le panneau dans la page produit.
+     * Le JS détecte la page (URL `/products-v2/<id>/edit`), fait un AJAX getState
+     * pour récupérer is_powerparts + relations, et injecte le panneau dans le DOM.
+     *
+     * Plan B après échec des hooks "Step" qui ne dispatchent pas dans la page
+     * produit moderne PS 8 (LegacyHookSubscriber issue connu).
      */
-    public function hookDisplayAdminProductsMainStepLeftColumnBottom($params)
+    public function hookDisplayBackOfficeHeader()
     {
-        error_log('[MS_RELATIONS] hook MainStepLeftColumnBottom called for id_product=' . ($params['id_product'] ?? 'null'));
-        $idProduct = (int) ($params['id_product'] ?? 0);
-        $debug = '<div style="background:#ff0;padding:8px;border:2px solid red;font-size:14px;">HOOK FIRED — id_product=' . $idProduct . ' — Powerparts=' . ($idProduct && $this->isProductInPowerpartsSubtree($idProduct) ? 'YES' : 'NO') . '</div>';
-        return $debug . $this->renderRelationsPanel($params);
+        $this->context->controller->addCSS($this->_path . 'views/css/admin-product-relations.css');
+        $this->context->controller->addJS($this->_path . 'views/js/admin-product-relations.js');
+
+        // Expose l'URL AJAX du module au JS (getModuleLink gère friendly URLs)
+        $ajaxUrl = $this->context->link->getModuleLink('megaservice_relations', 'admin', [], true);
+        return '<script>window.MS_RELATIONS_AJAX_URL = ' . json_encode($ajaxUrl) . ';</script>';
     }
 
     /**
-     * Hook legacy — fallback pour les versions PS où le hook moderne n'est pas dispo.
-     * Apparaît dans l'onglet Modules avec un bouton "Configurer".
+     * Public — appelé par le contrôleur AJAX pour récupérer l'état initial
+     * (is_powerparts + 4 listes de relations) pour un produit donné.
      */
-    public function hookDisplayAdminProductsExtra($params)
+    public function buildPanelState($idProduct)
     {
-        return $this->renderRelationsPanel($params);
-    }
-
-    /**
-     * Render commun aux deux hooks. N'affiche le panneau que si le produit
-     * appartient à la sous-arborescence Accessoires Powerparts.
-     */
-    private function renderRelationsPanel($params)
-    {
-        $idProduct = (int) $params['id_product'];
+        $idProduct = (int) $idProduct;
         if (!$idProduct || !$this->isProductInPowerpartsSubtree($idProduct)) {
-            return '';
+            return ['is_powerparts' => false];
         }
 
-        // Pré-charge les relations existantes pour les passer au JS en JSON
         $relations = [];
         foreach (MsProductRelationService::allTypes() as $type) {
             $rows = MsProductRelationService::getRelations($idProduct, $type);
@@ -134,18 +128,10 @@ class Megaservice_relations extends Module
             $relations[$type] = $items;
         }
 
-        $this->context->smarty->assign([
-            'ms_id_product'     => $idProduct,
-            'ms_ajax_url'       => $this->context->link->getModuleLink(
-                'megaservice_relations',
-                'admin',
-                [],
-                true
-            ),
-            'ms_relations_json' => json_encode($relations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-        ]);
-
-        return $this->display(__FILE__, 'admin-products-extra.tpl');
+        return [
+            'is_powerparts' => true,
+            'relations'     => $relations,
+        ];
     }
 
     /**
@@ -173,20 +159,6 @@ class Megaservice_relations extends Module
             }
         }
         return false;
-    }
-
-    /**
-     * Hook header BO — charge le CSS/JS de l'onglet relations sur la page produit.
-     */
-    public function hookDisplayBackOfficeHeader()
-    {
-        $controller = Tools::getValue('controller');
-        // PS 8 : page produit = AdminProducts (legacy) OU AdminProductsV2 (modern)
-        if (!in_array($controller, ['AdminProducts', 'AdminProductsV2'])) {
-            return;
-        }
-        $this->context->controller->addCSS($this->_path . 'views/css/admin-product-relations.css');
-        $this->context->controller->addJS($this->_path . 'views/js/admin-product-relations.js');
     }
 
     private function getProductName($idProduct)

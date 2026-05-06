@@ -1,49 +1,104 @@
 /**
- * Onglet Relations Powerparts — page produit BO.
- * - Autocomplete par AJAX (search par nom/réf)
- * - Drag & drop HTML5 natif pour réordonner
- * - Save AJAX automatique sur chaque modif (add/remove/reorder/qty)
+ * Panneau Relations Powerparts — page produit BO (PS 8 moderne).
+ *
+ * STRATÉGIE : injection JS depuis displayBackOfficeHeader.
+ * Les hooks "Step" (displayAdminProductsMainStepLeftColumnBottom) ne dispatchent
+ * pas vers les modules legacy dans la page produit moderne — le LegacyHookSubscriber
+ * de PS 8 a un comportement inconsistant. On contourne en :
+ *   1. Détectant la page produit BO via URL (/products-v2/<id>/edit)
+ *   2. AJAX getState pour vérifier is_powerparts + récupérer les relations
+ *   3. Si Powerparts → on construit le panneau HTML et on l'injecte dans le DOM
+ *
+ * Une fois injecté, l'init existant prend le relais (même bindings autocomplete,
+ * drag-drop, save).
  */
 (function () {
   'use strict';
 
-  // Try init dès que possible
+  var TYPES = [
+    { key: 'mandatory',   label: 'Pièces obligatoires' },
+    { key: 'excluded',    label: 'Pièces exclues (incompatibilités)' },
+    { key: 'recommended', label: 'Pièces recommandées' },
+    { key: 'spare',       label: 'Pièces de rechange', withQty: true }
+  ];
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tryInit);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    tryInit();
+    boot();
   }
 
-  // PS 8 page produit moderne : le hook displayAdminProductsExtra est rendu
-  // dans l'onglet "Modules" derrière un bouton "Configurer". Le contenu peut
-  // donc apparaître plus tard. On observe le DOM pour détecter l'arrivée du panneau.
-  var observer = new MutationObserver(function () { tryInit(); });
-  observer.observe(document.body, { childList: true, subtree: true });
+  function boot() {
+    // 1. Détecter la page produit BO via URL — pattern /products-v2/<id>/edit
+    var match = window.location.pathname.match(/\/products-v2\/(\d+)\/edit/);
+    if (!match) return;
+    var idProduct = parseInt(match[1], 10);
+    var ajaxUrl = window.MS_RELATIONS_AJAX_URL || (window.location.origin + '/index.php?fc=module&module=megaservice_relations&controller=admin');
 
-  function tryInit() {
+    // 2. Fetch state initial
+    ajaxFetch(ajaxUrl, { action: 'getState', id_product: idProduct })
+      .then(function (resp) {
+        if (!resp || !resp.success || !resp.is_powerparts) return;
+        injectPanel(idProduct, ajaxUrl, resp.relations || {});
+      })
+      .catch(function (err) {
+        console.error('[ms_relations] getState failed', err);
+      });
+  }
+
+  // 3. Construit le HTML du panneau et l'injecte dans la page
+  function injectPanel(idProduct, ajaxUrl, initialState) {
+    if (document.querySelector('.ms-relations')) return; // déjà injecté
+
+    var html =
+      '<div class="form-wrapper ms-relations" data-ms-id-product="' + idProduct + '" data-ms-ajax-url="' + escapeAttr(ajaxUrl) + '">' +
+        '<h3>Relations Powerparts</h3>' +
+        '<p class="text-muted small">Glissez-déposez pour réordonner. Les modifications sont enregistrées automatiquement.</p>' +
+        '<div class="ms-relations__panels">' +
+          TYPES.map(function (t) {
+            return (
+              '<div class="ms-relations__panel' + (t.withQty ? ' ms-relations__panel--with-qty' : '') + '" data-type="' + t.key + '">' +
+                '<h4>' + escapeHtml(t.label) + ' <span class="ms-relations__count badge">0</span></h4>' +
+                '<div class="ms-relations__search-wrap">' +
+                  '<input type="text" class="ms-relations__search form-control" placeholder="Rechercher un produit (nom ou référence)…" autocomplete="off">' +
+                  '<ul class="ms-relations__results"></ul>' +
+                '</div>' +
+                '<ul class="ms-relations__items"></ul>' +
+              '</div>'
+            );
+          }).join('') +
+        '</div>' +
+      '</div>';
+
+    // Cherche un anchor stable dans le DOM de la page produit moderne.
+    // Plusieurs candidats possibles selon la version PS, ordre de préférence :
+    var anchor =
+      document.getElementById('related-product') ||                       // bloc "Produits associés" PS 8
+      document.querySelector('[data-role="form-product"]') ||
+      document.querySelector('form[name="product"]') ||
+      document.querySelector('.product-page form') ||
+      document.querySelector('main');
+    if (!anchor) {
+      console.warn('[ms_relations] no anchor found, appending to body');
+      document.body.insertAdjacentHTML('beforeend', html);
+    } else {
+      anchor.insertAdjacentHTML('afterend', html);
+    }
+
+    // 4. Bind l'UI — réutilise le code existant
     var root = document.querySelector('.ms-relations');
-    if (!root || root.dataset.msInited === '1') return;
-    init(root);
-  }
+    if (!root) return;
+    root.dataset.msInited = '1';
 
-  function init(root) {
-    var idProduct = parseInt(root.dataset.msIdProduct, 10) || 0;
-    var ajaxUrl   = root.dataset.msAjaxUrl;
-    if (!idProduct || !ajaxUrl) return;
-    root.dataset.msInited = '1'; // évite double init si l'observer retire+remet
-
-    var initialDataEl = root.querySelector('.ms-relations__data');
-    var state = initialDataEl ? safeParse(initialDataEl.textContent) : {};
-    state = state || {};
-
-    var panels = root.querySelectorAll('.ms-relations__panel');
-    panels.forEach(function (panel) {
+    root.querySelectorAll('.ms-relations__panel').forEach(function (panel) {
       var type = panel.dataset.type;
-      state[type] = state[type] || [];
-      bindPanel(panel, type, state[type], idProduct, ajaxUrl);
-      renderItems(panel, state[type]);
+      var items = initialState[type] || [];
+      bindPanel(panel, type, items, idProduct, ajaxUrl);
+      renderItems(panel, items);
     });
   }
+
+  function escapeAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
 
   function safeParse(s) {
     try { return JSON.parse(s); } catch (e) { return null; }
