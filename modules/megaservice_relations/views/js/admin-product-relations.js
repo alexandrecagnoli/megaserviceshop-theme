@@ -50,7 +50,7 @@
   function injectPanel(idProduct, ajaxUrl, initialState) {
     if (document.querySelector('.ms-relations')) return; // déjà injecté
 
-    var html =
+    var panelHTML =
       '<div class="form-wrapper ms-relations" data-ms-id-product="' + idProduct + '" data-ms-ajax-url="' + escapeAttr(ajaxUrl) + '">' +
         '<h3>Relations Powerparts</h3>' +
         '<p class="text-muted small">Glissez-déposez pour réordonner. Les modifications sont enregistrées automatiquement.</p>' +
@@ -70,32 +70,117 @@
         '</div>' +
       '</div>';
 
-    // Cherche un anchor stable dans le DOM de la page produit moderne.
-    // Plusieurs candidats possibles selon la version PS, ordre de préférence :
+    // Stratégie 1 : injection comme NOUVEL ONGLET dans la nav du produit
+    // PS 8 modern product page : nav-tabs avec data-role/data-bs-target/href ancré.
+    if (injectAsTab(panelHTML)) {
+      finishInit(idProduct, ajaxUrl, initialState);
+      return;
+    }
+
+    // Stratégie 2 (fallback) : injection inline sous "Produits associés"
     var anchor =
-      document.getElementById('related-product') ||                       // bloc "Produits associés" PS 8
+      document.getElementById('related-product') ||
       document.querySelector('[data-role="form-product"]') ||
       document.querySelector('form[name="product"]') ||
       document.querySelector('.product-page form') ||
       document.querySelector('main');
     if (!anchor) {
-      console.warn('[ms_relations] no anchor found, appending to body');
-      document.body.insertAdjacentHTML('beforeend', html);
+      document.body.insertAdjacentHTML('beforeend', panelHTML);
     } else {
-      anchor.insertAdjacentHTML('afterend', html);
+      anchor.insertAdjacentHTML('afterend', panelHTML);
     }
+    finishInit(idProduct, ajaxUrl, initialState);
+  }
 
-    // 4. Bind l'UI — réutilise le code existant
+  function finishInit(idProduct, ajaxUrl, initialState) {
     var root = document.querySelector('.ms-relations');
     if (!root) return;
     root.dataset.msInited = '1';
-
     root.querySelectorAll('.ms-relations__panel').forEach(function (panel) {
       var type = panel.dataset.type;
       var items = initialState[type] || [];
       bindPanel(panel, type, items, idProduct, ajaxUrl);
       renderItems(panel, items);
     });
+  }
+
+  /**
+   * Tente d'injecter le panneau comme nouvel onglet "Relations Powerparts"
+   * dans la nav d'onglets de la page produit. Retourne true si réussi.
+   */
+  function injectAsTab(panelHTML) {
+    // Détection de la nav d'onglets : on cherche les boutons existants
+    // (Description, Détails, Stocks…). PS 8 utilise plusieurs structures possibles.
+    var navCandidates = [
+      'nav.product-tabs',
+      '.product-page .nav-tabs',
+      '.nav-tabs[role="tablist"]',
+      '[role="tablist"]'
+    ];
+    var nav = null;
+    for (var i = 0; i < navCandidates.length; i++) {
+      var found = document.querySelector(navCandidates[i]);
+      if (found && found.querySelector('a, button')) { nav = found; break; }
+    }
+    if (!nav) return false;
+
+    // Reproduit la structure d'un bouton existant pour rester cohérent
+    var sample = nav.querySelector('a, button');
+    if (!sample) return false;
+
+    // Tab content container (contient les .tab-pane)
+    var tabContent =
+      document.querySelector('.tab-content') ||
+      document.querySelector('.product-tab-content') ||
+      nav.parentElement.querySelector('.tab-content');
+    if (!tabContent) return false;
+
+    var paneId = 'ms-relations-pane';
+    var btnId  = 'ms-relations-tab-btn';
+
+    // 1. Crée le bouton onglet en clonant un sample (préserve les classes PS)
+    var btn = sample.cloneNode(false);
+    btn.id = btnId;
+    btn.removeAttribute('href');
+    btn.setAttribute('href', '#' + paneId);
+    btn.removeAttribute('aria-selected');
+    btn.classList.remove('active', 'show');
+    btn.textContent = 'Relations Powerparts';
+    // Si l'élément cloné est un <button> il n'a pas href, on garde
+
+    // Wrappe dans le même type d'élément parent que les autres onglets
+    var sampleWrapper = sample.closest('li');
+    var item;
+    if (sampleWrapper) {
+      item = sampleWrapper.cloneNode(false);
+      item.appendChild(btn);
+      nav.appendChild(item);
+    } else {
+      nav.appendChild(btn);
+    }
+
+    // 2. Crée le tab-pane
+    var pane = document.createElement('div');
+    pane.id = paneId;
+    pane.className = 'tab-pane fade ms-relations-pane';
+    pane.setAttribute('role', 'tabpanel');
+    pane.innerHTML = panelHTML;
+    tabContent.appendChild(pane);
+
+    // 3. Click handler — switch d'onglet manuel (compatible avec PS et Bootstrap)
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Désactive tous les autres onglets
+      nav.querySelectorAll('a, button').forEach(function (b) { b.classList.remove('active'); });
+      tabContent.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.classList.remove('active', 'show');
+      });
+      // Active le nôtre
+      btn.classList.add('active');
+      pane.classList.add('active', 'show');
+    });
+
+    return true;
   }
 
   function escapeAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }

@@ -1,6 +1,11 @@
 /* Onglet Relations Powerparts — page produit BO */
 
-.ms-relations { padding: 16px 0; }
+.ms-relations {
+  padding: 16px 0;
+  margin-bottom: 96px; /* offset pour le footer fixe BO (Annuler / Enregistrer) */
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 .ms-relations h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
 .ms-relations h4 {
@@ -24,11 +29,14 @@
 
 .ms-relations__panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   margin-top: 16px;
 }
-@media (max-width: 992px) { .ms-relations__panels { grid-template-columns: 1fr; } }
+/* Bascule en 1 colonne plus tôt — la zone utile en BO est étroite à cause de la sidebar */
+@media (max-width: 1400px) { .ms-relations__panels { grid-template-columns: 1fr; } }
+
+.ms-relations__panel { min-width: 0; }   /* protège du débordement grid */
 
 .ms-relations__panel {
   border: 1px solid #e0e0e0;
