@@ -188,3 +188,53 @@ find ... -delete 2>&1 | grep -v 'Directory not empty' || true
 ou utiliser un endpoint PHP qui clear via `Tools::clearCache()` (plus robuste).
 
 **Statut** : 🟢 monitoring — pas grave en l'état mais à reprendre si on a un jour un bug de cache non vidé.
+
+---
+
+## 🔴 Import CSV Powerparts — accepter les refs constructeur au lieu d'`id_product`
+
+**Fichiers** :
+- [modules/megaservice_relations/classes/CsvImporter.php](modules/megaservice_relations/classes/CsvImporter.php) (`REQUIRED_COLS`)
+- [modules/megaservice_relations/views/templates/admin/config-import.tpl](modules/megaservice_relations/views/templates/admin/config-import.tpl)
+- [samples/test-relations-import-29.csv](samples/test-relations-import-29.csv)
+
+**Contexte** : Le CSV exige `id_product_source` / `id_product_target` en integers PS internes. Or les fichiers constructeur (KTM Powerparts notamment) ne contiennent QUE des **références** (SKU `60100978000` etc.) — jamais d'`id_product` PS qui sont des données internes au shop. Sans support des refs, impossible de balancer un CSV constructeur tel quel : il faut un script intermédiaire de mapping `ref → id` à maintenir.
+
+**Impact** :
+- Bloquant pour intégrer la data fournisseur réelle (KTM, Husqvarna, GasGas)
+- Glue script à maintenir = source d'erreurs (mapping périmé après chaque nouveau produit ajouté)
+- Les ids varient entre dev/preprod/prod, les refs sont stables
+
+**Fix proposé** :
+1. Renommer les colonnes requises en `ref_source`, `relation_type`, `ref_target` (+ optionnels `position`, `recommended_qty`)
+2. **Une seule** requête en début d'import : `SELECT id_product, reference FROM ps_product WHERE reference IN (...)` pour récupérer toutes les refs du CSV en batch
+3. Construire la map `[ref => id_product]`, traduire chaque ligne, remonter en erreur les refs absentes (avec n° de ligne + ref invalide)
+4. Le reste de la logique (modes append / replace_for_listed / full_replace, dedup) reste identique
+
+**Perf** : meilleures qu'aujourd'hui — 1 SELECT batch au lieu de N `existsProduct()` actuels (un par ligne). Sur un import de 10k lignes : 1 requête vs 10k.
+
+**Effort** : ~1h.
+
+**Statut** : 🔴 max important — bloquant pour l'usage prod. À implémenter avant le premier vrai import constructeur.
+
+---
+
+## 🟡 Import CSV — pas de feedback progressif (progress bar) ni de chunking
+
+**Fichier** : [modules/megaservice_relations/classes/CsvImporter.php](modules/megaservice_relations/classes/CsvImporter.php)
+
+**Contexte** : L'import est synchrone — un POST `/admin?configure=megaservice_relations` traite tout le fichier ligne par ligne en PHP, puis renvoie la page de résultats à la fin. Pas de progress bar, pas de chunking, pas de streaming.
+
+**Impact** :
+- Sur un gros fichier (>5k lignes), le navigateur peut hit le `max_execution_time` PHP (30s par défaut) ou un timeout proxy → import partiel et state incohérent (mode `full_replace` particulièrement risqué : la table est vidée puis l'insert plante en cours)
+- UX : l'admin attend devant un loader sans savoir si ça avance ou si c'est freezé
+- Pas de retry/reprise possible
+
+**Fix proposé** :
+- **Court terme** : afficher un loader explicite sur le submit, augmenter `max_execution_time` localement via `set_time_limit(0)` au début de l'import
+- **Moyen terme** : chunker l'import en transactions de 500-1000 lignes, exposer un endpoint AJAX `?step=N` que la page poll, afficher une vraie progress bar en frontend (X / Y lignes traitées)
+- **Long terme** : queue async (Symfony Messenger ou job PrestaShop) — l'admin upload, reçoit un job id, peut quitter la page, voit le statut au retour
+
+**Effort** : 30 min court terme / 3h moyen terme / 1 jour long terme.
+
+**Statut** : 🟡 à reprendre si on rencontre un timeout sur un vrai import constructeur.
