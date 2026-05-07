@@ -215,12 +215,13 @@ window.prestashop.on('updateProductList', function(data) {
   });
 }());
 
-// ── Add-to-cart AJAX pour les miniatures de listing ──────────────────────────
-// Le formulaire sur .ms-product-card__add-form POST classique navigue vers la page panier.
-// On intercepte, on fait un POST AJAX et on émet updateCart pour que les modules
-// (ex: sidebar cart plugin) se déclenchent.
+// ── Add-to-cart AJAX pour les miniatures de listing + pièces de rechange ────
+// Sans intercept, le POST natif navigue vers /panier.
+// Sélecteur générique : tous les formulaires marqués js-ajax-add-to-cart, plus
+// rétrocompatibilité des classes existantes (.ms-product-card__add-form,
+// .ms-spare-list__add-form). Émet updateCart pour réveiller le sidebar plugin.
 document.addEventListener('submit', function(e) {
-  const form = e.target.closest('.ms-product-card__add-form');
+  const form = e.target.closest('.ms-product-card__add-form, .ms-spare-list__add-form, .js-ajax-add-to-cart');
   if (!form) return;
   e.preventDefault();
 
@@ -256,6 +257,19 @@ document.addEventListener('submit', function(e) {
     .catch(function(err) {
       console.error('[megaservice] add-to-cart error:', err);
     });
+});
+
+// ── Sync qty select → hidden input des pièces de rechange ────────────────────
+// Le <select class="ms-spare-list__qty"> est en dehors du <form>. Sans sync,
+// le POST envoie toujours la recommended_qty figée. On reflète la valeur du
+// select dans <input type="hidden" name="qty"> du form sibling dans la même <li>.
+document.addEventListener('change', function(e) {
+  const select = e.target.closest('.ms-spare-list__qty');
+  if (!select) return;
+  const row = select.closest('.ms-spare-list__row');
+  if (!row) return;
+  const hidden = row.querySelector('.ms-spare-list__add-form input[name="qty"]');
+  if (hidden) hidden.value = select.value;
 });
 
 // Event delegation : marche pour tout .products-sort-order, même ajouté
