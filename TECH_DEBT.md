@@ -238,3 +238,81 @@ ou utiliser un endpoint PHP qui clear via `Tools::clearCache()` (plus robuste).
 **Effort** : 30 min court terme / 3h moyen terme / 1 jour long terme.
 
 **Statut** : 🟡 à reprendre si on rencontre un timeout sur un vrai import constructeur.
+
+---
+
+## 🟠 Footer — liens hardcodés `href="#"` au lieu de routes dynamiques
+
+**Fichier** : [megaservice/templates/_partials/footer.tpl](megaservice/templates/_partials/footer.tpl)
+
+**Contexte** : Le footer contient 13 liens `href="#"` non câblés à de vraies destinations PS. Tant qu'on n'a pas créé les pages CMS / catégories / politiques côté back-office, on pointe vers `#` pour l'intégration visuelle.
+
+**Liens concernés** :
+
+*Colonne "La Société"* :
+- A propos (ligne 35)
+- Livraison et retours (ligne 36)
+- Blog (ligne 37)
+- FAQ (ligne 38)
+
+*Colonne "Catalogue"* :
+- Motos neuves (ligne 47)
+- Motos d'occasion (ligne 48)
+- Equipements pilotes (ligne 49) → catégorie 15 existante (`{$urls.pages.category15}`)
+- Pièces d'origines (ligne 50)
+- Accessoires powerparts (ligne 51) → catégorie 41 existante
+- Sportswear (ligne 52)
+
+*Newsletter (politique GDPR)* :
+- "Voir la politique de données personnelles" (ligne 65)
+
+*Barre légale* :
+- Conditions générales de vente (ligne 78)
+- Mentions légales (ligne 79)
+- Politique de confidentialité (ligne 80)
+- Vie privée et cookies (ligne 81)
+
+**Impact** :
+- Cliquer sur un lien fait défiler en haut de page (pas d'erreur, mais comportement inattendu)
+- SEO : Google indexe les liens `#` comme un trou
+- Accessibilité : nuit aux lecteurs d'écran
+- Légal : les CGV / Mentions légales / Politique de confidentialité sont **obligatoires** côté FR pour un site marchand. À fixer avant la mise en prod.
+
+**Fix proposé** :
+1. **Pages catégorie** : remplacer par `{$urls.pages.categoryN}` ou construire l'URL via `{url entity='category' id=N}` quand les ID sont stables (ex: 15 et 41 connus). Idéalement créer une variable Smarty mappée dans un controller pour les autres.
+2. **Pages CMS** (CGV, Mentions, RGPD, Cookies, A propos, FAQ, Livraison, Blog) : les créer dans le BO Presta (Design → Pages) puis utiliser `{$urls.pages.cmsN}` ou le widget `ps_linklist` (déjà standard PS) pour rendre la liste dynamiquement.
+3. **Newsletter GDPR link** : pointer vers la page CMS "Politique de confidentialité" une fois créée.
+4. **À long terme** : remplacer les colonnes hardcodées du footer par le module `ps_linklist` (config dans le BO, plusieurs blocs de liens, multilingue gratuit).
+
+**Effort** : 30 min si toutes les pages CMS existent, ~2h si faut les créer (+ rédaction).
+
+**Statut** : 🟠 important — bloquant pour la mise en prod (légalement et UX). À traiter en priorité avant le go live.
+
+---
+
+## 🟠 Newsletter — formulaire factice non câblé à un service mailing
+
+**Fichier** : [megaservice/templates/_partials/footer.tpl](megaservice/templates/_partials/footer.tpl#L60-L67)
+
+**Contexte** : Le formulaire newsletter du footer (`<form action="{$urls.pages.index}" method="post">`) est purement visuel. Le submit POST vers la home (qui ne traite rien), donc l'inscription n'est **enregistrée nulle part**. Le checkbox GDPR existe mais n'a pas d'effet.
+
+**Impact** :
+- Les emails saisis par les visiteurs sont **perdus** (le POST sur l'index n'enregistre rien)
+- Promesse contractuelle non tenue : on annonce "-10% sur la 1ère commande" sans mécanisme pour délivrer ni le code promo ni le mail de bienvenue
+- Pas de RGPD opt-in tracé (aucune trace consentement) → risque légal si quelqu'un saisit son mail
+- Faux positif : un visiteur inscrit pense être abonné mais n'aura jamais de news
+
+**Fix proposé** :
+1. **Choisir un service mailing** : Brevo (ex-Sendinblue, fr, gratuit jusqu'à 300 envois/jour), Mailchimp, Mailjet, ConvertKit, etc.
+2. **Câbler via API** :
+   - **Option A — module PS dédié** : la plupart des services ont un module officiel (`brevo`, `mailchimp` etc.) qui s'occupe de tout (form, double opt-in, sync contacts)
+   - **Option B — controller custom** : créer un endpoint front module qui reçoit le POST, valide email + GDPR, fait l'API call vers le service, gère retours d'erreurs / messages de succès
+3. **Workflow attendu** :
+   - Submit → enregistre dans la liste mailing (status: pending)
+   - Email de double opt-in envoyé (RGPD)
+   - Au confirm → status: confirmed + email avec code promo `BIENVENUE10`
+   - Stockage du consentement (date/IP/version CGV) en BDD pour traçabilité légale
+
+**Effort** : ~2h avec module officiel du service choisi / ~1 jour pour solution custom.
+
+**Statut** : 🟠 important — non bloquant techniquement (le form ne plante pas) mais bloquant fonctionnellement (l'engagement marketing n'est pas tenu) + risque RGPD. À fixer dès qu'un service mailing est choisi.
