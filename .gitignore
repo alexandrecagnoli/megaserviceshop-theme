@@ -19,3 +19,7 @@ megaservice.zip
 # Presta cache (si tu ajoutes PrestaShop plus tard)
 var/cache/
 var/logs/
+
+# Imports motos / microfiches : on ne versionne pas les gros CSV constructeur.
+# Les samples (~30 lignes/marque) sont dans modules/megaservice_microfiches/samples/.
+/data/imports/*.csv
