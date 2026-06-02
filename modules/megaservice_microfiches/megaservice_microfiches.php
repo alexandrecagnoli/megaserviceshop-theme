@@ -91,17 +91,33 @@ class Megaservice_microfiches extends Module
 
     // =====================================================================
     // Page de configuration BO (PrestaShop appelle getContent() sur "Configurer").
-    // V1 : minimal — un bouton d'import par marque + un bouton "Tout importer".
-    // Les CSV doivent être déposés au préalable dans <PS root>/data/imports/.
+    // 2 modes :
+    //   - upload direct d'un CSV depuis le navigateur → déposé dans
+    //     data/imports/<MARQUE>_MOTORCYCLES.csv puis import immédiat
+    //   - import des CSV déjà présents dans data/imports/ (SCP/SSH)
     // =====================================================================
 
     public function getContent(): string
     {
         $importsDir = _PS_ROOT_DIR_ . '/data/imports';
-        $csvs       = $this->scanMotosCsvs($importsDir);
         $output     = '';
 
-        // Dispatch des boutons d'import.
+        // Crée le dossier s'il n'existe pas (cas d'un premier déploiement).
+        if (!is_dir($importsDir) && !@mkdir($importsDir, 0755, true)) {
+            return $this->renderAlert('danger', sprintf(
+                'Impossible de créer le dossier %s — vérifier les droits.',
+                $importsDir
+            ));
+        }
+
+        // Mode 1 : upload + import immédiat.
+        if (Tools::isSubmit('submitUploadMotosCsv')) {
+            $output .= $this->handleUploadAndImport($importsDir);
+        }
+
+        // Mode 2 : import des CSV déjà présents.
+        $csvs = $this->scanMotosCsvs($importsDir);
+
         if (Tools::isSubmit('submitImportAllMotos') && $csvs !== []) {
             $output .= $this->runMotosImports($csvs);
         } else {
@@ -115,6 +131,81 @@ class Megaservice_microfiches extends Module
 
         $output .= $this->renderImportPage($importsDir, $csvs);
         return $output;
+    }
+
+    /**
+     * Gère l'upload d'un CSV motos depuis le BO, le déplace dans data/imports/
+     * sous le nom canonique <MARQUE>_MOTORCYCLES.csv puis lance l'import.
+     */
+    private function handleUploadAndImport(string $importsDir): string
+    {
+        $upload = $_FILES['csv_file'] ?? null;
+        if ($upload === null || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return $this->renderAlert('danger', $this->describeUploadError($upload['error'] ?? UPLOAD_ERR_NO_FILE));
+        }
+
+        $originalName = (string) ($upload['name'] ?? '');
+        if (strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION)) !== 'csv') {
+            return $this->renderAlert('danger', 'Le fichier doit avoir l\'extension .csv (reçu : '
+                . htmlspecialchars($originalName) . ')');
+        }
+
+        try {
+            $marque = MotosImporter::deduceMarque($originalName);
+        } catch (Throwable $e) {
+            return $this->renderAlert('danger',
+                'Marque indéterminable depuis le nom du fichier : doit contenir KTM, HQV ou GASGAS (reçu : '
+                . htmlspecialchars($originalName) . ')');
+        }
+
+        $destPath = $importsDir . '/' . $marque . '_MOTORCYCLES.csv';
+        if (!move_uploaded_file((string) $upload['tmp_name'], $destPath)) {
+            return $this->renderAlert('danger', sprintf(
+                'Impossible de déplacer le fichier uploadé vers %s — vérifier les droits.',
+                htmlspecialchars($destPath)
+            ));
+        }
+
+        $sizeMb = round(filesize($destPath) / 1024 / 1024, 2);
+        $out    = $this->renderAlert('success', sprintf(
+            'Upload réussi : %s (%s Mo). Import en cours…',
+            $marque, $sizeMb
+        ));
+
+        $out .= $this->runMotosImports([
+            $marque => [
+                'path'     => $destPath,
+                'size_mb'  => $sizeMb,
+                'modified' => date('Y-m-d H:i:s'),
+            ],
+        ]);
+
+        return $out;
+    }
+
+    private function describeUploadError(int $code): string
+    {
+        $umax = ini_get('upload_max_filesize');
+        $pmax = ini_get('post_max_size');
+        switch ($code) {
+            case UPLOAD_ERR_INI_SIZE:
+                return "Fichier trop volumineux pour PHP (upload_max_filesize=$umax). "
+                    . "Augmenter cette valeur dans le php.ini ou via .htaccess.";
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'Fichier trop volumineux (limite côté formulaire dépassée).';
+            case UPLOAD_ERR_PARTIAL:
+                return "Upload interrompu (post_max_size=$pmax peut être trop bas).";
+            case UPLOAD_ERR_NO_FILE:
+                return 'Aucun fichier sélectionné.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Dossier temporaire PHP introuvable côté serveur.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Impossible d\'écrire le fichier uploadé sur le disque côté serveur.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'Upload bloqué par une extension PHP.';
+            default:
+                return "Erreur d'upload inconnue (code $code).";
+        }
     }
 
     /**
@@ -163,13 +254,36 @@ class Megaservice_microfiches extends Module
      */
     private function renderImportPage(string $importsDir, array $csvs): string
     {
-        $dir = htmlspecialchars($importsDir);
+        $dir   = htmlspecialchars($importsDir);
+        $umax  = htmlspecialchars((string) ini_get('upload_max_filesize'));
+        $pmax  = htmlspecialchars((string) ini_get('post_max_size'));
+        $out   = '';
 
+        // -- Panel d'upload (toujours visible) --------------------------------
+        $out .= '<div class="panel">'
+            . '<h3>Téléverser un CSV motos</h3>'
+            . '<form method="post" action="" enctype="multipart/form-data">'
+            . '<p>Sélectionner un fichier <code>.csv</code> dont le nom contient '
+            . '<strong>KTM</strong>, <strong>HQV</strong> ou <strong>GASGAS</strong> '
+            . '(ex. <code>KTM_MOTORCYCLES.csv</code>). Le fichier est déposé dans '
+            . '<code>' . $dir . '</code> sous le nom canonique '
+            . '<code>&lt;MARQUE&gt;_MOTORCYCLES.csv</code> puis importé immédiatement.</p>'
+            . '<p><input type="file" name="csv_file" accept=".csv" required /> '
+            . '<button type="submit" name="submitUploadMotosCsv" value="1" class="btn btn-primary">'
+            . 'Téléverser et importer</button></p>'
+            . '<p class="help-block"><em>Limites PHP serveur : upload_max_filesize=' . $umax
+            . ', post_max_size=' . $pmax . '. KTM_MOTORCYCLES.csv fait ~32 Mo — '
+            . 'si l\'upload échoue, augmenter ces valeurs dans php.ini ou .htaccess.</em></p>'
+            . '</form>'
+            . '</div>';
+
+        // -- Panel des CSV déjà présents --------------------------------------
         if ($csvs === []) {
-            return '<div class="alert alert-warning">'
-                . '<p><strong>Aucun CSV motos trouvé</strong> dans <code>' . $dir . '</code>.</p>'
-                . '<p>Déposer les fichiers <code>KTM_MOTORCYCLES.csv</code>, <code>HQV_MOTORCYCLES.csv</code> et/ou <code>GASGAS_MOTORCYCLES.csv</code> dans ce dossier, puis recharger cette page.</p>'
+            $out .= '<div class="alert alert-info">'
+                . '<p>Aucun CSV motos présent dans <code>' . $dir . '</code> pour l\'instant. '
+                . 'Utiliser le panneau d\'upload ci-dessus pour en déposer un.</p>'
                 . '</div>';
+            return $out;
         }
 
         $rows = '';
@@ -193,8 +307,8 @@ class Megaservice_microfiches extends Module
             );
         }
 
-        return '<div class="panel">'
-            . '<h3>Import motos <small>depuis ' . $dir . '</small></h3>'
+        $out .= '<div class="panel">'
+            . '<h3>Réimporter un CSV déjà présent</h3>'
             . '<form method="post" action="">'
             . '<table class="table">'
             . '<thead><tr><th>Marque</th><th>Taille</th><th>Modifié</th><th>Action</th></tr></thead>'
@@ -206,6 +320,8 @@ class Megaservice_microfiches extends Module
             . '<p class="help-block"><em>Idempotent : un réimport met à jour les motos existantes (clé : MODELNUMBER), ne réactive pas une moto désactivée manuellement.</em></p>'
             . '</form>'
             . '</div>';
+
+        return $out;
     }
 
     /**

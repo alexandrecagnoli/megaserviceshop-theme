@@ -319,25 +319,24 @@ ou utiliser un endpoint PHP qui clear via `Tools::clearCache()` (plus robuste).
 
 ---
 
-## 🟠 Module microfiches — import CSV motos via SCP/SSH au lieu d'upload BO
+## 🟢 Module microfiches — upload BO des CSV motos (résolu)
 
-**Fichier** : [modules/megaservice_microfiches/megaservice_microfiches.php](modules/megaservice_microfiches/megaservice_microfiches.php) (`getContent()`)
+**Fichier** : [modules/megaservice_microfiches/megaservice_microfiches.php](modules/megaservice_microfiches/megaservice_microfiches.php) (`getContent()`, `handleUploadAndImport()`)
 
-**Contexte** : V1 de la page de config du module scanne `<PS root>/data/imports/` pour trouver les 3 CSV motos (KTM/HQV/GASGAS). Les fichiers sont donc déposés à la main (SCP/SSH) avant import. Pas de file upload depuis le BO.
+**Contexte historique** : la 1ʳᵉ version de `getContent()` se contentait de scanner `<PS root>/data/imports/` pour les CSV déposés en SCP/SSH. UX dégradée pour l'admin sans accès shell.
 
-**Impact** :
-- L'admin doit avoir un accès SSH au serveur (ou un panneau de fichiers type Plesk) pour pouvoir importer
-- UX dégradée : ce n'est pas le geste naturel "j'ouvre le BO, je téléverse, je clique import"
-- En cas de mise à jour mensuelle des CSV constructeur, ça reste manuel et hors-BO
+**Résolution** : ajout d'un panneau d'upload (form `multipart/form-data`) qui :
+1. Valide l'extension `.csv`
+2. Déduit la marque depuis le nom de fichier (via `MotosImporter::deduceMarque`)
+3. Déplace le fichier dans `data/imports/<MARQUE>_MOTORCYCLES.csv` (nom canonique)
+4. Lance l'import immédiatement et affiche le rapport
+5. Affiche les limites PHP (`upload_max_filesize`, `post_max_size`) + mapping clair des codes d'erreur (1=trop volumineux, 3=interrompu, etc.)
 
-**Fix proposé** :
-1. Ajouter un `<input type="file" name="csv_file" accept=".csv">` dans le form de `getContent()`
-2. Sur POST : valider l'extension + taille max (les CSV peuvent faire 30+ Mo, vérifier `upload_max_filesize` / `post_max_size` PHP), déduire la marque depuis le nom de fichier, déplacer dans `data/imports/` puis lancer l'import
-3. Bonus : conserver les versions précédentes (rename en `.YYYYMMDD-HHMM.csv`) pour rollback
+**Limites résiduelles** :
+- Sur Plesk/hébergement mutualisé, `upload_max_filesize` peut être <32 Mo → l'upload KTM échouera. Il faut alors augmenter via `.htaccess` ou demander à l'hébergeur. L'erreur est explicite.
+- Pas de versioning des CSV (un nouvel upload écrase le précédent). Bonus optionnel pour V2 : renommer en `.YYYYMMDD-HHMM.csv` avant écrasement.
 
-**Effort** : ~1h.
-
-**Statut** : 🟠 à faire avant la livraison V1 client. Acceptable pendant le dev car le dev a SSH.
+**Statut** : 🟢 résolu.
 
 ---
 
