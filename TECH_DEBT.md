@@ -316,3 +316,84 @@ ou utiliser un endpoint PHP qui clear via `Tools::clearCache()` (plus robuste).
 **Effort** : ~2h avec module officiel du service choisi / ~1 jour pour solution custom.
 
 **Statut** : 🟠 important — non bloquant techniquement (le form ne plante pas) mais bloquant fonctionnellement (l'engagement marketing n'est pas tenu) + risque RGPD. À fixer dès qu'un service mailing est choisi.
+
+---
+
+## 🟠 Module microfiches — import CSV motos via SCP/SSH au lieu d'upload BO
+
+**Fichier** : [modules/megaservice_microfiches/megaservice_microfiches.php](modules/megaservice_microfiches/megaservice_microfiches.php) (`getContent()`)
+
+**Contexte** : V1 de la page de config du module scanne `<PS root>/data/imports/` pour trouver les 3 CSV motos (KTM/HQV/GASGAS). Les fichiers sont donc déposés à la main (SCP/SSH) avant import. Pas de file upload depuis le BO.
+
+**Impact** :
+- L'admin doit avoir un accès SSH au serveur (ou un panneau de fichiers type Plesk) pour pouvoir importer
+- UX dégradée : ce n'est pas le geste naturel "j'ouvre le BO, je téléverse, je clique import"
+- En cas de mise à jour mensuelle des CSV constructeur, ça reste manuel et hors-BO
+
+**Fix proposé** :
+1. Ajouter un `<input type="file" name="csv_file" accept=".csv">` dans le form de `getContent()`
+2. Sur POST : valider l'extension + taille max (les CSV peuvent faire 30+ Mo, vérifier `upload_max_filesize` / `post_max_size` PHP), déduire la marque depuis le nom de fichier, déplacer dans `data/imports/` puis lancer l'import
+3. Bonus : conserver les versions précédentes (rename en `.YYYYMMDD-HHMM.csv`) pour rollback
+
+**Effort** : ~1h.
+
+**Statut** : 🟠 à faire avant la livraison V1 client. Acceptable pendant le dev car le dev a SSH.
+
+---
+
+## 🟡 Module microfiches — bruit HTML dans les CSV constructeur
+
+**Fichier** : [modules/megaservice_microfiches/classes/importers/MotosImporter.php](modules/megaservice_microfiches/classes/importers/MotosImporter.php) (`buildRow()`)
+
+**Contexte** : Les CSV `KTM_MOTORCYCLES.csv`, `HQV_MOTORCYCLES.csv` et `GASGAS_MOTORCYCLES.csv` fournis par le constructeur contiennent en début de fichier des fragments HTML (lignes `<td style="..."`, `<tr ...>`, `</tr>`) au lieu de vrais rows CSV. Origine probable : copié-collé depuis un export web. L'importer filtre via `^\$M-` sur `MODELNUMBER` et compte ces lignes en `skipped` dans le rapport.
+
+**Impact** :
+- Aucun bug fonctionnel : les rows polluées sont silencieusement skippées
+- Le compteur "Skippées" du rapport BO peut dérouter l'admin (élevé) — à expliquer dans la doc
+- Si la pollution change de forme (ex. autre balise HTML), notre filtre `^\$M-` pourrait laisser passer des rows invalides
+
+**Fix proposé** :
+1. Court terme : OK comme tel, le filtre est robuste
+2. Idéal : remonter le bug à la source (équipe constructeur / KTM Powerparts) pour qu'ils livrent des CSV propres
+3. Alternative : pré-processer le CSV avant import (script awk de nettoyage) — mais alourdit le pipeline pour pas grand-chose
+
+**Statut** : 🟡 monitoring — vérifier que le compteur "skipped" reste cohérent dans le temps.
+
+---
+
+## 🟡 Module microfiches — strip d'accents par table explicite (workaround libiconv BSD macOS)
+
+**Fichier** : [modules/megaservice_microfiches/classes/importers/CsvReader.php](modules/megaservice_microfiches/classes/importers/CsvReader.php) (`stripAccents()`)
+
+**Contexte** : `CsvReader::normalizeHeader()` doit retirer les accents pour canoniser les noms de colonnes (`année` / `annee` / `ANNEE` → `annee`). La méthode standard `iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s)` fonctionne avec GNU libiconv (Linux serveur) mais **strippe silencieusement** les caractères accentués sans les convertir avec la libiconv BSD livrée par macOS — résultat : `année` devient `anne` puis `ann_` après notre regex.
+
+Solution adoptée : table de remplacement PHP explicite (`strtr` sur ~50 caractères latins courants) — déterministe et portable, mais ne couvre que les accents latins (pas le cyrillique, grec, etc., on s'en fout pour des CSV moto FR/EN/DE/ES/IT).
+
+**Impact** :
+- Code un peu plus verbeux que `iconv TRANSLIT`
+- Couvre les besoins actuels à 100% (validé sur les 3 CSV)
+- Ne couvre pas un futur CSV cyrillique / asiatique → pas un sujet sur ce projet
+
+**Fix proposé** : aucun, c'est la bonne solution pour la portabilité dev macOS / prod Linux.
+
+**Statut** : 🟢 résolu, documenté pour mémoire — ne pas "améliorer" en remettant iconv.
+
+---
+
+## 🟡 Module microfiches — modèles KTM 125 LC2/Sting d'avant 2000 tombent en taxonomie 'Autres'
+
+**Fichier** : [modules/megaservice_microfiches/classes/importers/MotosTaxonomy.php](modules/megaservice_microfiches/classes/importers/MotosTaxonomy.php) (`RULES`)
+
+**Contexte** : Le dictionnaire taxonomie du brief §4.2 est conçu pour les modèles modernes (post-2010 grosso modo). Sur les samples on a observé 5 motos KTM des années 1997-1998 qui tombent en `Autres` :
+- `125 LC2 100/WEISS`, `125 STING`, `125 LC2 80`, `125 STING/100`, `125 LC2 11KW MIL`
+
+Conforme au brief qui prévoit explicitement de loguer ces motos pour correction manuelle BO (cf. compteur `autresFound` du `MotosImportReport`).
+
+**Impact** :
+- Sur l'import complet (~1830 motos), proportion d'`Autres` à mesurer
+- Si > 10% : enrichir le dictionnaire (ajouter règles `LC2`, `Sting` → `Enduro` ou `Naked` selon le modèle)
+- Sinon : laisser tel quel, corriger via BO (édition manuelle du `type`)
+
+**Fix proposé** : après le 1er import complet, mesurer la proportion et décider. Si patch dictionnaire, ajouter les règles avant `Motocross (SX|MC)` pour ne pas voler des matchs légitimes.
+
+**Statut** : 🟡 à mesurer après import complet sur preprod.
