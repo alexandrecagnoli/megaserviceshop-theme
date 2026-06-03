@@ -2,6 +2,12 @@
 
 > **Pour Claude Code** : ce brief est ta spec. Lis-le intégralement avant d'écrire la première ligne. Si un point te semble ambigu, demande avant de coder, ne devine pas.
 
+> ⚠️ **Brief figé — voir [`STATUS.md`](STATUS.md) pour l'état réel.**
+> Le module a été renommé `megaservice_microfiches` et plusieurs décisions
+> actées en cours de dev s'éloignent de ce brief (clé UNIQUE hotspots
+> étendue, collation alignée PS, dictionnaire taxonomie étendu, etc.).
+> `STATUS.md` est le doc à jour pour reprendre le travail.
+
 ---
 
 ## 1. Contexte projet (en 1 paragraphe)
