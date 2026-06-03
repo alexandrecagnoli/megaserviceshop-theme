@@ -65,22 +65,29 @@ class Megaservice_microfiches extends Module
     }
 
     /**
-     * Installe l'arborescence Tabs BO :
-     *   Microfiches (parent, top-level)
-     *     ├── Motos          → AdminMsMotos
-     *     ├── Microfiches    → AdminMsMicrofiches
-     *     └── Catégories     → AdminMsCategories
+     * Installe l'arborescence Tabs BO sous le menu "Catalogue" :
+     *   AdminCatalog (Catalogue) [existant PS]
+     *     └── Microfiches (parent)
+     *         ├── Motos          → AdminMsMotos
+     *         ├── Microfiches    → AdminMsMicrofiches
+     *         └── Catégories     → AdminMsCategories
      *
-     * Les controllers correspondants sont dans controllers/admin/ et seront
-     * ajoutés en commits suivants. À l'install d'un commit qui n'inclut pas
-     * encore le controller, le tab existe mais cliquer dessus donnera un 404
-     * Presta — sans gravité, le tab disparaît après désinstallation.
+     * Note PS 8 : on NE peut PAS ajouter un Tab top-level (id_parent=0) qui
+     * apparaîtra dans le menu — la racine utilise une whitelist côté
+     * Symfony. Il faut s'accrocher sous un Tab existant (Catalogue = logique
+     * pour des données catalogue motos/microfiches).
      */
     private function installTabs(): bool
     {
+        $catalogId = (int) Tab::getIdFromClassName('AdminCatalog');
+        if ($catalogId <= 0) {
+            // Très improbable (AdminCatalog est core PS) — fallback id_parent=0.
+            $catalogId = 0;
+        }
+
         $parentId = (int) Tab::getIdFromClassName(self::TAB_PARENT_CLASS);
         if ($parentId <= 0) {
-            $parentId = $this->createTab(self::TAB_PARENT_CLASS, 'Microfiches', 0);
+            $parentId = $this->createTab(self::TAB_PARENT_CLASS, 'Microfiches', $catalogId);
             if ($parentId <= 0) {
                 return false;
             }
@@ -112,7 +119,10 @@ class Megaservice_microfiches extends Module
     {
         $tab             = new Tab();
         $tab->class_name = $className;
-        $tab->module     = $parentId === 0 ? '' : $this->name; // parent top-level n'a pas de module
+        // Tous nos tabs portent le module : le parent "Microfiches" est aussi
+        // créé par nous (le module owner permet à PS de les déréférencer
+        // proprement à l'uninstall si appelé via Module::uninstall()).
+        $tab->module     = $this->name;
         $tab->id_parent  = $parentId;
         $tab->active     = 1;
         // Nom localisé pour toutes les langues installées.
