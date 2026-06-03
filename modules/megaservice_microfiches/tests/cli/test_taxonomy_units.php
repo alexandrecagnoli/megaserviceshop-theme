@@ -87,6 +87,83 @@ $tests = [
     ['type',       'SX-E 5 2025',            'Electrique'],
     ['type',       'MC-E 5 2025',            'Electrique'],
 
+    // =====================================================================
+    // PATCH POST-MESURE PROD (juin 2026) — patterns absents du brief, ajoutés
+    // après mesure des 313 'Autres' du 1er import.
+    // =====================================================================
+
+    // ---- Naked : fix bug RC (chiffre simple → chiffres multiples) -------
+    ['type',       'RC 390',                 'Naked'], // bug fix : ancien pattern \d (un seul) loupait
+    ['type',       'RC 200',                 'Naked'],
+    ['type',       'RC 125',                 'Naked'],
+    ['type',       'RC 250',                 'Naked'],
+    ['type',       '1190 RC8',               'Naked'], // RC sans espace
+    ['type',       '1190 RC8 R',             'Naked'], // RC8 + suffixe via espace
+    ['type',       'RC 8C',                  'Naked'], // RC 8C (modèle racing)
+
+    // ---- Naked : Brabus -------------------------------------------------
+    ['type',       'BRABUS 1300 R',          'Naked'],
+    ['type',       '1400 Brabus R Signature', 'Naked'],
+
+    // ---- Adventure : Rally Replica/Factory + SMT ------------------------
+    ['type',       '450 Rally Replica',      'Adventure'],
+    ['type',       '450 RALLY Factory Replica', 'Adventure'],
+    ['type',       '890 SMT',                'Adventure'],
+
+    // ---- Trial : Freeride (sans le E) -----------------------------------
+    ['type',       'Freeride 250 R',         'Trial'],
+    ['type',       'Freeride 350',           'Trial'],
+    ['type',       'FREERIDE 250 F',         'Trial'],
+    // Confirmation : Freeride E reste Electrique (priorité 1)
+    ['type',       'Freeride E',             'Electrique'],
+
+    // ---- Enduro : XCF (KTM) ---------------------------------------------
+    ['type',       'XCF 350',                'Enduro'],
+    ['type',       '350 XCF-W',              'Enduro'],
+    ['type',       '450 XCF-W',              'Enduro'],
+
+    // ---- Enduro : MXC, EGS, E-GS (vieux KTM) ----------------------------
+    ['type',       '300 MXC',                'Enduro'],
+    ['type',       'MXC 250',                'Enduro'],
+    ['type',       '125 EGS',                'Enduro'],
+    ['type',       '200 EGS 8KW',            'Enduro'],
+    ['type',       '250 E-GS WP',            'Enduro'],
+
+    // ---- Motocross : TC, FC (HQV motocross — absents du brief) ---------
+    ['type',       'TC 85',                  'Motocross'],
+    ['type',       'TC 250',                 'Motocross'],
+    ['type',       'TC 65',                  'Motocross'],
+    ['type',       'TC 50 Mini',             'Motocross'],
+    ['type',       'TC 125 Heritage',        'Motocross'],
+    ['type',       'FC 250',                 'Motocross'],
+    ['type',       'FC 350',                 'Motocross'],
+    ['type',       'FC 450 Rockstar Edition', 'Motocross'],
+    ['type',       'FC 250 FACTORY EDITION', 'Motocross'],
+
+    // ---- Enduro : EC (GASGAS 2T) + EC<num>F (GASGAS 4T) -----------------
+    ['type',       'EC 125',                 'Enduro'],
+    ['type',       'EC 250',                 'Enduro'],
+    ['type',       'EC 300',                 'Enduro'],
+    ['type',       'EC 250F',                'Enduro'],
+    ['type',       'EC 350F',                'Enduro'],
+    ['type',       'EC 500F',                'Enduro'],
+    ['type',       'EC 300 GP',              'Enduro'],
+
+    // ---- Supermoto : ES (GASGAS Enduro Street = supermoto routier) ------
+    ['type',       'ES 700',                 'Supermoto'],
+    ['type',       'ES 500',                 'Supermoto'],
+    ['type',       'ES 350',                 'Supermoto'],
+
+    // ---- Enduro : RX (GASGAS Rally Cross) + EW (GASGAS Enduro Wild) ----
+    ['type',       'RX 450F',                'Enduro'],
+    ['type',       'EW 500F',                'Enduro'],
+
+    // ---- Non-régression : règles existantes ----------------------------
+    ['type',       'EXC 300',                'Enduro'],   // EXC pas volé par EX
+    ['type',       '65 SX',                  'Motocross'],// SX pas volé par TC/FC
+    ['type',       'MC 250F',                'Motocross'],// MC pas volé par EC
+    ['type',       '125 LC2 80',             'Autres'],   // vieux KTM toujours en Autres
+
     // ---- isElectric ------------------------------------------------------
     ['isElectric', 'Electrique',             true],
     ['isElectric', 'Motocross',              false],

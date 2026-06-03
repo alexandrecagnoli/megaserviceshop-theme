@@ -33,23 +33,39 @@ class MotosTaxonomy
      * @var array<int, array{0: string, 1: string}>
      */
     private const RULES = [
-        // ÉLECTRIQUE en premier (avant que SX-E matche SX en Motocross).
+        // 1. ÉLECTRIQUE (priorité absolue : avant SX/MC/Freeride en non-électrique).
         ['/\b(SX-E|MC-E|EE|Freeride\s*E)\b/i', self::TYPE_ELECTRIQUE],
-        // TRIAL (GASGAS uniquement)
-        ['/\b(TXT|TXT\s+GP|TXT\s+Racing)\b/i', self::TYPE_TRIAL],
-        // ADVENTURE / TRAVEL
-        ['/\b(Adventure|Norden)\b/i', self::TYPE_ADVENTURE],
-        // SUPERMOTO (SMC / SMR / SM<sp> / FS<sp> / Supermoto)
-        ['/\b(SMC|SMR|SM\s|FS\s|Supermoto)\b/i', self::TYPE_SUPERMOTO],
-        // NAKED / ROADSTER (Duke, RC<num>, Svartpilen, Vitpilen)
-        ['/\b(Duke|RC\s+\d|Svartpilen|Vitpilen)\b/i', self::TYPE_NAKED],
-        // ENDURO routier (Enduro R / 701 Enduro)
+
+        // 2. TRIAL (GASGAS TXT + KTM Freeride non électrique).
+        //    Freeride E ne tombe pas ici (déjà capturé en 1).
+        ['/\b(TXT|TXT\s+GP|TXT\s+Racing|Freeride)\b/i', self::TYPE_TRIAL],
+
+        // 3. ADVENTURE / RALLY RAID (Adventure, Norden, Rally Replica/Factory, SMT).
+        ['/\b(Adventure|Norden|Rally\s+(Replica|Factory)|SMT)\b/i', self::TYPE_ADVENTURE],
+
+        // 4. SUPERMOTO (SMC / SMR / SM<sp> / FS<sp> / Supermoto / ES = GASGAS Enduro Street).
+        ['/\b(SMC|SMR|SM\s|FS\s|Supermoto|ES)\b/i', self::TYPE_SUPERMOTO],
+
+        // 5. NAKED (Duke, RC<num> avec ou sans espace ni suffixe lettre, Svartpilen,
+        //    Vitpilen, Brabus). Couvre RC 125/200/250/390, RC8, RC8C.
+        //    Note historique : ancien pattern `RC\s+\d` (1 chiffre) loupait RC 390
+        //    car \b après \d échouait quand suivait un chiffre — bug du brief.
+        ['/\b(Duke|RC\s*\d+[A-Z]?|Svartpilen|Vitpilen|Brabus)\b/i', self::TYPE_NAKED],
+
+        // 6. ENDURO routier (Enduro R / 701 Enduro).
         ['/\b(Enduro\s+R|701\s+Enduro)\b/i', self::TYPE_ENDURO],
-        // ENDURO compétition (EXC, EX, XC, TE, TX, FE, FX)
-        ['/\b(EXC|EX|XC|TE|TX|FE|FX)\b/i', self::TYPE_ENDURO],
-        // MOTOCROSS (SX, MC) — laissé EN DERNIER car SX matche aussi SX-E
-        // (déjà attrapé par la 1re règle Électrique).
-        ['/\b(SX|MC)\b/i', self::TYPE_MOTOCROSS],
+
+        // 7. ENDURO compétition :
+        //    KTM : EXC, EX, XCF, XC, MXC (Motocross Cross-Country), EGS / E-GS (vieux 2T)
+        //    HQV : TE, TX, FE, FX
+        //    GASGAS : EC (2T et 4T car EC 350F matche \bEC\b), EW (Enduro Wild), RX (Rally Cross)
+        ['/\b(EXC|EX|XCF|XC|TE|TX|FE|FX|EC|EW|RX|MXC|EGS|E-GS)\b/i', self::TYPE_ENDURO],
+
+        // 8. MOTOCROSS — EN DERNIER (SX-E déjà attrapé en 1).
+        //    KTM : SX
+        //    HQV : TC (2T), FC (4T) — absents du brief, ajoutés après mesure
+        //    GASGAS : MC
+        ['/\b(SX|MC|TC|FC)\b/i', self::TYPE_MOTOCROSS],
     ];
 
     /**
