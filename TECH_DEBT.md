@@ -6,6 +6,28 @@ Liste vivante des hacks, raccourcis, et optimisations à reprendre quand le proj
 
 ---
 
+## 🟡 Module microfiches — UNIQUE KEY hotspot sous-spécifiée dans le brief (corrigée a posteriori)
+
+**Fichier** : [modules/megaservice_microfiches/sql/install.sql](modules/megaservice_microfiches/sql/install.sql) + [migration 001](modules/megaservice_microfiches/sql/migrations/001_hotspot_unique_with_position.sql)
+
+**Contexte** : le brief §4.3 spécifiait la clé fonctionnelle d'un hotspot comme `(id_microfiche, article_ref, sequence_number)`. Mesure réelle sur le 1er CSV testé (F0403X7.csv = GASGAS EC 300 2024, 1466 hotspots) :
+- 1250 clés uniques selon la spec brief
+- 1463 clés uniques en incluant `position_x` + `position_y`
+- **→ 213 hotspots (14.5%) silencieusement écrasés** par le INSERT ON DUPLICATE KEY UPDATE
+
+**Cause racine** : une même pièce numérotée (ex. vis M6 "10") peut apparaître plusieurs fois sur une vue éclatée à des endroits visuels différents (jusqu'à 9 fois pour les vis répétitives du moteur). Chaque occurrence est un vrai hotspot cliquable distinct.
+
+**Fix appliqué** (commit qui suit la mesure) :
+1. `install.sql` : `UNIQUE KEY uk_hotspot_naturel` étendue à 5 colonnes (ajout position_x, position_y)
+2. `sql/migrations/001_hotspot_unique_with_position.sql` : script `ALTER TABLE` pour les installs déjà en place (préprod, prod future). À exécuter manuellement via phpMyAdmin.
+3. Aucun changement code PHP : `MicrofichesImporter::upsertHotspot()` n'est pas impacté (le SQL ON DUPLICATE KEY UPDATE marche identiquement avec la nouvelle clé).
+
+**Impact résiduel** : la doc du brief §4.3 reste à corriger côté MSS — la spec officielle devrait inclure la position dans la clé naturelle.
+
+**Statut** : 🟢 corrigé en code et schéma. Migration manuelle requise sur les bases déjà installées (préprod en attente d'exécution au moment de cet ajout).
+
+---
+
 ## 🟠 Module Powerparts — panneau BO injecté en JS au lieu d'un onglet Symfony natif
 
 **Fichier** : [modules/megaservice_relations/views/js/admin-product-relations.js](modules/megaservice_relations/views/js/admin-product-relations.js)

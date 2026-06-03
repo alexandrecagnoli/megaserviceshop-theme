@@ -68,6 +68,11 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche` (
   CONSTRAINT `fk_microfiche_categorie` FOREIGN KEY (`id_categorie`) REFERENCES `PREFIX_ms_microfiche_categorie`(`id_categorie`)     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Note : la UNIQUE KEY inclut position_x ET position_y car une même pièce
+-- (ex. vis M6 #10) peut apparaître plusieurs fois sur la vue éclatée à des
+-- endroits visuels différents — chaque occurrence est un vrai hotspot.
+-- La spec initiale du brief (§4.3) sous-spécifiait la clé naturelle ; on a
+-- mesuré une perte de 14.5% des hotspots sur le 1er CSV testé (cf. TECH_DEBT).
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
   `id_hotspot`      INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_microfiche`   INT UNSIGNED NOT NULL,
@@ -79,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
   `position_y`      SMALLINT UNSIGNED NOT NULL,
   `qty_recommended` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_hotspot`),
-  UNIQUE KEY `uk_hotspot_naturel` (`id_microfiche`, `article_ref`, `sequence_number`),
+  UNIQUE KEY `uk_hotspot_naturel` (`id_microfiche`, `article_ref`, `sequence_number`, `position_x`, `position_y`),
   KEY `idx_id_microfiche` (`id_microfiche`),
   KEY `idx_id_product` (`id_product`),
   KEY `idx_article_ref` (`article_ref`),
