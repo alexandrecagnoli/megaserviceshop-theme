@@ -46,6 +46,7 @@ class Megaservice_microfiches extends Module
     {
         return parent::install()
             && $this->installSql()
+            && $this->installTabs()
             && $this->registerHook('displayHeader')
             && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('actionProductAdd')
@@ -54,12 +55,97 @@ class Megaservice_microfiches extends Module
 
     /**
      * On NE drop PAS les tables à l'uninstall — protection anti-perte de données.
+     * Les tabs BO sont supprimés (cosmétique, recréables).
      * Pour réellement nettoyer la base, appeler dropTables() explicitement.
      */
     public function uninstall(): bool
     {
+        $this->uninstallTabs();
         return parent::uninstall();
     }
+
+    /**
+     * Installe l'arborescence Tabs BO :
+     *   Microfiches (parent, top-level)
+     *     ├── Motos          → AdminMsMotos
+     *     ├── Microfiches    → AdminMsMicrofiches
+     *     └── Catégories     → AdminMsCategories
+     *
+     * Les controllers correspondants sont dans controllers/admin/ et seront
+     * ajoutés en commits suivants. À l'install d'un commit qui n'inclut pas
+     * encore le controller, le tab existe mais cliquer dessus donnera un 404
+     * Presta — sans gravité, le tab disparaît après désinstallation.
+     */
+    private function installTabs(): bool
+    {
+        $parentId = (int) Tab::getIdFromClassName(self::TAB_PARENT_CLASS);
+        if ($parentId <= 0) {
+            $parentId = $this->createTab(self::TAB_PARENT_CLASS, 'Microfiches', 0);
+            if ($parentId <= 0) {
+                return false;
+            }
+        }
+        foreach (self::CHILD_TABS as $className => $name) {
+            if ((int) Tab::getIdFromClassName($className) > 0) {
+                continue; // déjà installé (cas d'un upgrade partiel)
+            }
+            if ($this->createTab($className, $name, $parentId) <= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function uninstallTabs(): bool
+    {
+        // Enfants d'abord pour éviter un parent orphelin (PrestaShop le gère
+        // mais on reste explicite).
+        $ok = true;
+        foreach (self::CHILD_TABS as $className => $_) {
+            $ok = $this->deleteTabByClass($className) && $ok;
+        }
+        $ok = $this->deleteTabByClass(self::TAB_PARENT_CLASS) && $ok;
+        return $ok;
+    }
+
+    private function createTab(string $className, string $name, int $parentId): int
+    {
+        $tab             = new Tab();
+        $tab->class_name = $className;
+        $tab->module     = $parentId === 0 ? '' : $this->name; // parent top-level n'a pas de module
+        $tab->id_parent  = $parentId;
+        $tab->active     = 1;
+        // Nom localisé pour toutes les langues installées.
+        $tab->name = [];
+        foreach (Language::getLanguages(false) as $lang) {
+            $tab->name[(int) $lang['id_lang']] = $name;
+        }
+        return $tab->add() ? (int) $tab->id : 0;
+    }
+
+    private function deleteTabByClass(string $className): bool
+    {
+        $id = (int) Tab::getIdFromClassName($className);
+        if ($id <= 0) {
+            return true; // rien à supprimer
+        }
+        $tab = new Tab($id);
+        return (bool) $tab->delete();
+    }
+
+    /** Classname du Tab parent (top-level) — référencé par les sous-tabs. */
+    private const TAB_PARENT_CLASS = 'AdminMsMicrofichesParent';
+
+    /**
+     * Sous-tabs enfants : classname → libellé (FR).
+     * Les controllers correspondants seront livrés dans les commits suivants
+     * de la PR4 (Catégories d'abord car action immédiate la plus utile).
+     */
+    private const CHILD_TABS = [
+        'AdminMsMotos'       => 'Motos',
+        'AdminMsMicrofiches' => 'Microfiches',
+        'AdminMsCategories'  => 'Catégories',
+    ];
 
     private function installSql(): bool
     {
