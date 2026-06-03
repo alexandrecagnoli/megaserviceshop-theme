@@ -21,14 +21,33 @@ MODELNUMBER;annee;article number;active/inactive;picture;Struktur DE;...;structu
 Variantes du nom de colonne année selon source : `anne` (KTM, accent perdu en
 ISO-8859-1), `annee` (HQV), `ANNEE` (GASGAS) — l'importer normalise.
 
+## Microfiches (1 fichier par moto)
+
+Format : 1 ligne = 1 hotspot (point cliquable). Les microfiches sont implicites :
+on les déduit en groupant sur `(vue_eclatee_type, vue_eclatee_number, vue_eclatee)`.
+
+| Fichier exemple    | Moto pivot              | Encodage      | Ordre de grandeur          |
+|--------------------|-------------------------|---------------|----------------------------|
+| `F0403X7.csv`      | GASGAS EC 300 2024      | UTF-8 / ASCII | ~424 Ko / 1466 hotspots / 45 microfiches / 25 catégories |
+
+Le nom du fichier = la référence constructeur de la moto (= `serial_constructeur`
+sur `ms_moto`). L'importer résout le pivot moto via ce serial. Si la moto n'est
+pas encore en BDD (CSV motos pas encore importé), tous les hotspots sont skippés
+avec un compteur explicite dans le rapport.
+
+Format colonnes : voir brief §4.3.
+
 ## Samples (pour dev / tests)
 
-Un extrait de ~30 lignes par marque (1ère occurrence par `MODELNUMBER` unique)
-est versionné dans `modules/megaservice_microfiches/samples/`. Il sert pour les
-tests unitaires et la validation du mapping taxonomie — pas pour la prod.
+Versionnés dans `modules/megaservice_microfiches/samples/` :
+- **motos** : extrait ~30 lignes par marque (1ère occurrence par `MODELNUMBER`),
+- **microfiches** : 100 premières lignes du CSV complet (couvre engine + frame).
 
 ## Workflow d'import
 
-1. Déposer les CSV constructeur dans ce dossier.
-2. Lancer l'import (CLI ou BO — voir `modules/megaservice_microfiches/README.md`).
-3. Vérifier les logs / le rapport d'import.
+1. Importer **les motos d'abord** (KTM/HQV/GASGAS CSV) → remplit `ps_ms_moto`
+   avec les `serial_constructeur`.
+2. Importer ensuite **les microfiches** (1 CSV par moto, ex. F0403X7.csv) → l'importer
+   résout le pivot via le nom de fichier et remplit `ps_ms_microfiche` +
+   `ps_ms_microfiche_categorie` + `ps_ms_microfiche_hotspot`.
+3. Vérifier le rapport d'import dans le BO (compteurs + erreurs + 'Autres').
