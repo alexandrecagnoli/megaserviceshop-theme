@@ -97,9 +97,14 @@ class AdminMsMotosController extends ModuleAdminController
         $this->addRowAction('edit');
     }
 
+    /** Extensions image acceptées pour upload picture_cycle / picture_moteur. */
+    private const ALLOWED_IMAGE_EXT = ['jpg', 'jpeg', 'png', 'webp'];
+
     public function renderForm()
     {
-        if (!$this->loadObject(true)) {
+        /** @var MsMoto|null $obj */
+        $obj = $this->loadObject(true);
+        if (!$obj) {
             return '';
         }
 
@@ -196,11 +201,132 @@ class AdminMsMotosController extends ModuleAdminController
                     ],
                     'desc'    => 'Une moto désactivée n\'apparaît pas côté front. Un réimport CSV ne réactive pas (cf. MotosImporter).',
                 ],
+                // -- Uploads images partielles -----------------------------
+                [
+                    'type'  => 'file',
+                    'label' => 'Photo partie cycle',
+                    'name'  => 'picture_cycle_upload',
+                    'desc'  => $this->renderCurrentImageHint($obj->picture_cycle, 'cycle'),
+                ],
+                [
+                    'type'  => 'file',
+                    'label' => 'Photo partie moteur',
+                    'name'  => 'picture_moteur_upload',
+                    'desc'  => $this->renderCurrentImageHint($obj->picture_moteur, 'moteur'),
+                ],
             ],
             'submit' => ['title' => 'Enregistrer'],
         ];
 
         return parent::renderForm();
+    }
+
+    /**
+     * HTML pour le champ desc d'un input file : preview de l'image actuelle
+     * (si présente) + rappel des formats acceptés.
+     */
+    private function renderCurrentImageHint(?string $relativePath, string $type): string
+    {
+        $formats = 'JPG, PNG ou WebP.';
+        if (!$relativePath) {
+            return 'Aucune image actuelle. Téléverser un fichier (' . $formats . ')';
+        }
+        $url = __PS_BASE_URI__ . 'img/ms_moto/' . htmlspecialchars($relativePath, ENT_QUOTES, 'UTF-8');
+        return sprintf(
+            'Image actuelle : <a href="%s" target="_blank">%s</a><br>'
+            . '<img src="%s" alt="%s actuelle" style="max-height:120px;border:1px solid #ddd;padding:2px;margin:4px 0;"><br>'
+            . 'Téléverser un fichier pour remplacer (%s)',
+            $url, htmlspecialchars($relativePath, ENT_QUOTES, 'UTF-8'),
+            $url, htmlspecialchars($type, ENT_QUOTES, 'UTF-8'),
+            $formats
+        );
+    }
+
+    /**
+     * Intercepte la save pour gérer les uploads picture_cycle / picture_moteur.
+     * On laisse le save standard de l'ObjectModel se faire (parent::postProcess),
+     * puis on traite les éventuels fichiers uploadés.
+     */
+    public function postProcess()
+    {
+        $result = parent::postProcess();
+
+        $isSave = Tools::isSubmit('submitAdd' . $this->table)
+               || Tools::isSubmit('submitAdd' . $this->table . 'AndStay');
+        if ($isSave) {
+            $idMoto = (int) Tools::getValue('id_moto');
+            if ($idMoto > 0) {
+                $this->handleImageUpload($idMoto, 'cycle');
+                $this->handleImageUpload($idMoto, 'moteur');
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Gère l'upload d'une image partielle (cycle ou moteur) sur une moto.
+     * Stockage : <PS root>/img/ms_moto/<id_moto>/{cycle,moteur}.<ext>
+     * Path BDD : <id_moto>/cycle.<ext> (relatif à img/ms_moto/)
+     */
+    private function handleImageUpload(int $idMoto, string $type): void
+    {
+        $field = 'picture_' . $type . '_upload';
+        if (empty($_FILES[$field]['name']) || empty($_FILES[$field]['tmp_name'])) {
+            return; // pas d'upload pour ce champ
+        }
+        $err = (int) ($_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($err !== UPLOAD_ERR_OK) {
+            $this->errors[] = sprintf('Upload %s : erreur PHP %d (vérifier upload_max_filesize / post_max_size)', $type, $err);
+            return;
+        }
+
+        $originalName = (string) $_FILES[$field]['name'];
+        $ext = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+        if (!in_array($ext, self::ALLOWED_IMAGE_EXT, true)) {
+            $this->errors[] = sprintf(
+                'Upload %s : extension "%s" non autorisée (attendu : %s)',
+                $type, $ext, implode(', ', self::ALLOWED_IMAGE_EXT)
+            );
+            return;
+        }
+
+        $dir = _PS_IMG_DIR_ . 'ms_moto/' . $idMoto . '/';
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+            $this->errors[] = sprintf('Upload %s : impossible de créer le dossier %s', $type, $dir);
+            return;
+        }
+
+        // Supprimer une ancienne image (toutes extensions possibles) avant d'écrire la nouvelle.
+        foreach (self::ALLOWED_IMAGE_EXT as $oldExt) {
+            $oldPath = $dir . $type . '.' . $oldExt;
+            if (is_file($oldPath)) {
+                @unlink($oldPath);
+            }
+        }
+
+        $destFilename = $type . '.' . $ext;
+        $destPath     = $dir . $destFilename;
+        if (!move_uploaded_file((string) $_FILES[$field]['tmp_name'], $destPath)) {
+            $this->errors[] = sprintf('Upload %s : impossible de déplacer le fichier vers %s', $type, $destPath);
+            return;
+        }
+        @chmod($destPath, 0644);
+
+        $bddPath = $idMoto . '/' . $destFilename;
+        $ok = Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'ms_moto` '
+            . "SET `picture_" . $type . "` = '" . pSQL($bddPath) . "', `date_upd` = NOW() "
+            . 'WHERE `id_moto` = ' . $idMoto
+        );
+        if (!$ok) {
+            $this->errors[] = sprintf('Upload %s : fichier déplacé mais update BDD échoué.', $type);
+            return;
+        }
+
+        $this->confirmations[] = sprintf('Image %s mise à jour (%s).', $type, $destFilename);
     }
 
     /**

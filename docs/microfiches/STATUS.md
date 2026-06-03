@@ -67,7 +67,7 @@ décision actée : on attend que toute la V1 marche).
 | 4 | Tabs BO sous `Catalogue` (pas top-level) | PS 8 n'autorise pas les top-level customs | Brief ne le précisait pas |
 | 5 | `UNIQUE KEY hotspot` étendue avec `position_x`, `position_y` | 14.5% des hotspots écrasés sans ça (mesure réelle F0403X7) | `(microfiche, article_ref, sequence)` |
 | 6 | Collation `utf8mb4_general_ci` (alignée sur PS) | Sinon JOIN avec `ps_product` plante (1267) | Brief disait `utf8mb4_unicode_ci` |
-| 7 | Édition motos limitée à `type` + `active` en V1 | Source de vérité = CSV constructeur | Brief V2 prévoyait édition complète |
+| 7 | Édition motos : `type` + `active` + **upload photo cycle + photo moteur** | Source de vérité CSV pour le reste, mais visuels partiels uploadés manuellement | Brief V2 prévoyait édition complète |
 | 8 | Visuels microfiches : hotlink V1 (pas de download) | Décision MSS | "Stockage URL en V1, download V2" |
 | 9 | Visuels motos : download local prévu (PR-Visuels) | Décision MSS | "Juste nom de fichier en V1" |
 | 10 | Patch dictionnaire taxonomie : 17% → 2.3% Autres | Patterns manquants au brief (`TC`/`FC` HQV, `EC` GASGAS, `RC<digits>` KTM, etc.) | Dictionnaire incomplet §4.2 |
@@ -85,7 +85,7 @@ Liste à remonter avant prochaine session de dev :
 2. **Confirmation hotlink microfiches** (sparepartsfinder.gasgas.com, gasgasdealer.net, équivalents KTM/HQV) — OK légalement ?
 3. **Maquettes Figma** : `PLP_CAT_SPAREPARTS.png` + `PDP_microfiche.png` (bloquent PR6/PR7 front)
 4. **Stratégie catalogue spareparts** : par quel flux les 1128+ références OEM par moto vont-elles arriver dans `ps_product.reference` ? (CSV PS natif ? Module externe ? API ?)
-5. **Champs `picture_cycle` + `picture_moteur` sur `ms_moto`** : prévus au schéma mais le CSV motos n'a qu'une seule colonne `picture`. Source de ces vues partielles ?
+5. ~~**Champs `picture_cycle` + `picture_moteur` sur `ms_moto`** : prévus au schéma mais le CSV motos n'a qu'une seule colonne `picture`. Source de ces vues partielles ?~~ → **Résolu** : upload manuel par moto via fiche d'édition BO (cf. décision #7). Stockage dans `img/ms_moto/<id>/{cycle,moteur}.<ext>`.
 
 ---
 
