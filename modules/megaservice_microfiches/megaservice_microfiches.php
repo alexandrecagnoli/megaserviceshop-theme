@@ -169,6 +169,20 @@ class Megaservice_microfiches extends Module
         $sql = (string) file_get_contents($path);
         $sql = str_replace('PREFIX_', _DB_PREFIX_, $sql);
 
+        // Strip les commentaires '--' AVANT de splitter sur ';' : sinon un
+        // commentaire qui contient ';' (ex. "spec ; on a vu...") casse le
+        // parser naïf et MariaDB voit la 2e moitié comme du SQL invalide.
+        $lines = preg_split('/\R/', $sql) ?: [];
+        $clean = [];
+        foreach ($lines as $line) {
+            $trimmed = ltrim($line);
+            if ($trimmed === '' || strncmp($trimmed, '--', 2) === 0) {
+                continue;
+            }
+            $clean[] = $line;
+        }
+        $sql = implode("\n", $clean);
+
         foreach (array_filter(array_map('trim', explode(';', $sql))) as $query) {
             if (!Db::getInstance()->execute($query)) {
                 return false;
