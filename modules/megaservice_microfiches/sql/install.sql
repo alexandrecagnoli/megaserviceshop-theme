@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_moto` (
   KEY `idx_marque_annee` (`marque`, `annee`),
   KEY `idx_type` (`type`),
   KEY `idx_active` (`active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_categorie` (
   `id_categorie`        INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_categorie` (
   PRIMARY KEY (`id_categorie`),
   UNIQUE KEY `uk_partie_numero` (`partie`, `numero_constructeur`),
   KEY `idx_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche` (
   `id_microfiche`    INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche` (
   KEY `idx_active` (`active`),
   CONSTRAINT `fk_microfiche_moto`      FOREIGN KEY (`id_moto`)      REFERENCES `PREFIX_ms_moto`(`id_moto`)                          ON DELETE CASCADE,
   CONSTRAINT `fk_microfiche_categorie` FOREIGN KEY (`id_categorie`) REFERENCES `PREFIX_ms_microfiche_categorie`(`id_categorie`)     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Note : la UNIQUE KEY inclut position_x ET position_y car une meme piece
 -- (ex. vis M6 #10) peut apparaitre plusieurs fois sur la vue eclatee a des
@@ -89,4 +89,4 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
   KEY `idx_id_product` (`id_product`),
   KEY `idx_article_ref` (`article_ref`),
   CONSTRAINT `fk_hotspot_microfiche` FOREIGN KEY (`id_microfiche`) REFERENCES `PREFIX_ms_microfiche`(`id_microfiche`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

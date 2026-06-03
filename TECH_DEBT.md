@@ -6,6 +6,23 @@ Liste vivante des hacks, raccourcis, et optimisations à reprendre quand le proj
 
 ---
 
+## 🟡 Module microfiches — collation tables ms_* alignée sur PrestaShop a posteriori
+
+**Fichier** : [modules/megaservice_microfiches/sql/install.sql](modules/megaservice_microfiches/sql/install.sql) + [migration 002](modules/megaservice_microfiches/sql/migrations/002_align_collation_with_prestashop.sql)
+
+**Contexte** : l'install.sql initial utilisait `utf8mb4_unicode_ci` (choix "moderne", trié plus correctement). PrestaShop 8 utilise `utf8mb4_general_ci` pour toutes ses tables natives. MySQL refuse de comparer 2 chaînes avec collations différentes → tout JOIN entre nos `ms_*` et les `ps_*` natives planterait avec `#1267 Illegal mix of collations`.
+
+**Détecté** quand on a voulu mesurer combien de nos `article_ref` matchent des `ps_product.reference` (préparation PR8 rematching).
+
+**Fix appliqué** :
+1. `install.sql` : 4 occurrences `utf8mb4_unicode_ci` → `utf8mb4_general_ci`
+2. `sql/migrations/002_align_collation_with_prestashop.sql` : 4 `ALTER TABLE` à exécuter manuellement en phpMyAdmin sur les bases déjà installées (préprod)
+3. Aucun changement code PHP : les jointures avec `ps_*` deviendront possibles sans `COLLATE` forcé après migration
+
+**Statut** : 🟢 corrigé en code et schéma. Migration manuelle requise sur préprod.
+
+---
+
 ## 🟡 Module microfiches — UNIQUE KEY hotspot sous-spécifiée dans le brief (corrigée a posteriori)
 
 **Fichier** : [modules/megaservice_microfiches/sql/install.sql](modules/megaservice_microfiches/sql/install.sql) + [migration 001](modules/megaservice_microfiches/sql/migrations/001_hotspot_unique_with_position.sql)
