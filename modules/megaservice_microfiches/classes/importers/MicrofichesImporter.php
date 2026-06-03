@@ -192,8 +192,9 @@ class MicrofichesImporter
 
     private function resolveMotoId(string $serial): ?int
     {
+        // NB : Db::getValue() ajoute automatiquement LIMIT 1 → ne PAS le mettre ici.
         $sql = 'SELECT `id_moto` FROM `' . _DB_PREFIX_ . 'ms_moto` '
-             . "WHERE `serial_constructeur` = '" . pSQL($serial) . "' LIMIT 1";
+             . "WHERE `serial_constructeur` = '" . pSQL($serial) . "'";
         $val = Db::getInstance()->getValue($sql);
         return ($val === false || $val === null || $val === '') ? null : (int) $val;
     }
@@ -207,8 +208,9 @@ class MicrofichesImporter
 
         $db    = Db::getInstance();
         $table = _DB_PREFIX_ . 'ms_microfiche_categorie';
+        // NB : Db::getValue() ajoute automatiquement LIMIT 1 → ne PAS le mettre ici.
         $sql   = "SELECT `id_categorie` FROM `$table` "
-               . "WHERE `partie` = '" . pSQL($partie) . "' AND `numero_constructeur` = $numero LIMIT 1";
+               . "WHERE `partie` = '" . pSQL($partie) . "' AND `numero_constructeur` = $numero";
         $val   = $db->getValue($sql);
         if ($val !== false && $val !== null && $val !== '') {
             $report->incCategoriesReused();
@@ -265,10 +267,11 @@ class MicrofichesImporter
         // Affected_Rows = 0 (UPDATE no-op) : pas de compteur, OK.
 
         // Récupérer l'id (Insert_ID ne marche que sur INSERT, pas sur UPDATE no-op).
+        // NB : Db::getValue() ajoute automatiquement LIMIT 1 → ne PAS le mettre ici.
         $idMicrofiche = (int) $db->getValue(
             "SELECT `id_microfiche` FROM `$table` "
             . "WHERE `id_moto` = $motoId AND `id_categorie` = $catId "
-            . "AND `nom_constructeur` = '" . pSQL($data['nom_constructeur']) . "' LIMIT 1"
+            . "AND `nom_constructeur` = '" . pSQL($data['nom_constructeur']) . "'"
         );
         return $this->micCache[$key] = $idMicrofiche;
     }
