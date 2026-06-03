@@ -82,6 +82,22 @@ class AdminMsMotosController extends ModuleAdminController
                 'orderby'      => false,
                 'width'        => 90,
             ],
+            'picture_cycle' => [
+                'title'    => 'Cycle',
+                'callback' => 'renderPictureCell',
+                'search'   => false,
+                'orderby'  => false,
+                'align'    => 'center',
+                'width'    => 60,
+            ],
+            'picture_moteur' => [
+                'title'    => 'Moteur',
+                'callback' => 'renderPictureCell',
+                'search'   => false,
+                'orderby'  => false,
+                'align'    => 'center',
+                'width'    => 60,
+            ],
             'active' => [
                 'title'  => 'Actif',
                 'active' => 'status',
@@ -327,6 +343,24 @@ class AdminMsMotosController extends ModuleAdminController
         }
 
         $this->confirmations[] = sprintf('Image %s mise à jour (%s).', $type, $destFilename);
+    }
+
+    /**
+     * Mini-vignette si l'image est uploadée, tiret gris sinon.
+     * Callback fields_list pour picture_cycle / picture_moteur.
+     */
+    public function renderPictureCell($value, $row): string
+    {
+        if ($value === null || $value === '') {
+            return '<span class="text-muted" title="Aucune image uploadée">&mdash;</span>';
+        }
+        $url = __PS_BASE_URI__ . 'img/ms_moto/' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        return sprintf(
+            '<a href="%s" target="_blank" title="Voir l\'image en grand">'
+            . '<img src="%s" alt="" style="max-height:32px;max-width:60px;border:1px solid #ddd;padding:1px;background:#fff;" />'
+            . '</a>',
+            $url, $url
+        );
     }
 
     /**
