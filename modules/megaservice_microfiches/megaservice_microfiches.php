@@ -19,6 +19,9 @@ require_once __DIR__ . '/classes/importers/CsvReader.php';
 require_once __DIR__ . '/classes/importers/MotosTaxonomy.php';
 require_once __DIR__ . '/classes/importers/MotosImportReport.php';
 require_once __DIR__ . '/classes/importers/MotosImporter.php';
+require_once __DIR__ . '/classes/importers/MicrofichesTaxonomy.php';
+require_once __DIR__ . '/classes/importers/MicrofichesImportReport.php';
+require_once __DIR__ . '/classes/importers/MicrofichesImporter.php';
 
 class Megaservice_microfiches extends Module
 {
@@ -110,14 +113,11 @@ class Megaservice_microfiches extends Module
             ));
         }
 
-        // Mode 1 : upload + import immédiat.
+        // -- Motos --------------------------------------------------------
         if (Tools::isSubmit('submitUploadMotosCsv')) {
             $output .= $this->handleUploadAndImport($importsDir);
         }
-
-        // Mode 2 : import des CSV déjà présents.
         $csvs = $this->scanMotosCsvs($importsDir);
-
         if (Tools::isSubmit('submitImportAllMotos') && $csvs !== []) {
             $output .= $this->runMotosImports($csvs);
         } else {
@@ -128,8 +128,21 @@ class Megaservice_microfiches extends Module
                 }
             }
         }
-
         $output .= $this->renderImportPage($importsDir, $csvs);
+
+        // -- Microfiches --------------------------------------------------
+        if (Tools::isSubmit('submitUploadMicrofichesCsv')) {
+            $output .= $this->handleUploadAndImportMicrofiches($importsDir);
+        }
+        $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
+        foreach ($microficheCsvs as $serial => $info) {
+            if (Tools::isSubmit('submitImportMicrofiches_' . $serial)) {
+                $output .= $this->runMicrofichesImports([$serial => $info]);
+                break;
+            }
+        }
+        $output .= $this->renderMicrofichesPage($importsDir, $microficheCsvs);
+
         return $output;
     }
 
@@ -380,6 +393,248 @@ class Megaservice_microfiches extends Module
                 }
                 if (count($r->autresFound) > 10) {
                     $out .= sprintf('<li><em>&hellip; et %d autres</em></li>', count($r->autresFound) - 10);
+                }
+                $out .= '</ul>';
+            }
+        }
+        $out .= '</div>';
+        return $out;
+    }
+
+    // =====================================================================
+    // Microfiches : upload + import + listing
+    // =====================================================================
+
+    /**
+     * Gère l'upload d'un CSV microfiches depuis le BO. Le nom du fichier
+     * (sans .csv) sert de pivot moto via ms_moto.serial_constructeur.
+     */
+    private function handleUploadAndImportMicrofiches(string $importsDir): string
+    {
+        $upload = $_FILES['microfiches_csv_file'] ?? null;
+        if ($upload === null || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return $this->renderAlert('danger', $this->describeUploadError($upload['error'] ?? UPLOAD_ERR_NO_FILE));
+        }
+
+        $originalName = (string) ($upload['name'] ?? '');
+        if (strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION)) !== 'csv') {
+            return $this->renderAlert('danger', 'Le fichier doit avoir l\'extension .csv (reçu : '
+                . htmlspecialchars($originalName) . ')');
+        }
+        $serial = pathinfo($originalName, PATHINFO_FILENAME);
+        if ($serial === '' || preg_match('/^[A-Za-z0-9_-]+$/', $serial) !== 1) {
+            return $this->renderAlert('danger',
+                'Nom de fichier invalide : doit être de la forme <code>&lt;SERIAL&gt;.csv</code> (caractères alphanumériques, "_" et "-") où SERIAL correspond à ms_moto.serial_constructeur (reçu : '
+                . htmlspecialchars($originalName) . ')');
+        }
+
+        $destPath = $importsDir . '/' . $serial . '.csv';
+        if (!move_uploaded_file((string) $upload['tmp_name'], $destPath)) {
+            return $this->renderAlert('danger', sprintf(
+                'Impossible de déplacer le fichier uploadé vers %s — vérifier les droits.',
+                htmlspecialchars($destPath)
+            ));
+        }
+
+        $sizeKo = round(filesize($destPath) / 1024, 1);
+        $out    = $this->renderAlert('success', sprintf(
+            'Upload réussi : %s (%s Ko). Import en cours…',
+            $serial, $sizeKo
+        ));
+
+        $out .= $this->runMicrofichesImports([
+            $serial => [
+                'path'     => $destPath,
+                'size_ko'  => $sizeKo,
+                'modified' => date('Y-m-d H:i:s'),
+            ],
+        ]);
+
+        return $out;
+    }
+
+    /**
+     * Scanne data/imports/ pour tout .csv qui n'est PAS un CSV motos.
+     * @return array<string, array{path: string, size_ko: float, modified: string}>
+     */
+    private function scanMicrofichesCsvs(string $importsDir): array
+    {
+        $excluded = [];
+        foreach (MsMoto::MARQUES as $marque) {
+            $excluded[$marque . '_MOTORCYCLES.csv'] = true;
+        }
+        $found = [];
+        $files = @scandir($importsDir);
+        if ($files === false) {
+            return $found;
+        }
+        foreach ($files as $f) {
+            if (substr($f, -4) !== '.csv' || isset($excluded[$f])) {
+                continue;
+            }
+            $path = $importsDir . '/' . $f;
+            if (!is_file($path) || !is_readable($path)) {
+                continue;
+            }
+            $serial = pathinfo($f, PATHINFO_FILENAME);
+            $found[$serial] = [
+                'path'     => $path,
+                'size_ko'  => round(filesize($path) / 1024, 1),
+                'modified' => date('Y-m-d H:i:s', filemtime($path)),
+            ];
+        }
+        ksort($found);
+        return $found;
+    }
+
+    /**
+     * @param array<string, array{path: string, size_ko: float, modified: string}> $csvs
+     */
+    private function runMicrofichesImports(array $csvs): string
+    {
+        $importer = new MicrofichesImporter();
+        $reports  = [];
+        foreach ($csvs as $serial => $csv) {
+            try {
+                $reports[$serial] = $importer->importFile($csv['path'], $serial);
+            } catch (Throwable $e) {
+                return $this->renderAlert('danger', sprintf(
+                    'Erreur fatale sur %s : %s',
+                    $serial, $e->getMessage()
+                ));
+            }
+        }
+        return $this->renderMicrofichesReports($reports);
+    }
+
+    /**
+     * @param array<string, array{path: string, size_ko: float, modified: string}> $csvs
+     */
+    private function renderMicrofichesPage(string $importsDir, array $csvs): string
+    {
+        $dir  = htmlspecialchars($importsDir);
+        $umax = htmlspecialchars((string) ini_get('upload_max_filesize'));
+        $pmax = htmlspecialchars((string) ini_get('post_max_size'));
+        $out  = '';
+
+        // -- Panel d'upload microfiches -----------------------------------
+        $out .= '<div class="panel">'
+            . '<h3>Téléverser un CSV microfiches</h3>'
+            . '<form method="post" action="" enctype="multipart/form-data">'
+            . '<p>Sélectionner un fichier <code>.csv</code> dont le nom (sans extension) '
+            . 'correspond au <strong>serial constructeur</strong> d\'une moto déjà en BDD '
+            . '(ex. <code>F0403X7.csv</code> pour la GASGAS EC 300 2024). '
+            . 'Le fichier est déposé dans <code>' . $dir . '</code> puis importé immédiatement.</p>'
+            . '<p><input type="file" name="microfiches_csv_file" accept=".csv" required /> '
+            . '<button type="submit" name="submitUploadMicrofichesCsv" value="1" class="btn btn-primary">'
+            . 'Téléverser et importer</button></p>'
+            . '<p class="help-block"><em>Pré-requis : importer d\'abord le CSV motos correspondant '
+            . '(la moto pivot doit exister dans <code>ps_ms_moto</code>). '
+            . 'Limites PHP serveur : upload_max_filesize=' . $umax . ', post_max_size=' . $pmax . '.</em></p>'
+            . '</form>'
+            . '</div>';
+
+        // -- Panel des CSV déjà présents ---------------------------------
+        if ($csvs === []) {
+            $out .= '<div class="alert alert-info">'
+                . '<p>Aucun CSV microfiches présent dans <code>' . $dir . '</code> pour l\'instant.</p>'
+                . '</div>';
+            return $out;
+        }
+
+        $rows = '';
+        foreach ($csvs as $serial => $c) {
+            $rows .= sprintf(
+                '<tr><td><strong>%s</strong></td><td>%s Ko</td><td>%s</td>'
+                . '<td><button type="submit" name="submitImportMicrofiches_%s" value="1" class="btn btn-default">Réimporter</button></td></tr>',
+                htmlspecialchars($serial), $c['size_ko'], $c['modified'],
+                htmlspecialchars($serial)
+            );
+        }
+
+        $out .= '<div class="panel">'
+            . '<h3>Réimporter un CSV microfiches déjà présent</h3>'
+            . '<form method="post" action="">'
+            . '<table class="table">'
+            . '<thead><tr><th>Serial moto</th><th>Taille</th><th>Modifié</th><th>Action</th></tr></thead>'
+            . '<tbody>' . $rows . '</tbody>'
+            . '</table>'
+            . '<p class="help-block"><em>Idempotent : un réimport met à jour les microfiches '
+            . 'et hotspots existants (clés : (moto+catégorie+nom) et (microfiche+article+sequence)).</em></p>'
+            . '</form>'
+            . '</div>';
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, MicrofichesImportReport> $reports
+     */
+    private function renderMicrofichesReports(array $reports): string
+    {
+        $out = '<div class="panel"><h3>Rapport d\'import microfiches</h3>';
+        foreach ($reports as $serial => $r) {
+            $a = $r->toArray();
+            if ($r->motoId === null) {
+                $out .= sprintf(
+                    '<div class="alert alert-warning">'
+                    . '<h4>%s &mdash; %s</h4>'
+                    . '<p>⚠️ <strong>Moto pivot introuvable</strong> : <code>%s</code> n\'existe pas dans <code>ps_ms_moto.serial_constructeur</code>. '
+                    . 'Importer d\'abord le CSV motos correspondant, puis relancer cet import.</p>'
+                    . '</div>',
+                    htmlspecialchars($serial), htmlspecialchars($a['csv']), htmlspecialchars($serial)
+                );
+                continue;
+            }
+            $alertClass = count($r->errors) > 0 ? 'alert-warning' : 'alert-success';
+            $out .= sprintf(
+                '<div class="alert %s">'
+                . '<h4>%s &mdash; %s</h4>'
+                . '<ul>'
+                . '<li>Moto résolue : id_moto = <strong>%d</strong></li>'
+                . '<li>Hotspots lus : <strong>%d</strong></li>'
+                . '<li>Hotspots skippés (invalides) : <strong>%d</strong></li>'
+                . '<li>Catégories créées (auto) / réutilisées : <strong>%d / %d</strong></li>'
+                . '<li>Microfiches insérées / mises à jour : <strong>%d / %d</strong></li>'
+                . '<li>Hotspots insérés / mis à jour : <strong>%d / %d</strong></li>'
+                . '<li>Durée : <strong>%d ms</strong></li>'
+                . '<li>Erreurs SQL : <strong>%d</strong></li>'
+                . '</ul>'
+                . '</div>',
+                $alertClass,
+                htmlspecialchars($serial), htmlspecialchars($a['csv']),
+                $a['moto_id'], $a['rows_read'], $a['rows_skipped'],
+                $a['categories_created'], $a['categories_reused'],
+                $a['microfiches_inserted'], $a['microfiches_updated'],
+                $a['hotspots_inserted'], $a['hotspots_updated'],
+                $a['duration_ms'], count($r->errors)
+            );
+
+            if (count($r->errors) > 0) {
+                $out .= '<h5>Erreurs SQL (10 premières) :</h5><ul>';
+                foreach (array_slice($r->errors, 0, 10) as $err) {
+                    $out .= sprintf(
+                        '<li><code>[%s] %s</code> &mdash; %s</li>',
+                        htmlspecialchars($err['level']),
+                        htmlspecialchars($err['key']),
+                        htmlspecialchars($err['error'])
+                    );
+                }
+                if (count($r->errors) > 10) {
+                    $out .= sprintf('<li><em>&hellip; et %d autres</em></li>', count($r->errors) - 10);
+                }
+                $out .= '</ul>';
+            }
+
+            if (count($r->categoriesAutoCreated) > 0) {
+                $out .= '<h5>Catégories auto-créées (à renommer en BO &mdash; brief §6.1.E) :</h5><ul>';
+                foreach ($r->categoriesAutoCreated as $cat) {
+                    $out .= sprintf(
+                        '<li><code>%s</code> (partie=%s, numero=%d) &mdash; nom_fr = NULL</li>',
+                        htmlspecialchars($cat['code']),
+                        htmlspecialchars($cat['partie']),
+                        $cat['numero']
+                    );
                 }
                 $out .= '</ul>';
             }
