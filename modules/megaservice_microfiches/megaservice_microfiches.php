@@ -708,8 +708,16 @@ class Megaservice_microfiches extends Module
             $entryName = (string) $zip->getNameIndex($i);
             $baseName  = basename($entryName);
 
-            // Ignore dossiers (entrées qui se terminent par /)
+            // Skip silencieux : dossiers + métadonnées macOS (__MACOSX/, ._*)
+            // + autres fichiers cachés type .DS_Store. Ce sont des artefacts
+            // de l'archiveur (Finder Apple par défaut), pas des fichiers
+            // utilisateur — pas la peine de les reporter comme erreurs.
             if ($baseName === '' || substr($entryName, -1) === '/') {
+                continue;
+            }
+            if (strpos($entryName, '__MACOSX/') === 0
+                || strpos($baseName, '._') === 0
+                || $baseName === '.DS_Store') {
                 continue;
             }
             // Ignore tout ce qui n'est pas .csv
