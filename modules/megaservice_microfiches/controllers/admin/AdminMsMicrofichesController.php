@@ -324,6 +324,10 @@ class AdminMsMicrofichesController extends ModuleAdminController
 .ms-microfiche-meta { margin: 10px 0 20px; }
 .ms-microfiche-meta dt { font-weight:bold; float:left; clear:left; width:160px; }
 .ms-microfiche-meta dd { margin-left:170px; margin-bottom:4px; }
+.ms-legend-dot { display:inline-block; width:12px; height:12px; border-radius:50%;
+                 vertical-align:middle; margin-right:6px; border:1px solid #fff;
+                 box-shadow:0 0 2px rgba(0,0,0,0.4); }
+.ms-legend-item { margin-right:16px; white-space:nowrap; }
 .ms-hotspots-table { width:100%; font-size:12px; }
 .ms-hotspots-table th, .ms-hotspots-table td { padding:4px 6px; vertical-align:top; }
 .ms-hotspots-table tbody tr:hover { background: #fffae6; }
@@ -420,9 +424,11 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . '<dt>Image</dt><dd>' . $imgWidth . ' × ' . $imgHeight . ' px '
             . '— <a href="' . $imageUrl . '" target="_blank">URL d\'origine</a></dd>'
             . '<dt>Légende</dt>'
-            . '<dd><span class="ms-seq-badge ms-seq-badge--linked">●</span> lié à un produit Presta'
-            . ' &nbsp;&nbsp; <span class="ms-seq-badge ms-seq-badge--orphan">●</span> pas encore lié'
-            . ' &nbsp;&nbsp; <span class="ms-seq-badge" style="background:#1e90ff">●</span> modifié manuellement</dd>'
+            . '<dd>'
+            . '<span class="ms-legend-item"><span class="ms-legend-dot" style="background:rgba(40,167,69,0.85)"></span>lié à un produit Presta</span>'
+            . '<span class="ms-legend-item"><span class="ms-legend-dot" style="background:rgba(255,128,0,0.85)"></span>pas encore lié</span>'
+            . '<span class="ms-legend-item"><span class="ms-legend-dot" style="background:rgba(30,144,255,0.90)"></span>modifié manuellement</span>'
+            . '</dd>'
             . '</dl>'
             . '<form id="ms-save-form" method="post" action="" class="ms-edit-bar">'
             . '<input type="hidden" name="id_microfiche" value="' . (int) $micro->id_microfiche . '" />'
