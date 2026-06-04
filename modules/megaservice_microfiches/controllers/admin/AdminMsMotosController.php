@@ -53,6 +53,10 @@ class AdminMsMotosController extends ModuleAdminController
                 'title' => 'MODELNUMBER',
                 'width' => 180,
             ],
+            'serial_constructeur' => [
+                'title' => 'Serial constructeur',
+                'width' => 120,
+            ],
             'nom_fr' => [
                 'title' => 'Nom',
             ],

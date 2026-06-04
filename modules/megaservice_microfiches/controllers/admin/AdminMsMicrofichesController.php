@@ -31,6 +31,7 @@ class AdminMsMicrofichesController extends ModuleAdminController
         $this->_select = 'm.`marque` AS `moto_marque`, '
                        . 'm.`annee` AS `moto_annee`, '
                        . 'm.`nom_fr` AS `moto_nom`, '
+                       . 'm.`serial_constructeur` AS `moto_serial`, '
                        . 'c.`partie` AS `cat_partie`, '
                        . 'c.`numero_constructeur` AS `cat_numero`, '
                        . 'c.`nom_fr` AS `cat_nom_fr`, '
@@ -59,6 +60,11 @@ class AdminMsMicrofichesController extends ModuleAdminController
             'moto_nom' => [
                 'title'      => 'Moto',
                 'filter_key' => 'm!nom_fr',
+            ],
+            'moto_serial' => [
+                'title'      => 'Serial constructeur',
+                'filter_key' => 'm!serial_constructeur',
+                'width'      => 120,
             ],
             'cat_partie' => [
                 'title'      => 'Partie',
