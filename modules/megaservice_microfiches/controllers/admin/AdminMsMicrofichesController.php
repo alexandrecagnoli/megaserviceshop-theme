@@ -442,33 +442,51 @@ class AdminMsMicrofichesController extends ModuleAdminController
 
         // Convertir la position pixel courante en position image originale.
         var rect = viewer.getBoundingClientRect();
-        // Position absolue dans le viewer (haut-gauche origine)
         var hRect = hotspot.getBoundingClientRect();
         var leftInViewer   = hRect.left - rect.left;
         var topInViewer    = hRect.top  - rect.top;
-        // Marges -1px sur left + bottom : on récupère donc la position du COIN haut-gauche du cercle
-        var imgRect = viewer.querySelector('img').getBoundingClientRect();
-        var displayedW = imgRect.width;
-        var displayedH = imgRect.height;
+        var imgEl = viewer.querySelector('img');
+        var imgRect = imgEl ? imgEl.getBoundingClientRect() : null;
+        var displayedW = imgRect ? imgRect.width  : 0;
+        var displayedH = imgRect ? imgRect.height : 0;
+
+        // Garde : si l'image n'est pas encore chargée (dimensions 0), on ne
+        // peut pas calculer le ratio. On annule le drag et on remet le
+        // hotspot a sa position de depart.
+        if (!displayedW || !displayedH) {
+            setFeedback('Image non charge - re-essaie apres le chargement complet.', true);
+            hotspot.style.left   = startLeft   + 'px';
+            hotspot.style.bottom = startBottom + 'px';
+            return;
+        }
+
         var ratioX = imgW / displayedW;
         var ratioY = imgH / displayedH;
-        // position_x = px depuis la gauche de l'image (origine pixel)
         var posX = Math.round(leftInViewer * ratioX);
-        // position_y = px depuis le BAS de l'image (convention KTM)
         var bottomInViewer = displayedH - (topInViewer + hRect.height);
         var posY = Math.round(bottomInViewer * ratioY);
+
+        // Garde supplementaire : NaN possible si les nombres ci-dessus
+        // foirent (cas extreme). On refuse plutot que d'envoyer 'NaN' au
+        // serveur qui rejetterait avec un message obscur.
+        if (!Number.isFinite(posX) || !Number.isFinite(posY)) {
+            setFeedback('Positions calculees invalides (NaN/Infinity). Rechargez la page.', true);
+            hotspot.style.left   = startLeft   + 'px';
+            hotspot.style.bottom = startBottom + 'px';
+            return;
+        }
 
         // Clamp aux limites de l'image
         if (posX < 0) posX = 0; if (posX > imgW) posX = imgW;
         if (posY < 0) posY = 0; if (posY > imgH) posY = imgH;
 
         var idHotspot = parseInt(hotspot.dataset.id, 10);
-        setFeedback('Sauvegarde…', false);
+        setFeedback('Sauvegarde...', false);
 
         var formData = new FormData();
-        formData.append('id_hotspot', idHotspot);
-        formData.append('position_x', posX);
-        formData.append('position_y', posY);
+        formData.append('id_hotspot', String(idHotspot));
+        formData.append('position_x', String(posX));
+        formData.append('position_y', String(posY));
 
         fetch(AJAX_URL + '&action=SaveHotspotPosition', {
             method: 'POST',

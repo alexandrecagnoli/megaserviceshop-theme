@@ -268,16 +268,41 @@ class AdminMsHotspotsController extends ModuleAdminController
      */
     public function ajaxProcessSaveHotspotPosition()
     {
-        $idHotspot = (int) Tools::getValue('id_hotspot');
-        $posX      = Tools::getValue('position_x');
-        $posY      = Tools::getValue('position_y');
+        $idHotspotRaw = Tools::getValue('id_hotspot');
+        $posXRaw      = Tools::getValue('position_x');
+        $posYRaw      = Tools::getValue('position_y');
 
-        if ($idHotspot <= 0 || $posX === false || $posY === false || !ctype_digit((string) $posX) || !ctype_digit((string) $posY)) {
-            $this->jsonReply(['ok' => false, 'error' => 'Paramètres invalides (id_hotspot, position_x, position_y requis et entiers positifs).']);
+        $idHotspot = (int) $idHotspotRaw;
+        if ($idHotspot <= 0) {
+            $this->jsonReply([
+                'ok'    => false,
+                'error' => 'id_hotspot manquant ou invalide.',
+                'debug' => ['id_hotspot' => $idHotspotRaw, 'post_keys' => array_keys($_POST), 'get_keys' => array_keys($_GET)],
+            ]);
             return;
         }
-        $posX = (int) $posX;
-        $posY = (int) $posY;
+
+        // Accepte les entiers (int natif) ET les strings numériques.
+        // ctype_digit échoue sur '0' précédé d'un - ou sur les ints natifs
+        // (le cast (string) marche mais le check 'is_numeric' est plus permissif).
+        if ($posXRaw === false || $posXRaw === '' || !is_numeric($posXRaw)
+            || $posYRaw === false || $posYRaw === '' || !is_numeric($posYRaw)) {
+            $this->jsonReply([
+                'ok'    => false,
+                'error' => 'position_x / position_y manquants ou non numériques.',
+                'debug' => [
+                    'position_x' => $posXRaw, 'type_x' => gettype($posXRaw),
+                    'position_y' => $posYRaw, 'type_y' => gettype($posYRaw),
+                ],
+            ]);
+            return;
+        }
+        $posX = (int) $posXRaw;
+        $posY = (int) $posYRaw;
+        if ($posX < 0 || $posY < 0) {
+            $this->jsonReply(['ok' => false, 'error' => 'Positions négatives non autorisées.']);
+            return;
+        }
 
         $hotspot = new MsMicroficheHotspot($idHotspot);
         if (!Validate::isLoadedObject($hotspot)) {
