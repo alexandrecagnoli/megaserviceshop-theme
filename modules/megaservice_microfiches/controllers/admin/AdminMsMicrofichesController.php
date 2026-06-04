@@ -196,20 +196,71 @@ class AdminMsMicrofichesController extends ModuleAdminController
 
         // CSS inline (1 fichier admin, autonome, pas de dépendance externe).
         $css = '<style>
+.ms-microfiche-layout { display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+.ms-microfiche-layout > .ms-microfiche-viewer-wrap { flex:1 1 600px; min-width:300px; }
+.ms-microfiche-layout > .ms-microfiche-list-wrap   { flex:1 1 380px; min-width:280px; }
 .ms-microfiche-viewer { position:relative; display:inline-block; max-width:100%; line-height:0; background:#fafafa; border:1px solid #ddd; }
 .ms-microfiche-viewer > img { display:block; max-width:100%; height:auto; }
 .ms-hotspot { position:absolute; width:24px; height:24px; margin-left:-12px; margin-bottom:-12px;
               border-radius:50%; color:#fff; font-size:11px; font-weight:bold;
               text-align:center; line-height:20px; cursor:default;
               border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.5);
-              transition: transform 0.1s ease-out; user-select:none; }
-.ms-hotspot--linked { background: rgba(40,167,69,0.85); }  /* vert : lié à un produit */
-.ms-hotspot--orphan { background: rgba(255,128,0,0.85); }  /* orange : pas lié */
-.ms-hotspot:hover { transform: scale(1.4); z-index:10; box-shadow:0 0 8px rgba(0,0,0,0.8); }
+              transition: transform 0.1s ease-out; user-select:none; text-decoration:none; }
+.ms-hotspot--linked { background: rgba(40,167,69,0.85); cursor:pointer; }  /* vert : lié à un produit */
+.ms-hotspot--orphan { background: rgba(255,128,0,0.85); }                   /* orange : pas lié */
+.ms-hotspot:hover { transform: scale(1.4); z-index:10; box-shadow:0 0 8px rgba(0,0,0,0.8); color:#fff; }
 .ms-microfiche-meta { margin: 10px 0 20px; }
 .ms-microfiche-meta dt { font-weight:bold; float:left; clear:left; width:160px; }
 .ms-microfiche-meta dd { margin-left:170px; margin-bottom:4px; }
+.ms-hotspots-table { width:100%; font-size:12px; }
+.ms-hotspots-table th, .ms-hotspots-table td { padding:4px 6px; vertical-align:top; }
+.ms-hotspots-table tbody tr:hover { background: #fffae6; }
+.ms-hotspots-table .ms-seq-badge { display:inline-block; min-width:22px; padding:1px 4px; border-radius:11px;
+                                   color:#fff; font-weight:bold; text-align:center; font-size:11px; }
+.ms-hotspots-table .ms-seq-badge--linked { background:#28a745; }
+.ms-hotspots-table .ms-seq-badge--orphan { background:#ff8000; }
 </style>';
+
+        // Construction de la table détaillée à droite de l'image.
+        $listRows = '';
+        $countLinked = 0;
+        foreach ($hotspots as $h) {
+            $seq        = (int) $h['sequence_number'];
+            $articleRef = (string) $h['article_ref'];
+            $label      = (string) ($h['article_label'] ?? '');
+            $qty        = (int) $h['qty_recommended'];
+            $idProduct  = (int) ($h['id_product'] ?? 0);
+
+            if ($idProduct > 0) {
+                $countLinked++;
+                $productLink = $this->context->link->getAdminLink('AdminProducts', true)
+                             . '&id_product=' . $idProduct . '&updateproduct';
+                $refCell = sprintf(
+                    '<a href="%s" target="_blank" title="Ouvrir la fiche produit Presta"><code>%s</code></a>',
+                    htmlspecialchars($productLink, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($articleRef, ENT_QUOTES, 'UTF-8')
+                );
+                $badgeCls = 'ms-seq-badge ms-seq-badge--linked';
+            } else {
+                $refCell = '<code>' . htmlspecialchars($articleRef, ENT_QUOTES, 'UTF-8') . '</code>'
+                    . ' <small class="text-muted" title="Aucun produit Presta avec cette référence (en attente cron rematching)">(orphelin)</small>';
+                $badgeCls = 'ms-seq-badge ms-seq-badge--orphan';
+            }
+
+            $listRows .= sprintf(
+                '<tr id="ms-hotspot-row-%d">'
+                . '<td><span class="%s">%d</span></td>'
+                . '<td>%s</td>'
+                . '<td>%s</td>'
+                . '<td style="text-align:right">×%d</td>'
+                . '</tr>',
+                $seq,
+                $badgeCls, $seq,
+                $refCell,
+                htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+                $qty
+            );
+        }
 
         $catLabel = (string) ($cat->nom_fr ?: $cat->code);
 
@@ -221,20 +272,34 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . ' #' . (int) $cat->numero_constructeur
             . ' <small>(partie : ' . htmlspecialchars((string) $cat->partie, ENT_QUOTES, 'UTF-8') . ')</small></h4>'
             . '<h5>' . htmlspecialchars((string) $micro->nom_constructeur, ENT_QUOTES, 'UTF-8')
-            . ' &mdash; <strong>' . count($hotspots) . ' hotspots</strong></h5>'
+            . ' &mdash; <strong>' . count($hotspots) . ' hotspots</strong>'
+            . ' <small>(' . $countLinked . ' liés à un produit, ' . (count($hotspots) - $countLinked) . ' orphelins)</small>'
+            . '</h5>'
             . '<dl class="ms-microfiche-meta">'
             . '<dt>Image</dt><dd>' . $imgWidth . ' × ' . $imgHeight . ' px '
             . '— <a href="' . $imageUrl . '" target="_blank">URL d\'origine</a></dd>'
             . '<dt>Légende</dt>'
-            . '<dd><span class="ms-hotspot ms-hotspot--linked" style="position:relative;display:inline-block;margin:0 8px 0 0;">●</span> lié à un produit Presta'
-            . ' &nbsp;&nbsp; <span class="ms-hotspot ms-hotspot--orphan" style="position:relative;display:inline-block;margin:0 8px 0 0;">●</span> pas encore lié</dd>'
+            . '<dd><span class="ms-seq-badge ms-seq-badge--linked">●</span> lié à un produit Presta'
+            . ' &nbsp;&nbsp; <span class="ms-seq-badge ms-seq-badge--orphan">●</span> pas encore lié</dd>'
             . '</dl>'
+            . '<div class="ms-microfiche-layout">'
+            . '<div class="ms-microfiche-viewer-wrap">'
             . '<div class="ms-microfiche-viewer">'
             . '<img src="' . $imageUrl . '" alt="" width="' . $imgWidth . '" height="' . $imgHeight . '" />'
             . $overlaysHtml
             . '</div>'
-            . '<p class="help-block" style="margin-top:15px"><em>Survoler un cercle pour voir le détail (référence + libellé + quantité). '
-            . 'V1 : visualisation seule, l\'édition des positions viendra dans une PR ultérieure.</em></p>'
+            . '</div>'
+            . '<div class="ms-microfiche-list-wrap">'
+            . '<table class="table ms-hotspots-table">'
+            . '<thead><tr><th>#</th><th>Référence OEM</th><th>Libellé</th><th>Qté</th></tr></thead>'
+            . '<tbody>' . $listRows . '</tbody>'
+            . '</table>'
+            . '</div>'
+            . '</div>'
+            . '<p class="help-block" style="margin-top:15px"><em>Survoler un cercle sur l\'image pour voir le détail. '
+            . 'Cliquer une référence en vert dans le tableau ouvre la fiche produit PrestaShop dans un nouvel onglet. '
+            . 'Les hotspots orphelins (orange) seront liés automatiquement quand le catalogue spareparts sera importé '
+            . '(via le futur cron de rematching, PR8).</em></p>'
             . '</div>';
     }
 
