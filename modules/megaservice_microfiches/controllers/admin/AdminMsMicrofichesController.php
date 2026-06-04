@@ -229,6 +229,7 @@ class AdminMsMicrofichesController extends ModuleAdminController
         $listRows = '';
         $countLinked = 0;
         foreach ($hotspots as $h) {
+            $idHotspot  = (int) $h['id_hotspot'];
             $seq        = (int) $h['sequence_number'];
             $articleRef = (string) $h['article_ref'];
             $label      = (string) ($h['article_label'] ?? '');
@@ -251,18 +252,27 @@ class AdminMsMicrofichesController extends ModuleAdminController
                 $badgeCls = 'ms-seq-badge ms-seq-badge--orphan';
             }
 
+            $editLink = $this->context->link->getAdminLink('AdminMsHotspots', true)
+                      . '&id_hotspot=' . $idHotspot . '&updatems_microfiche_hotspot';
+            $editCell = sprintf(
+                '<a href="%s" class="btn btn-default btn-xs" title="Modifier ce hotspot"><i class="icon-edit"></i></a>',
+                htmlspecialchars($editLink, ENT_QUOTES, 'UTF-8')
+            );
+
             $listRows .= sprintf(
                 '<tr id="ms-hotspot-row-%d">'
                 . '<td><span class="%s">%d</span></td>'
                 . '<td>%s</td>'
                 . '<td>%s</td>'
                 . '<td style="text-align:right">×%d</td>'
+                . '<td style="text-align:center">%s</td>'
                 . '</tr>',
                 $seq,
                 $badgeCls, $seq,
                 $refCell,
                 htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
-                $qty
+                $qty,
+                $editCell
             );
         }
 
@@ -295,7 +305,7 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . '</div>'
             . '<div class="ms-microfiche-list-wrap">'
             . '<table class="table ms-hotspots-table">'
-            . '<thead><tr><th>#</th><th>Référence OEM</th><th>Libellé</th><th>Qté</th></tr></thead>'
+            . '<thead><tr><th>#</th><th>Référence OEM</th><th>Libellé</th><th>Qté</th><th></th></tr></thead>'
             . '<tbody>' . $listRows . '</tbody>'
             . '</table>'
             . '</div>'
