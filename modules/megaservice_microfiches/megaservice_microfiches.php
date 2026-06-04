@@ -143,6 +143,35 @@ class Megaservice_microfiches extends Module
         return (bool) $tab->delete();
     }
 
+    /**
+     * Hook BO appelé sur chaque page admin. Sert ici à s'assurer que les
+     * Tabs sont à jour sans exiger une visite manuelle de la page Configurer.
+     *
+     * On garde un flag Configuration::MS_MICROFICHES_TABS_VERSION qui doit
+     * matcher self::TABS_VERSION (constante incrémentée à chaque ajout de
+     * Tab) — si différent, on lance installTabs() et on met à jour le flag.
+     * Coût : 1 SELECT Configuration::get() par pageview BO une fois sync'd.
+     */
+    public function hookDisplayBackOfficeHeader(): void
+    {
+        if ((int) Configuration::get('MS_MICROFICHES_TABS_VERSION') < self::TABS_VERSION) {
+            if ($this->installTabs()) {
+                Configuration::updateValue('MS_MICROFICHES_TABS_VERSION', self::TABS_VERSION);
+            }
+        }
+    }
+
+    /**
+     * Version courante de la liste CHILD_TABS. À incrémenter à chaque ajout
+     * d'un nouveau Tab dans CHILD_TABS pour déclencher l'auto-install sur
+     * les installations existantes (sans désinstall/réinstall manuel).
+     *
+     * Historique :
+     *   1 : Motos, Microfiches, Catégories (PR4)
+     *   2 : + Hotspots (PR5-bis)
+     */
+    private const TABS_VERSION = 2;
+
     /** Classname du Tab parent (top-level) — référencé par les sous-tabs. */
     private const TAB_PARENT_CLASS = 'AdminMsMicrofichesParent';
 
