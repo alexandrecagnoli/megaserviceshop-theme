@@ -276,27 +276,57 @@ class MicrofichesImporter
         return $this->micCache[$key] = $idMicrofiche;
     }
 
+    /**
+     * SQL specialise (pas via buildUpsert generique) car on a besoin de logique
+     * conditionnelle a base de IF(manually_edited = 1, ...) pour proteger les
+     * modifications manuelles de l'admin contre l'ecrasement par un reimport
+     * du CSV constructeur.
+     *
+     * Champs proteges par manually_edited :
+     *   - position_x, position_y : preservees si flag = 1, sinon updatees CSV
+     *   - qty_recommended        : idem
+     *
+     * Champs TOUJOURS updates au reimport (independants du flag) :
+     *   - position_x_original, position_y_original : referencent toujours la
+     *     derniere position CSV connue, utilisees pour le revert
+     *   - article_label : libelle constructeur, peut evoluer
+     *
+     * Champ JAMAIS touche par l'import :
+     *   - id_product : rempli par le cron de rematching produit ou
+     *     manuellement par l'admin via AdminMsHotspots — l'import ne doit
+     *     surtout pas remettre NULL un lien produit deja resolu
+     */
     private function upsertHotspot(int $microficheId, array $data, MicrofichesImportReport $report): void
     {
         $db    = Db::getInstance();
         $table = _DB_PREFIX_ . 'ms_microfiche_hotspot';
 
-        $cols = [
-            'id_microfiche'   => $microficheId,
-            'id_product'      => null, // résolu via cron de rematching (PR ultérieure)
-            'article_ref'     => $data['article_ref'],
-            'article_label'   => $data['article_label'],
-            'sequence_number' => $data['sequence_number'],
-            'position_x'      => $data['position_x'],
-            'position_y'      => $data['position_y'],
-            'qty_recommended' => $data['qty_recommended'],
-        ];
+        $articleRef   = pSQL((string) $data['article_ref'], true);
+        $articleLabel = $data['article_label'] !== null
+            ? "'" . pSQL((string) $data['article_label'], true) . "'"
+            : 'NULL';
+        $sequence = (int) $data['sequence_number'];
+        $posX     = (int) $data['position_x'];
+        $posY     = (int) $data['position_y'];
+        $qty      = (int) $data['qty_recommended'];
 
-        $sql = $this->buildUpsert(
-            $table, $cols,
-            ['id_microfiche', 'article_ref', 'sequence_number'],
-            false // pas de date_add/date_upd sur hotspot (cf. brief §3)
-        );
+        $sql = "INSERT INTO `$table` "
+             . '(`id_microfiche`, `id_product`, `article_ref`, `article_label`, '
+             . ' `sequence_number`, `position_x`, `position_y`, '
+             . ' `position_x_original`, `position_y_original`, '
+             . ' `qty_recommended`, `manually_edited`) '
+             . "VALUES ($microficheId, NULL, '$articleRef', $articleLabel, "
+             . " $sequence, $posX, $posY, "
+             . " $posX, $posY, "  /* original = current au 1er insert */
+             . " $qty, 0) "
+             . 'ON DUPLICATE KEY UPDATE '
+             . ' `article_label`       = VALUES(`article_label`), '
+             . ' `position_x`          = IF(`manually_edited` = 1, `position_x`, VALUES(`position_x`)), '
+             . ' `position_y`          = IF(`manually_edited` = 1, `position_y`, VALUES(`position_y`)), '
+             . ' `position_x_original` = VALUES(`position_x`), '
+             . ' `position_y_original` = VALUES(`position_y`), '
+             . ' `qty_recommended`     = IF(`manually_edited` = 1, `qty_recommended`, VALUES(`qty_recommended`))';
+
         if (!$db->execute($sql)) {
             $report->addError('hotspot', "$microficheId:{$data['article_ref']}:{$data['sequence_number']}", $db->getMsgError());
             return;

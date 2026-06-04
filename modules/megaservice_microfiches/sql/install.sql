@@ -73,20 +73,28 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche` (
 -- endroits visuels differents -- chaque occurrence est un vrai hotspot.
 -- La spec initiale du brief 4.3 sous-specifiait la cle naturelle, on a
 -- mesure une perte de 14,5% des hotspots sur le 1er CSV teste (cf. TECH_DEBT).
+-- position_x_original / position_y_original : copie figee des positions du
+-- dernier CSV constructeur. Sert au revert d une edition manuelle.
+-- manually_edited : flag de protection contre l ecrasement par reimport
+-- (cf. MicrofichesImporter::upsertHotspot).
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
-  `id_hotspot`      INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `id_microfiche`   INT UNSIGNED NOT NULL,
-  `id_product`      INT UNSIGNED NULL,
-  `article_ref`     VARCHAR(64) NOT NULL,
-  `article_label`   VARCHAR(255) NULL,
-  `sequence_number` SMALLINT UNSIGNED NOT NULL,
-  `position_x`      SMALLINT UNSIGNED NOT NULL,
-  `position_y`      SMALLINT UNSIGNED NOT NULL,
-  `qty_recommended` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `id_hotspot`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_microfiche`       INT UNSIGNED NOT NULL,
+  `id_product`          INT UNSIGNED NULL,
+  `article_ref`         VARCHAR(64) NOT NULL,
+  `article_label`       VARCHAR(255) NULL,
+  `sequence_number`     SMALLINT UNSIGNED NOT NULL,
+  `position_x`          SMALLINT UNSIGNED NOT NULL,
+  `position_y`          SMALLINT UNSIGNED NOT NULL,
+  `position_x_original` SMALLINT UNSIGNED NULL,
+  `position_y_original` SMALLINT UNSIGNED NULL,
+  `qty_recommended`     TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `manually_edited`     TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_hotspot`),
   UNIQUE KEY `uk_hotspot_naturel` (`id_microfiche`, `article_ref`, `sequence_number`, `position_x`, `position_y`),
   KEY `idx_id_microfiche` (`id_microfiche`),
   KEY `idx_id_product` (`id_product`),
   KEY `idx_article_ref` (`article_ref`),
+  KEY `idx_manually_edited` (`manually_edited`),
   CONSTRAINT `fk_hotspot_microfiche` FOREIGN KEY (`id_microfiche`) REFERENCES `PREFIX_ms_microfiche`(`id_microfiche`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
