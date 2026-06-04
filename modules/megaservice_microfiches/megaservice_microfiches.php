@@ -248,10 +248,23 @@ class Megaservice_microfiches extends Module
             $output .= $this->handleUploadZipMicrofiches($importsDir);
         }
         $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
-        foreach ($microficheCsvs as $serial => $info) {
-            if (Tools::isSubmit('submitImportMicrofiches_' . $serial)) {
-                $output .= $this->runMicrofichesImports([$serial => $info]);
-                break;
+        if (Tools::isSubmit('submitImportNewMicrofiches')) {
+            // Filtre les CSV jamais importés (nb_microfiches = 0)
+            $newCsvs = array_filter($microficheCsvs, static fn($info) => ($info['nb_microfiches'] ?? 0) === 0);
+            if ($newCsvs !== []) {
+                $output .= $this->runMicrofichesImports($newCsvs);
+                // Rafraîchir les stats après import
+                $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
+            } else {
+                $output .= $this->renderAlert('info', 'Aucun CSV à importer : tous ont déjà été traités au moins une fois.');
+            }
+        } else {
+            foreach ($microficheCsvs as $serial => $info) {
+                if (Tools::isSubmit('submitImportMicrofiches_' . $serial)) {
+                    $output .= $this->runMicrofichesImports([$serial => $info]);
+                    $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
+                    break;
+                }
             }
         }
         $output .= $this->renderMicrofichesPage($importsDir, $microficheCsvs);
@@ -737,8 +750,14 @@ class Megaservice_microfiches extends Module
     }
 
     /**
-     * Scanne data/imports/ pour tout .csv qui n'est PAS un CSV motos.
-     * @return array<string, array{path: string, size_ko: float, modified: string}>
+     * Scanne data/imports/ pour tout .csv qui n'est PAS un CSV motos, et
+     * enrichit chaque entrée avec les statistiques BDD (statut import,
+     * nb microfiches, nb hotspots, date du dernier import).
+     *
+     * @return array<string, array{
+     *   path: string, size_ko: float, modified: string,
+     *   id_moto: ?int, nb_microfiches: int, nb_hotspots: int, last_import: ?string,
+     * }>
      */
     private function scanMicrofichesCsvs(string $importsDir): array
     {
@@ -761,12 +780,60 @@ class Megaservice_microfiches extends Module
             }
             $serial = pathinfo($f, PATHINFO_FILENAME);
             $found[$serial] = [
-                'path'     => $path,
-                'size_ko'  => round(filesize($path) / 1024, 1),
-                'modified' => date('Y-m-d H:i:s', filemtime($path)),
+                'path'           => $path,
+                'size_ko'        => round(filesize($path) / 1024, 1),
+                'modified'       => date('Y-m-d H:i:s', filemtime($path)),
+                'id_moto'        => null,
+                'nb_microfiches' => 0,
+                'nb_hotspots'    => 0,
+                'last_import'    => null,
             ];
         }
         ksort($found);
+
+        // Enrichissement BDD : 1 SELECT pour les stats microfiches, 1 pour
+        // les hotspots (ces 2 jointures cumulées en une seule génèreraient
+        // un produit cartésien lourd).
+        if ($found !== []) {
+            $serials    = array_keys($found);
+            $serialList = "'" . implode("','", array_map('pSQL', $serials)) . "'";
+            $db         = Db::getInstance();
+
+            $statsRows = (array) $db->executeS(
+                'SELECT m.`serial_constructeur` AS `serial`, m.`id_moto`, '
+                . 'COUNT(DISTINCT mf.`id_microfiche`) AS `nb_microfiches`, '
+                . 'MAX(mf.`date_upd`) AS `last_import` '
+                . 'FROM `' . _DB_PREFIX_ . 'ms_moto` m '
+                . 'LEFT JOIN `' . _DB_PREFIX_ . 'ms_microfiche` mf ON mf.`id_moto` = m.`id_moto` '
+                . "WHERE m.`serial_constructeur` IN ($serialList) "
+                . 'GROUP BY m.`id_moto`'
+            );
+            foreach ($statsRows as $r) {
+                $s = (string) $r['serial'];
+                if (isset($found[$s])) {
+                    $found[$s]['id_moto']        = (int) $r['id_moto'];
+                    $found[$s]['nb_microfiches'] = (int) $r['nb_microfiches'];
+                    $found[$s]['last_import']    = ($r['last_import'] && $r['last_import'] !== '0000-00-00 00:00:00')
+                        ? (string) $r['last_import'] : null;
+                }
+            }
+
+            $hotspotsRows = (array) $db->executeS(
+                'SELECT m.`serial_constructeur` AS `serial`, COUNT(*) AS `nb_hotspots` '
+                . 'FROM `' . _DB_PREFIX_ . 'ms_moto` m '
+                . 'JOIN `' . _DB_PREFIX_ . 'ms_microfiche` mf ON mf.`id_moto` = m.`id_moto` '
+                . 'JOIN `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` h ON h.`id_microfiche` = mf.`id_microfiche` '
+                . "WHERE m.`serial_constructeur` IN ($serialList) "
+                . 'GROUP BY m.`id_moto`'
+            );
+            foreach ($hotspotsRows as $r) {
+                $s = (string) $r['serial'];
+                if (isset($found[$s])) {
+                    $found[$s]['nb_hotspots'] = (int) $r['nb_hotspots'];
+                }
+            }
+        }
+
         return $found;
     }
 
@@ -844,25 +911,94 @@ class Megaservice_microfiches extends Module
             return $out;
         }
 
+        // Compte les CSV jamais importés pour informer le bouton "Tout importer".
+        $newCount = 0;
+        foreach ($csvs as $c) {
+            if (($c['nb_microfiches'] ?? 0) === 0) {
+                $newCount++;
+            }
+        }
+
         $rows = '';
         foreach ($csvs as $serial => $c) {
+            $serialEsc = htmlspecialchars($serial);
+            $isImported = ($c['nb_microfiches'] ?? 0) > 0;
+            if ($isImported) {
+                $statusLabel = sprintf(
+                    '<span class="label label-success" title="Importé le %s">✓ Importé</span>',
+                    htmlspecialchars((string) $c['last_import'])
+                );
+                $lastImport = htmlspecialchars((string) ($c['last_import'] ?? ''));
+            } else {
+                $statusLabel = '<span class="label label-warning">À importer</span>';
+                $lastImport  = '<em class="text-muted">&mdash;</em>';
+            }
             $rows .= sprintf(
-                '<tr><td><strong>%s</strong></td><td>%s Ko</td><td>%s</td>'
-                . '<td><button type="submit" name="submitImportMicrofiches_%s" value="1" class="btn btn-default">Réimporter</button></td></tr>',
-                htmlspecialchars($serial), $c['size_ko'], $c['modified'],
-                htmlspecialchars($serial)
+                '<tr data-serial="%s">'
+                . '<td><strong>%s</strong></td>'
+                . '<td>%s</td>'
+                . '<td style="text-align:right">%d</td>'
+                . '<td style="text-align:right">%d</td>'
+                . '<td>%s</td>'
+                . '<td>%s Ko</td>'
+                . '<td>%s</td>'
+                . '<td><button type="submit" name="submitImportMicrofiches_%s" value="1" class="btn btn-default">%s</button></td>'
+                . '</tr>',
+                strtolower($serialEsc),
+                $serialEsc,
+                $statusLabel,
+                (int) ($c['nb_microfiches'] ?? 0),
+                (int) ($c['nb_hotspots'] ?? 0),
+                $lastImport,
+                $c['size_ko'],
+                htmlspecialchars((string) ($c['modified'] ?? '')),
+                $serialEsc,
+                $isImported ? 'Réimporter' : 'Importer'
             );
         }
 
+        // Search JS inline : filtre les rows par data-serial (lowercase) qui contient le texte tapé.
+        $searchJs = "(function(input){"
+            . "var q=(input.value||'').toLowerCase();"
+            . "document.querySelectorAll('#ms-microfiches-csv-table tbody tr').forEach(function(r){"
+            . "r.style.display=(r.dataset.serial||'').indexOf(q)!==-1?'':'none';"
+            . "});"
+            . "})(this);";
+
         $out .= '<div class="panel">'
-            . '<h3>Réimporter un CSV microfiches déjà présent</h3>'
+            . '<h3>CSV microfiches présents dans <code>' . $dir . '</code></h3>'
             . '<form method="post" action="">'
-            . '<table class="table">'
-            . '<thead><tr><th>Serial moto</th><th>Taille</th><th>Modifié</th><th>Action</th></tr></thead>'
+            . '<div class="row" style="margin-bottom:10px">'
+            . '<div class="col-md-6">'
+            . '<input type="text" class="form-control" placeholder="Filtrer par serial moto (ex. F040)..." '
+            . 'oninput="' . $searchJs . '" />'
+            . '</div>'
+            . '<div class="col-md-6" style="text-align:right">'
+            . sprintf(
+                '<button type="submit" name="submitImportNewMicrofiches" value="1" class="btn btn-primary" %s>'
+                . 'Tout importer ce qui est nouveau (%d)</button>',
+                $newCount === 0 ? 'disabled' : '',
+                $newCount
+            )
+            . '</div>'
+            . '</div>'
+            . '<table id="ms-microfiches-csv-table" class="table">'
+            . '<thead><tr>'
+            . '<th>Serial moto</th>'
+            . '<th>Statut</th>'
+            . '<th style="text-align:right">Microfiches</th>'
+            . '<th style="text-align:right">Hotspots</th>'
+            . '<th>Dernier import</th>'
+            . '<th>Taille</th>'
+            . '<th>Fichier modifié</th>'
+            . '<th>Action</th>'
+            . '</tr></thead>'
             . '<tbody>' . $rows . '</tbody>'
             . '</table>'
             . '<p class="help-block"><em>Idempotent : un réimport met à jour les microfiches '
-            . 'et hotspots existants (clés : (moto+catégorie+nom) et (microfiche+article+sequence)).</em></p>'
+            . 'et hotspots existants (clés : (moto+catégorie+nom) et (microfiche+article+sequence)). '
+            . '<strong>Tout importer ce qui est nouveau</strong> traite uniquement les CSV avec '
+            . '0 microfiche en BDD (statut "À importer") — utile après un upload batch ZIP ou multi-file.</em></p>'
             . '</form>'
             . '</div>';
 
