@@ -201,8 +201,11 @@ class AdminMsMicrofichesController extends ModuleAdminController
 .ms-microfiche-layout > .ms-microfiche-list-wrap   { flex:1 1 380px; min-width:280px; }
 .ms-microfiche-viewer { position:relative; display:inline-block; max-width:100%; line-height:0; background:#fafafa; border:1px solid #ddd; }
 .ms-microfiche-viewer > img { display:block; max-width:100%; height:auto; }
-.ms-hotspot { position:absolute; width:24px; height:24px; margin-left:-12px; margin-bottom:-12px;
-              box-sizing: border-box; /* border 2px incluse dans width/height -> centrage exact */
+/* Convention constructeur (KTM) : position_x/position_y designent le COIN
+   du marqueur (pas son centre). On colle le coin du cercle a la position,
+   avec 1px d ajustement empirique pour aligner pile poil. */
+.ms-hotspot { position:absolute; width:24px; height:24px; margin-left:-1px; margin-bottom:-1px;
+              box-sizing: border-box;
               border-radius:50%; color:#fff; font-size:11px; font-weight:bold;
               text-align:center; line-height:20px; cursor:default;
               border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.5);
