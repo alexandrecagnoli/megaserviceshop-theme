@@ -365,12 +365,14 @@ class AdminMsMicrofichesController extends ModuleAdminController
      */
     private function renderHotspotsEditorJs(): string
     {
-        // getAdminLink(true) inclut automatiquement le token CSRF correct
-        // pour AdminMsHotspots dans la session courante. Ne PAS reconstruire
-        // l'URL a la main avec getAdminTokenLite() : ca generait un token
-        // base sur Tab::getIdFromClassName, ce qui foire si le Tab n'est pas
-        // (encore) cree en BDD ou si la session a un autre cookie_key.
-        $ajaxUrl = $this->context->link->getAdminLink('AdminMsHotspots', true) . '&ajax=1';
+        // Endpoint AJAX standalone du module (bypass total du routing
+        // ModuleAdminController + checkToken PS qui s'est avere trop
+        // fragile au token CSRF). Authentification cote serveur via
+        // cookie session admin (Context::getContext()->cookie->id_employee).
+        //
+        // Le base URI Presta inclut un trailing slash, on append directement
+        // le chemin physique relatif au document root.
+        $ajaxUrl = __PS_BASE_URI__ . 'modules/megaservice_microfiches/ajax-hotspot.php';
 
         $js = <<<'JS'
 <script>
@@ -485,11 +487,12 @@ class AdminMsMicrofichesController extends ModuleAdminController
         setFeedback('Sauvegarde...', false);
 
         var formData = new FormData();
+        formData.append('action', 'SaveHotspotPosition');
         formData.append('id_hotspot', String(idHotspot));
         formData.append('position_x', String(posX));
         formData.append('position_y', String(posY));
 
-        fetch(AJAX_URL + '&action=SaveHotspotPosition', {
+        fetch(AJAX_URL, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -531,10 +534,11 @@ class AdminMsMicrofichesController extends ModuleAdminController
         if (!confirm('Revert ce hotspot vers la position constructeur du CSV ?')) return;
 
         var formData = new FormData();
-        formData.append('id_hotspot', idHotspot);
+        formData.append('action', 'RevertHotspotPosition');
+        formData.append('id_hotspot', String(idHotspot));
 
         setFeedback('Revert…', false);
-        fetch(AJAX_URL + '&action=RevertHotspotPosition', {
+        fetch(AJAX_URL, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
