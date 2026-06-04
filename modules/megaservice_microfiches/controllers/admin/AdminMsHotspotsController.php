@@ -252,4 +252,118 @@ class AdminMsHotspotsController extends ModuleAdminController
         }
         return '<span class="label label-warning" title="Aucun produit Presta avec cette référence">Orphelin</span>';
     }
+
+    // =====================================================================
+    // AJAX endpoints (utilisés par l'éditeur drag/drop visuel)
+    // =====================================================================
+
+    /**
+     * AJAX : sauvegarde la position d'un hotspot après drag&drop.
+     * Set manually_edited = 1 pour protéger la position contre l'écrasement
+     * par un futur réimport CSV.
+     *
+     * URL : index.php?controller=AdminMsHotspots&token=...&ajax=1&action=SaveHotspotPosition
+     * POST : id_hotspot, position_x, position_y
+     * Réponse JSON : {ok: bool, position_x: int, position_y: int, manually_edited: bool, error?: string}
+     */
+    public function ajaxProcessSaveHotspotPosition(): void
+    {
+        header('Content-Type: application/json');
+
+        $idHotspot = (int) Tools::getValue('id_hotspot');
+        $posX      = Tools::getValue('position_x');
+        $posY      = Tools::getValue('position_y');
+
+        if ($idHotspot <= 0 || $posX === false || $posY === false || !ctype_digit((string) $posX) || !ctype_digit((string) $posY)) {
+            echo json_encode(['ok' => false, 'error' => 'Paramètres invalides (id_hotspot, position_x, position_y requis et entiers positifs).']);
+            return;
+        }
+        $posX = (int) $posX;
+        $posY = (int) $posY;
+
+        $hotspot = new MsMicroficheHotspot($idHotspot);
+        if (!Validate::isLoadedObject($hotspot)) {
+            echo json_encode(['ok' => false, 'error' => 'Hotspot introuvable (id=' . $idHotspot . ').']);
+            return;
+        }
+
+        $ok = (bool) Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+            . 'SET `position_x` = ' . $posX . ', '
+            . '    `position_y` = ' . $posY . ', '
+            . '    `manually_edited` = 1 '
+            . 'WHERE `id_hotspot` = ' . $idHotspot
+        );
+
+        if (!$ok) {
+            echo json_encode(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
+            return;
+        }
+
+        echo json_encode([
+            'ok'              => true,
+            'id_hotspot'      => $idHotspot,
+            'position_x'      => $posX,
+            'position_y'      => $posY,
+            'manually_edited' => true,
+        ]);
+    }
+
+    /**
+     * AJAX : revert d'un hotspot manuellement édité vers sa position constructeur.
+     * Recopie position_x_original → position_x (idem y) + set manually_edited = 0.
+     * Si position_*_original est NULL (jamais initialisé), refuse l'opération.
+     *
+     * URL : ...&action=RevertHotspotPosition
+     * POST : id_hotspot
+     * Réponse JSON : {ok: bool, position_x: int, position_y: int, manually_edited: false, error?: string}
+     */
+    public function ajaxProcessRevertHotspotPosition(): void
+    {
+        header('Content-Type: application/json');
+
+        $idHotspot = (int) Tools::getValue('id_hotspot');
+        if ($idHotspot <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Paramètre id_hotspot manquant ou invalide.']);
+            return;
+        }
+
+        $row = Db::getInstance()->getRow(
+            'SELECT `position_x_original`, `position_y_original` '
+            . 'FROM `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+            . 'WHERE `id_hotspot` = ' . $idHotspot
+        );
+        if (!$row) {
+            echo json_encode(['ok' => false, 'error' => 'Hotspot introuvable.']);
+            return;
+        }
+        if ($row['position_x_original'] === null || $row['position_y_original'] === null) {
+            echo json_encode(['ok' => false, 'error' => 'Aucune position constructeur en référence (champs _original NULL). Le revert n\'est pas possible — il faudra réimporter le CSV constructeur ou drag/drop manuellement.']);
+            return;
+        }
+
+        $posX = (int) $row['position_x_original'];
+        $posY = (int) $row['position_y_original'];
+
+        $ok = (bool) Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+            . 'SET `position_x` = ' . $posX . ', '
+            . '    `position_y` = ' . $posY . ', '
+            . '    `manually_edited` = 0 '
+            . 'WHERE `id_hotspot` = ' . $idHotspot
+        );
+
+        if (!$ok) {
+            echo json_encode(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
+            return;
+        }
+
+        echo json_encode([
+            'ok'              => true,
+            'id_hotspot'      => $idHotspot,
+            'position_x'      => $posX,
+            'position_y'      => $posY,
+            'manually_edited' => false,
+        ]);
+    }
 }
