@@ -516,50 +516,130 @@ class Megaservice_microfiches extends Module
     // =====================================================================
 
     /**
-     * Gère l'upload d'un CSV microfiches depuis le BO. Le nom du fichier
-     * (sans .csv) sert de pivot moto via ms_moto.serial_constructeur.
+     * Gère l'upload d'UN OU PLUSIEURS CSV microfiches depuis le BO.
+     * Le nom de chaque fichier (sans .csv) sert de pivot moto via
+     * ms_moto.serial_constructeur. Validation + déplacement + import sont
+     * appliqués indépendamment fichier par fichier — un échec sur un fichier
+     * n'arrête pas le traitement des autres.
+     *
+     * Le champ form `microfiches_csv_files[]` est un input type=file multiple.
+     * $_FILES['microfiches_csv_files'] a alors une structure transposée
+     * (clés name/tmp_name/error/size deviennent des arrays).
      */
     private function handleUploadAndImportMicrofiches(string $importsDir): string
     {
-        $upload = $_FILES['microfiches_csv_file'] ?? null;
-        if ($upload === null || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            return $this->renderAlert('danger', $this->describeUploadError($upload['error'] ?? UPLOAD_ERR_NO_FILE));
+        $uploads = $_FILES['microfiches_csv_files'] ?? null;
+        if ($uploads === null || empty($uploads['name'])) {
+            return $this->renderAlert('danger', 'Aucun fichier sélectionné.');
         }
 
-        $originalName = (string) ($upload['name'] ?? '');
-        if (strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION)) !== 'csv') {
-            return $this->renderAlert('danger', 'Le fichier doit avoir l\'extension .csv (reçu : '
-                . htmlspecialchars($originalName) . ')');
-        }
-        $serial = pathinfo($originalName, PATHINFO_FILENAME);
-        if ($serial === '' || preg_match('/^[A-Za-z0-9_-]+$/', $serial) !== 1) {
-            return $this->renderAlert('danger',
-                'Nom de fichier invalide : doit être de la forme <code>&lt;SERIAL&gt;.csv</code> (caractères alphanumériques, "_" et "-") où SERIAL correspond à ms_moto.serial_constructeur (reçu : '
-                . htmlspecialchars($originalName) . ')');
-        }
+        $files         = self::transposeMultipleUpload($uploads);
+        $perFileReport = [];
+        $csvsToImport  = [];
 
-        $destPath = $importsDir . '/' . $serial . '.csv';
-        if (!move_uploaded_file((string) $upload['tmp_name'], $destPath)) {
-            return $this->renderAlert('danger', sprintf(
-                'Impossible de déplacer le fichier uploadé vers %s — vérifier les droits.',
-                htmlspecialchars($destPath)
-            ));
-        }
+        foreach ($files as $file) {
+            $name = (string) ($file['name'] ?? '');
+            if ($name === '') {
+                continue; // slot vide (rare en multiple, mais safe)
+            }
 
-        $sizeKo = round(filesize($destPath) / 1024, 1);
-        $out    = $this->renderAlert('success', sprintf(
-            'Upload réussi : %s (%s Ko). Import en cours…',
-            $serial, $sizeKo
-        ));
+            $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($err !== UPLOAD_ERR_OK) {
+                $perFileReport[] = ['file' => $name, 'ok' => false, 'msg' => $this->describeUploadError($err)];
+                continue;
+            }
 
-        $out .= $this->runMicrofichesImports([
-            $serial => [
+            if (strtolower((string) pathinfo($name, PATHINFO_EXTENSION)) !== 'csv') {
+                $perFileReport[] = ['file' => $name, 'ok' => false, 'msg' => 'Extension .csv requise.'];
+                continue;
+            }
+
+            $serial = pathinfo($name, PATHINFO_FILENAME);
+            if ($serial === '' || preg_match('/^[A-Za-z0-9_-]+$/', $serial) !== 1) {
+                $perFileReport[] = ['file' => $name, 'ok' => false, 'msg' => 'Nom invalide (attendu : alphanumérique + "_" + "-" uniquement).'];
+                continue;
+            }
+
+            $destPath = $importsDir . '/' . $serial . '.csv';
+            if (!move_uploaded_file((string) ($file['tmp_name'] ?? ''), $destPath)) {
+                $perFileReport[] = ['file' => $name, 'ok' => false, 'msg' => 'Échec du déplacement vers ' . htmlspecialchars($destPath)];
+                continue;
+            }
+
+            $csvsToImport[$serial] = [
                 'path'     => $destPath,
-                'size_ko'  => $sizeKo,
+                'size_ko'  => round(filesize($destPath) / 1024, 1),
                 'modified' => date('Y-m-d H:i:s'),
-            ],
-        ]);
+            ];
+            $perFileReport[] = ['file' => $name, 'ok' => true, 'msg' => 'Déposé : ' . basename($destPath)];
+        }
 
+        $out = $this->renderUploadBatchSummary($perFileReport);
+        if ($csvsToImport !== []) {
+            $out .= $this->runMicrofichesImports($csvsToImport);
+        }
+        return $out;
+    }
+
+    /**
+     * Transforme $_FILES['xxx'] tel que reçu pour un input multiple
+     * (arrays parallèles) en liste d'uploads individuels indexés.
+     *
+     * @return array<int, array{name: string, tmp_name: string, error: int, size: int}>
+     */
+    private static function transposeMultipleUpload(array $uploads): array
+    {
+        $files = [];
+        $names = (array) ($uploads['name'] ?? []);
+        foreach (array_keys($names) as $i) {
+            $files[] = [
+                'name'     => (string) ($uploads['name'][$i]     ?? ''),
+                'tmp_name' => (string) ($uploads['tmp_name'][$i] ?? ''),
+                'error'    => (int)    ($uploads['error'][$i]    ?? UPLOAD_ERR_NO_FILE),
+                'size'     => (int)    ($uploads['size'][$i]     ?? 0),
+            ];
+        }
+        return $files;
+    }
+
+    /**
+     * Récap visuel du batch d'upload : 1 alerte agrégée + liste détaillée
+     * des fichiers en erreur. Les fichiers OK ne sont pas listés individuellement
+     * pour ne pas noyer l'affichage en cas de batch volumineux.
+     *
+     * @param array<int, array{file: string, ok: bool, msg: string}> $reports
+     */
+    private function renderUploadBatchSummary(array $reports): string
+    {
+        if ($reports === []) {
+            return '';
+        }
+        $okCount = 0;
+        $koReports = [];
+        foreach ($reports as $r) {
+            if ($r['ok']) {
+                $okCount++;
+            } else {
+                $koReports[] = $r;
+            }
+        }
+        $alertType = $koReports !== [] ? ($okCount > 0 ? 'warning' : 'danger') : 'success';
+        $out = sprintf(
+            '<div class="alert alert-%s"><p><strong>Upload :</strong> %d réussi(s), %d erreur(s).</p>',
+            $alertType, $okCount, count($koReports)
+        );
+        if ($koReports !== []) {
+            $out .= '<ul>';
+            foreach ($koReports as $r) {
+                $out .= sprintf(
+                    '<li><code>%s</code> &mdash; %s</li>',
+                    htmlspecialchars($r['file']),
+                    $r['msg'] // msg contient déjà du HTML safe (htmlspecialchars sur destPath)
+                );
+            }
+            $out .= '</ul>';
+        }
+        $out .= '</div>';
         return $out;
     }
 
@@ -629,18 +709,21 @@ class Megaservice_microfiches extends Module
 
         // -- Panel d'upload microfiches -----------------------------------
         $out .= '<div class="panel">'
-            . '<h3>Téléverser un CSV microfiches</h3>'
+            . '<h3>Téléverser un ou plusieurs CSV microfiches</h3>'
             . '<form method="post" action="" enctype="multipart/form-data">'
-            . '<p>Sélectionner un fichier <code>.csv</code> dont le nom (sans extension) '
-            . 'correspond au <strong>serial constructeur</strong> d\'une moto déjà en BDD '
+            . '<p>Sélectionner <strong>un ou plusieurs</strong> fichiers <code>.csv</code> '
+            . '(Ctrl+clic / Cmd+clic pour multi-sélection). Le nom de chaque fichier (sans extension) '
+            . 'doit correspondre au <strong>serial constructeur</strong> d\'une moto déjà en BDD '
             . '(ex. <code>F0403X7.csv</code> pour la GASGAS EC 300 2024). '
-            . 'Le fichier est déposé dans <code>' . $dir . '</code> puis importé immédiatement.</p>'
-            . '<p><input type="file" name="microfiches_csv_file" accept=".csv" required /> '
+            . 'Chaque fichier est déposé dans <code>' . $dir . '</code> puis importé indépendamment '
+            . '(un échec sur un fichier ne bloque pas les autres).</p>'
+            . '<p><input type="file" name="microfiches_csv_files[]" accept=".csv" multiple required /> '
             . '<button type="submit" name="submitUploadMicrofichesCsv" value="1" class="btn btn-primary">'
             . 'Téléverser et importer</button></p>'
             . '<p class="help-block"><em>Pré-requis : importer d\'abord le CSV motos correspondant '
             . '(la moto pivot doit exister dans <code>ps_ms_moto</code>). '
-            . 'Limites PHP serveur : upload_max_filesize=' . $umax . ', post_max_size=' . $pmax . '.</em></p>'
+            . 'Limites PHP serveur : upload_max_filesize=' . $umax . ', post_max_size=' . $pmax
+            . ' (somme des fichiers).</em></p>'
             . '</form>'
             . '</div>';
 
