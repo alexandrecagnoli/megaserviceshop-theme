@@ -87,6 +87,8 @@ Liste à remonter avant prochaine session de dev :
 4. **Stratégie catalogue spareparts** : par quel flux les 1128+ références OEM par moto vont-elles arriver dans `ps_product.reference` ? (CSV PS natif ? Module externe ? API ?)
 5. ~~**Champs `picture_cycle` + `picture_moteur` sur `ms_moto`** : prévus au schéma mais le CSV motos n'a qu'une seule colonne `picture`. Source de ces vues partielles ?~~ → **Résolu** : upload manuel par moto via fiche d'édition BO (cf. décision #7). Stockage dans `img/ms_moto/<id>/{cycle,moteur}.<ext>`.
 
+6. **Mapping serials motos ↔ microfiches** : le CSV motos utilise des codes SAP/ERP fournisseur avec suffixes `_CFMOTO` ou `_FTI` (modèles fabriqués par CFMOTO / via le programme FTI). Le CSV microfiches utilise les codes officiels catalogue pièces. **Le numéro lui-même diffère**, pas juste le suffixe (ex. `2887X1_FTI` → `F2803X1` pour la Norden 901 2024). Mesure preprod : **15 motos sur 1830 concernées** (9 CFMOTO + 6 FTI), toutes en 2022-2025. À demander à MSS : table de correspondance `serial_csv_motos` → `serial_csv_microfiches` pour ces 15. Solution V1 : `UPDATE` SQL ponctuel sur `ms_moto.serial_constructeur` (pas de refactor schéma vu la volumétrie).
+
 ---
 
 ## 5. SQL utiles (à exécuter en phpMyAdmin)
