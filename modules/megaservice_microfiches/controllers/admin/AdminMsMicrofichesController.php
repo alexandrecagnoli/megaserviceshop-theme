@@ -149,7 +149,11 @@ class AdminMsMicrofichesController extends ModuleAdminController
         $cat  = new MsMicroficheCategorie((int) $micro->id_categorie);
 
         $hotspots = (array) Db::getInstance()->executeS(
-            'SELECT * FROM `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+            'SELECT `id_hotspot`, `id_microfiche`, `id_product`, `article_ref`, `article_label`, '
+            . '`sequence_number`, `position_x`, `position_y`, '
+            . '`position_x_original`, `position_y_original`, '
+            . '`qty_recommended`, `manually_edited` '
+            . 'FROM `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
             . 'WHERE `id_microfiche` = ' . (int) $micro->id_microfiche
             . ' ORDER BY `sequence_number`, `id_hotspot`'
         );
@@ -168,26 +172,37 @@ class AdminMsMicrofichesController extends ModuleAdminController
 
         // Génération des overlays hotspot — positions en pourcentage pour
         // suivre le redimensionnement responsive de l'image.
-        $overlaysHtml = '';
+        $overlaysHtml   = '';
+        $countEdited    = 0;
         foreach ($hotspots as $h) {
-            $leftPct   = ((int) $h['position_x']) / $imgWidth  * 100;
-            $bottomPct = ((int) $h['position_y']) / $imgHeight * 100;
-            $title     = sprintf(
-                '#%d — %s%s (qté: %d)',
+            $leftPct       = ((int) $h['position_x']) / $imgWidth  * 100;
+            $bottomPct     = ((int) $h['position_y']) / $imgHeight * 100;
+            $manuallyEdited = (bool) ($h['manually_edited'] ?? false);
+            if ($manuallyEdited) {
+                $countEdited++;
+            }
+            $title = sprintf(
+                '#%d — %s%s (qté: %d)%s',
                 (int) $h['sequence_number'],
                 (string) $h['article_ref'],
                 $h['article_label'] ? ' — ' . $h['article_label'] : '',
-                (int) $h['qty_recommended']
+                (int) $h['qty_recommended'],
+                $manuallyEdited ? ' [modifié manuellement]' : ''
             );
-            $cls = ((int) ($h['id_product'] ?? 0)) > 0
-                ? 'ms-hotspot ms-hotspot--linked'
-                : 'ms-hotspot ms-hotspot--orphan';
+            if ($manuallyEdited) {
+                $cls = 'ms-hotspot ms-hotspot--edited';
+            } elseif (((int) ($h['id_product'] ?? 0)) > 0) {
+                $cls = 'ms-hotspot ms-hotspot--linked';
+            } else {
+                $cls = 'ms-hotspot ms-hotspot--orphan';
+            }
             $overlaysHtml .= sprintf(
                 '<div class="%s" style="left:%.3f%%;bottom:%.3f%%" title="%s" '
-                . 'data-seq="%d" data-ref="%s">%d</div>',
+                . 'data-id="%d" data-seq="%d" data-ref="%s">%d</div>',
                 $cls,
                 $leftPct, $bottomPct,
                 htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
+                (int) $h['id_hotspot'],
                 (int) $h['sequence_number'],
                 htmlspecialchars((string) $h['article_ref'], ENT_QUOTES, 'UTF-8'),
                 (int) $h['sequence_number']
@@ -212,7 +227,14 @@ class AdminMsMicrofichesController extends ModuleAdminController
               transition: transform 0.1s ease-out; user-select:none; text-decoration:none; }
 .ms-hotspot--linked { background: rgba(40,167,69,0.85); cursor:pointer; }  /* vert : lié à un produit */
 .ms-hotspot--orphan { background: rgba(255,128,0,0.85); }                   /* orange : pas lié */
+.ms-hotspot--edited { background: rgba(30,144,255,0.90); }                  /* bleu : modifié manuellement */
 .ms-hotspot:hover { transform: scale(1.4); z-index:10; box-shadow:0 0 8px rgba(0,0,0,0.8); color:#fff; }
+/* Mode "édition activée" : curseur main + bordure plus visible pour signaler le drag possible */
+.ms-microfiche-viewer.ms-editing .ms-hotspot { cursor: move; border-color: #1e90ff; }
+.ms-microfiche-viewer.ms-editing .ms-hotspot.ms-dragging { z-index:20; transform: scale(1.4); opacity:0.85; box-shadow:0 0 10px rgba(30,144,255,1); }
+.ms-edit-bar { margin:10px 0; padding:8px; background:#f5f5f5; border:1px solid #ddd; border-radius:3px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.ms-edit-bar .ms-edit-status { font-size:13px; color:#666; }
+.ms-edit-bar .ms-edit-status .ms-counter-edited { color:#1e90ff; font-weight:bold; }
 .ms-microfiche-meta { margin: 10px 0 20px; }
 .ms-microfiche-meta dt { font-weight:bold; float:left; clear:left; width:160px; }
 .ms-microfiche-meta dd { margin-left:170px; margin-bottom:4px; }
@@ -254,10 +276,18 @@ class AdminMsMicrofichesController extends ModuleAdminController
 
             $editLink = $this->context->link->getAdminLink('AdminMsHotspots', true)
                       . '&id_hotspot=' . $idHotspot . '&updatems_microfiche_hotspot';
+            $manuallyEdited = (bool) ($h['manually_edited'] ?? false);
             $editCell = sprintf(
                 '<a href="%s" class="btn btn-default btn-xs" title="Modifier ce hotspot"><i class="icon-edit"></i></a>',
                 htmlspecialchars($editLink, ENT_QUOTES, 'UTF-8')
             );
+            if ($manuallyEdited) {
+                $editCell .= sprintf(
+                    ' <button type="button" class="btn btn-default btn-xs ms-revert-btn" '
+                    . 'data-id="%d" title="Revert vers la position constructeur (CSV)"><i class="icon-undo"></i></button>',
+                    $idHotspot
+                );
+            }
 
             $listRows .= sprintf(
                 '<tr id="ms-hotspot-row-%d">'
@@ -294,11 +324,20 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . '— <a href="' . $imageUrl . '" target="_blank">URL d\'origine</a></dd>'
             . '<dt>Légende</dt>'
             . '<dd><span class="ms-seq-badge ms-seq-badge--linked">●</span> lié à un produit Presta'
-            . ' &nbsp;&nbsp; <span class="ms-seq-badge ms-seq-badge--orphan">●</span> pas encore lié</dd>'
+            . ' &nbsp;&nbsp; <span class="ms-seq-badge ms-seq-badge--orphan">●</span> pas encore lié'
+            . ' &nbsp;&nbsp; <span class="ms-seq-badge" style="background:#1e90ff">●</span> modifié manuellement</dd>'
             . '</dl>'
+            . '<div class="ms-edit-bar">'
+            . '<label><input type="checkbox" id="ms-toggle-edit" /> <strong>Activer le drag &amp; drop</strong></label>'
+            . ' <span class="ms-edit-status">'
+            . '<span class="ms-counter-edited">' . $countEdited . '</span> hotspot(s) modifié(s) manuellement / '
+            . count($hotspots) . ' au total'
+            . '</span>'
+            . '<span id="ms-edit-feedback" style="margin-left:auto"></span>'
+            . '</div>'
             . '<div class="ms-microfiche-layout">'
             . '<div class="ms-microfiche-viewer-wrap">'
-            . '<div class="ms-microfiche-viewer">'
+            . '<div class="ms-microfiche-viewer" id="ms-microfiche-viewer" data-img-w="' . $imgWidth . '" data-img-h="' . $imgHeight . '">'
             . '<img src="' . $imageUrl . '" alt="" width="' . $imgWidth . '" height="' . $imgHeight . '" />'
             . $overlaysHtml
             . '</div>'
@@ -313,8 +352,189 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . '<p class="help-block" style="margin-top:15px"><em>Survoler un cercle sur l\'image pour voir le détail. '
             . 'Cliquer une référence en vert dans le tableau ouvre la fiche produit PrestaShop dans un nouvel onglet. '
             . 'Les hotspots orphelins (orange) seront liés automatiquement quand le catalogue spareparts sera importé '
-            . '(via le futur cron de rematching, PR8).</em></p>'
-            . '</div>';
+            . '(via le futur cron de rematching, PR8). '
+            . 'Cocher <strong>Activer le drag &amp; drop</strong> pour déplacer un cercle (modification protégée contre l\'écrasement au prochain réimport CSV — récupérable via le bouton ↶ Revert).</em></p>'
+            . '</div>'
+            . $this->renderHotspotsEditorJs();
+    }
+
+    /**
+     * JS inline pour le drag/drop des hotspots + revert AJAX.
+     * Autonome (pas de dépendance jQuery custom, on utilise jQuery déjà
+     * inclus par PrestaShop pour le token).
+     */
+    private function renderHotspotsEditorJs(): string
+    {
+        $tokenSave   = Tools::getAdminTokenLite('AdminMsHotspots');
+        $ajaxBaseUrl = $this->context->link->getAdminLink('AdminMsHotspots', false);
+        // getAdminLink(false) renvoie sans token — on ajoute le token + ajax=1.
+        $ajaxUrl = $ajaxBaseUrl . (strpos($ajaxBaseUrl, '?') !== false ? '&' : '?')
+                 . 'token=' . urlencode($tokenSave) . '&ajax=1';
+
+        $js = <<<'JS'
+<script>
+(function() {
+    var viewer = document.getElementById('ms-microfiche-viewer');
+    if (!viewer) return;
+
+    var toggle    = document.getElementById('ms-toggle-edit');
+    var feedback  = document.getElementById('ms-edit-feedback');
+    var imgW      = parseInt(viewer.dataset.imgW, 10) || 1;
+    var imgH      = parseInt(viewer.dataset.imgH, 10) || 1;
+    var AJAX_URL  = '%%AJAX_URL%%';
+
+    function setFeedback(msg, isError) {
+        if (!feedback) return;
+        feedback.textContent = msg || '';
+        feedback.style.color = isError ? '#c00' : '#28a745';
+    }
+
+    // -- Toggle drag mode -------------------------------------------------
+    if (toggle) {
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                viewer.classList.add('ms-editing');
+                setFeedback('Drag & drop activé — déplacer un cercle pour le repositionner.', false);
+            } else {
+                viewer.classList.remove('ms-editing');
+                setFeedback('', false);
+            }
+        });
+    }
+
+    // -- Drag & drop -------------------------------------------------------
+    var dragging = null;
+    var startX = 0, startY = 0, startLeft = 0, startBottom = 0;
+
+    function onPointerDown(e) {
+        if (!viewer.classList.contains('ms-editing')) return;
+        if (!e.target.classList || !e.target.classList.contains('ms-hotspot')) return;
+        dragging = e.target;
+        dragging.classList.add('ms-dragging');
+        var rect = viewer.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        var st = window.getComputedStyle(dragging);
+        startLeft   = parseFloat(st.left)   || 0;
+        startBottom = parseFloat(st.bottom) || 0;
+        e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+        if (!dragging) return;
+        var rect = viewer.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        var dx = x - startX;
+        var dy = y - startY;
+        // On était en pixels (style courant), on continue en pixels pour le drag fluide.
+        // On les convertira en % à la fin du drag pour rester responsive.
+        dragging.style.left   = (startLeft + dx)   + 'px';
+        // bottom CSS = depuis le bas → un mouvement vers le bas = bottom diminue
+        dragging.style.bottom = (startBottom - dy) + 'px';
+    }
+
+    function onPointerUp(e) {
+        if (!dragging) return;
+        var hotspot = dragging;
+        hotspot.classList.remove('ms-dragging');
+        dragging = null;
+
+        // Convertir la position pixel courante en position image originale.
+        var rect = viewer.getBoundingClientRect();
+        // Position absolue dans le viewer (haut-gauche origine)
+        var hRect = hotspot.getBoundingClientRect();
+        var leftInViewer   = hRect.left - rect.left;
+        var topInViewer    = hRect.top  - rect.top;
+        // Marges -1px sur left + bottom : on récupère donc la position du COIN haut-gauche du cercle
+        var imgRect = viewer.querySelector('img').getBoundingClientRect();
+        var displayedW = imgRect.width;
+        var displayedH = imgRect.height;
+        var ratioX = imgW / displayedW;
+        var ratioY = imgH / displayedH;
+        // position_x = px depuis la gauche de l'image (origine pixel)
+        var posX = Math.round(leftInViewer * ratioX);
+        // position_y = px depuis le BAS de l'image (convention KTM)
+        var bottomInViewer = displayedH - (topInViewer + hRect.height);
+        var posY = Math.round(bottomInViewer * ratioY);
+
+        // Clamp aux limites de l'image
+        if (posX < 0) posX = 0; if (posX > imgW) posX = imgW;
+        if (posY < 0) posY = 0; if (posY > imgH) posY = imgH;
+
+        var idHotspot = parseInt(hotspot.dataset.id, 10);
+        setFeedback('Sauvegarde…', false);
+
+        var formData = new FormData();
+        formData.append('id_hotspot', idHotspot);
+        formData.append('position_x', posX);
+        formData.append('position_y', posY);
+
+        fetch(AJAX_URL + '&action=SaveHotspotPosition', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        }).then(function(r) { return r.json(); }).then(function(json) {
+            if (json && json.ok) {
+                // Re-positionner en % (responsive) avec les valeurs serveur arrondies
+                var newLeftPct   = (json.position_x / imgW) * 100;
+                var newBottomPct = (json.position_y / imgH) * 100;
+                hotspot.style.left   = newLeftPct.toFixed(3) + '%';
+                hotspot.style.bottom = newBottomPct.toFixed(3) + '%';
+                // Passe le hotspot en classe "edited" (bleu)
+                hotspot.classList.remove('ms-hotspot--linked', 'ms-hotspot--orphan');
+                hotspot.classList.add('ms-hotspot--edited');
+                setFeedback('Position sauvegardée (' + json.position_x + ', ' + json.position_y + ').', false);
+            } else {
+                setFeedback('Échec sauvegarde : ' + (json && json.error ? json.error : 'erreur inconnue'), true);
+                // Restaure la position d'avant le drag
+                hotspot.style.left   = startLeft   + 'px';
+                hotspot.style.bottom = startBottom + 'px';
+            }
+        }).catch(function(err) {
+            setFeedback('Erreur réseau : ' + err.message, true);
+            hotspot.style.left   = startLeft   + 'px';
+            hotspot.style.bottom = startBottom + 'px';
+        });
+    }
+
+    viewer.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('mousemove', onPointerMove);
+    document.addEventListener('mouseup',   onPointerUp);
+
+    // -- Revert (boutons dans le tableau de droite) ----------------------
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest ? e.target.closest('.ms-revert-btn') : null;
+        if (!btn) return;
+        e.preventDefault();
+        var idHotspot = parseInt(btn.dataset.id, 10);
+        if (!idHotspot) return;
+        if (!confirm('Revert ce hotspot vers la position constructeur du CSV ?')) return;
+
+        var formData = new FormData();
+        formData.append('id_hotspot', idHotspot);
+
+        setFeedback('Revert…', false);
+        fetch(AJAX_URL + '&action=RevertHotspotPosition', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        }).then(function(r) { return r.json(); }).then(function(json) {
+            if (json && json.ok) {
+                setFeedback('Revert OK — rechargement de la page.', false);
+                setTimeout(function() { window.location.reload(); }, 600);
+            } else {
+                setFeedback('Échec revert : ' + (json && json.error ? json.error : 'erreur inconnue'), true);
+            }
+        }).catch(function(err) {
+            setFeedback('Erreur réseau : ' + err.message, true);
+        });
+    });
+})();
+</script>
+JS;
+
+        return str_replace('%%AJAX_URL%%', htmlspecialchars($ajaxUrl, ENT_QUOTES, 'UTF-8'), $js);
     }
 
     /**
