@@ -365,11 +365,12 @@ class AdminMsMicrofichesController extends ModuleAdminController
      */
     private function renderHotspotsEditorJs(): string
     {
-        $tokenSave   = Tools::getAdminTokenLite('AdminMsHotspots');
-        $ajaxBaseUrl = $this->context->link->getAdminLink('AdminMsHotspots', false);
-        // getAdminLink(false) renvoie sans token — on ajoute le token + ajax=1.
-        $ajaxUrl = $ajaxBaseUrl . (strpos($ajaxBaseUrl, '?') !== false ? '&' : '?')
-                 . 'token=' . urlencode($tokenSave) . '&ajax=1';
+        // getAdminLink(true) inclut automatiquement le token CSRF correct
+        // pour AdminMsHotspots dans la session courante. Ne PAS reconstruire
+        // l'URL a la main avec getAdminTokenLite() : ca generait un token
+        // base sur Tab::getIdFromClassName, ce qui foire si le Tab n'est pas
+        // (encore) cree en BDD ou si la session a un autre cookie_key.
+        $ajaxUrl = $this->context->link->getAdminLink('AdminMsHotspots', true) . '&ajax=1';
 
         $js = <<<'JS'
 <script>
