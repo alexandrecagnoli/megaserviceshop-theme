@@ -137,6 +137,92 @@ class AdminMsMicrofichesController extends ModuleAdminController
      * On positionne en pourcentages plutôt qu'en pixels pour que les
      * hotspots restent alignés quand l'image est rétrécie (responsive).
      */
+    /**
+     * Traite les soumissions du form de l editeur visuel (save batch + revert).
+     * Appelee par PrestaShop avant le rendu. Le redirect a la fin garde
+     * l admin sur la meme page (pattern POST-Redirect-GET classique pour
+     * eviter le "voulez-vous reposter le formulaire ?" au reload).
+     */
+    public function postProcess()
+    {
+        // --- Save batch des modifications de positions ---------------------
+        if (Tools::isSubmit('ms_save_hotspots')) {
+            $idMicrofiche = (int) Tools::getValue('id_microfiche');
+            $rawJson      = Tools::getValue('ms_save_hotspots');
+            $changes      = json_decode((string) $rawJson, true);
+
+            $applied = 0;
+            $errors  = 0;
+            if (is_array($changes)) {
+                foreach ($changes as $idHotspot => $pos) {
+                    $idHotspot = (int) $idHotspot;
+                    if ($idHotspot <= 0 || !is_array($pos)) {
+                        $errors++; continue;
+                    }
+                    $posX = isset($pos['x']) ? (int) $pos['x'] : -1;
+                    $posY = isset($pos['y']) ? (int) $pos['y'] : -1;
+                    if ($posX < 0 || $posY < 0) {
+                        $errors++; continue;
+                    }
+                    $ok = (bool) Db::getInstance()->execute(
+                        'UPDATE `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+                        . 'SET `position_x` = ' . $posX . ', '
+                        . '    `position_y` = ' . $posY . ', '
+                        . '    `manually_edited` = 1 '
+                        . 'WHERE `id_hotspot` = ' . $idHotspot
+                    );
+                    if ($ok && Db::getInstance()->Affected_Rows() > 0) {
+                        $applied++;
+                    } else {
+                        $errors++;
+                    }
+                }
+            }
+            $this->confirmations[] = $applied . ' hotspot(s) mis a jour.'
+                . ($errors > 0 ? ' (' . $errors . ' erreur(s) ignoree(s))' : '');
+
+            if ($idMicrofiche > 0) {
+                Tools::redirectAdmin(
+                    $this->context->link->getAdminLink('AdminMsMicrofiches', true)
+                    . '&id_microfiche=' . $idMicrofiche . '&viewms_microfiche'
+                );
+            }
+        }
+
+        // --- Revert d un hotspot vers sa position constructeur -------------
+        if (Tools::isSubmit('ms_revert_hotspot')) {
+            $idHotspot    = (int) Tools::getValue('ms_revert_hotspot');
+            $idMicrofiche = (int) Tools::getValue('id_microfiche');
+            if ($idHotspot > 0) {
+                $row = Db::getInstance()->getRow(
+                    'SELECT `position_x_original`, `position_y_original` '
+                    . 'FROM `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+                    . 'WHERE `id_hotspot` = ' . $idHotspot
+                );
+                if ($row && $row['position_x_original'] !== null && $row['position_y_original'] !== null) {
+                    Db::getInstance()->execute(
+                        'UPDATE `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` '
+                        . 'SET `position_x` = ' . (int) $row['position_x_original'] . ', '
+                        . '    `position_y` = ' . (int) $row['position_y_original'] . ', '
+                        . '    `manually_edited` = 0 '
+                        . 'WHERE `id_hotspot` = ' . $idHotspot
+                    );
+                    $this->confirmations[] = 'Hotspot #' . $idHotspot . ' revert OK.';
+                } else {
+                    $this->errors[] = 'Hotspot #' . $idHotspot . ' : aucune position constructeur en reference.';
+                }
+            }
+            if ($idMicrofiche > 0) {
+                Tools::redirectAdmin(
+                    $this->context->link->getAdminLink('AdminMsMicrofiches', true)
+                    . '&id_microfiche=' . $idMicrofiche . '&viewms_microfiche'
+                );
+            }
+        }
+
+        return parent::postProcess();
+    }
+
     public function renderView()
     {
         /** @var MsMicrofiche|null $micro */
@@ -283,9 +369,20 @@ class AdminMsMicrofichesController extends ModuleAdminController
             );
             if ($manuallyEdited) {
                 $editCell .= sprintf(
-                    ' <button type="button" class="btn btn-default btn-xs ms-revert-btn" '
-                    . 'data-id="%d" title="Revert vers la position constructeur (CSV)"><i class="icon-undo"></i></button>',
-                    $idHotspot
+                    ' <button type="submit" form="ms-revert-form-%d" '
+                    . 'class="btn btn-default btn-xs" name="ms_revert_hotspot" value="%d" '
+                    . 'title="Revert vers la position constructeur (CSV)" '
+                    . 'onclick="return confirm(\'Revert ce hotspot vers la position constructeur ?\');">'
+                    . '<i class="icon-undo"></i></button>',
+                    $idHotspot, $idHotspot
+                );
+                // Form séparé par bouton pour permettre un submit ciblé.
+                $editCell .= sprintf(
+                    '<form id="ms-revert-form-%d" method="post" action="" style="display:inline">'
+                    . '<input type="hidden" name="id_microfiche" value="%d" />'
+                    . '</form>',
+                    $idHotspot,
+                    (int) $micro->id_microfiche
                 );
             }
 
@@ -327,14 +424,19 @@ class AdminMsMicrofichesController extends ModuleAdminController
             . ' &nbsp;&nbsp; <span class="ms-seq-badge ms-seq-badge--orphan">●</span> pas encore lié'
             . ' &nbsp;&nbsp; <span class="ms-seq-badge" style="background:#1e90ff">●</span> modifié manuellement</dd>'
             . '</dl>'
-            . '<div class="ms-edit-bar">'
+            . '<form id="ms-save-form" method="post" action="" class="ms-edit-bar">'
+            . '<input type="hidden" name="id_microfiche" value="' . (int) $micro->id_microfiche . '" />'
+            . '<input type="hidden" name="ms_save_hotspots" id="ms-pending-changes" value="" />'
             . '<label><input type="checkbox" id="ms-toggle-edit" /> <strong>Activer le drag &amp; drop</strong></label>'
             . ' <span class="ms-edit-status">'
-            . '<span class="ms-counter-edited">' . $countEdited . '</span> hotspot(s) modifié(s) manuellement / '
+            . '<span class="ms-counter-edited">' . $countEdited . '</span> modifié(s) en BDD / '
             . count($hotspots) . ' au total'
             . '</span>'
+            . ' <button type="submit" id="ms-save-btn" class="btn btn-primary btn-sm" disabled>'
+            . '<i class="icon-save"></i> Enregistrer (<span id="ms-pending-count">0</span>)'
+            . '</button>'
             . '<span id="ms-edit-feedback" style="margin-left:auto"></span>'
-            . '</div>'
+            . '</form>'
             . '<div class="ms-microfiche-layout">'
             . '<div class="ms-microfiche-viewer-wrap">'
             . '<div class="ms-microfiche-viewer" id="ms-microfiche-viewer" data-img-w="' . $imgWidth . '" data-img-h="' . $imgHeight . '">'
@@ -365,26 +467,29 @@ class AdminMsMicrofichesController extends ModuleAdminController
      */
     private function renderHotspotsEditorJs(): string
     {
-        // Endpoint AJAX standalone du module (bypass total du routing
-        // ModuleAdminController + checkToken PS qui s'est avere trop
-        // fragile au token CSRF). Authentification cote serveur via
-        // cookie session admin (Context::getContext()->cookie->id_employee).
-        //
-        // Le base URI Presta inclut un trailing slash, on append directement
-        // le chemin physique relatif au document root.
-        $ajaxUrl = __PS_BASE_URI__ . 'modules/megaservice_microfiches/ajax-hotspot.php';
-
-        $js = <<<'JS'
+        // Plus d'AJAX : on accumule les changements cote JS dans un objet
+        // pendingChanges, le bouton "Enregistrer (N)" submit un form POST
+        // classique avec tout le batch en JSON. postProcess() cote PHP
+        // applique en BDD puis redirect vers la meme page.
+        // Pareil pour le revert : submit POST classique avec un input
+        // hidden ms_revert_hotspot = idHotspot.
+        return <<<'JS'
 <script>
 (function() {
     var viewer = document.getElementById('ms-microfiche-viewer');
     if (!viewer) return;
 
-    var toggle    = document.getElementById('ms-toggle-edit');
-    var feedback  = document.getElementById('ms-edit-feedback');
-    var imgW      = parseInt(viewer.dataset.imgW, 10) || 1;
-    var imgH      = parseInt(viewer.dataset.imgH, 10) || 1;
-    var AJAX_URL  = '%%AJAX_URL%%';
+    var toggle      = document.getElementById('ms-toggle-edit');
+    var feedback    = document.getElementById('ms-edit-feedback');
+    var saveBtn     = document.getElementById('ms-save-btn');
+    var pendingInpt = document.getElementById('ms-pending-changes');
+    var pendingCnt  = document.getElementById('ms-pending-count');
+    var saveForm    = document.getElementById('ms-save-form');
+    var imgW        = parseInt(viewer.dataset.imgW, 10) || 1;
+    var imgH        = parseInt(viewer.dataset.imgH, 10) || 1;
+
+    /** @type {Object<number, {x: number, y: number}>} */
+    var pendingChanges = {};
 
     function setFeedback(msg, isError) {
         if (!feedback) return;
@@ -392,12 +497,19 @@ class AdminMsMicrofichesController extends ModuleAdminController
         feedback.style.color = isError ? '#c00' : '#28a745';
     }
 
+    function updatePending() {
+        var count = Object.keys(pendingChanges).length;
+        if (pendingCnt) pendingCnt.textContent = count;
+        if (saveBtn)   saveBtn.disabled = count === 0;
+        if (pendingInpt) pendingInpt.value = JSON.stringify(pendingChanges);
+    }
+
     // -- Toggle drag mode -------------------------------------------------
     if (toggle) {
         toggle.addEventListener('change', function() {
             if (this.checked) {
                 viewer.classList.add('ms-editing');
-                setFeedback('Drag & drop activé — déplacer un cercle pour le repositionner.', false);
+                setFeedback('Drag activé. Déplacer les cercles, puis cliquer Enregistrer.', false);
             } else {
                 viewer.classList.remove('ms-editing');
                 setFeedback('', false);
@@ -405,9 +517,8 @@ class AdminMsMicrofichesController extends ModuleAdminController
         });
     }
 
-    // -- Drag & drop -------------------------------------------------------
-    var dragging = null;
-    var startX = 0, startY = 0, startLeft = 0, startBottom = 0;
+    // -- Drag & drop (uniquement update visuel + accumulation) -----------
+    var dragging = null, startX = 0, startY = 0, startLeft = 0, startBottom = 0;
 
     function onPointerDown(e) {
         if (!viewer.classList.contains('ms-editing')) return;
@@ -426,14 +537,9 @@ class AdminMsMicrofichesController extends ModuleAdminController
     function onPointerMove(e) {
         if (!dragging) return;
         var rect = viewer.getBoundingClientRect();
-        var x = e.clientX - rect.left;
-        var y = e.clientY - rect.top;
-        var dx = x - startX;
-        var dy = y - startY;
-        // On était en pixels (style courant), on continue en pixels pour le drag fluide.
-        // On les convertira en % à la fin du drag pour rester responsive.
+        var dx = (e.clientX - rect.left) - startX;
+        var dy = (e.clientY - rect.top)  - startY;
         dragging.style.left   = (startLeft + dx)   + 'px';
-        // bottom CSS = depuis le bas → un mouvement vers le bas = bottom diminue
         dragging.style.bottom = (startBottom - dy) + 'px';
     }
 
@@ -443,121 +549,76 @@ class AdminMsMicrofichesController extends ModuleAdminController
         hotspot.classList.remove('ms-dragging');
         dragging = null;
 
-        // Convertir la position pixel courante en position image originale.
+        // Conversion px viewer -> px image originale (convention KTM :
+        // position_y = depuis le bas, donc bottomInViewer * ratioY).
         var rect = viewer.getBoundingClientRect();
         var hRect = hotspot.getBoundingClientRect();
-        var leftInViewer   = hRect.left - rect.left;
-        var topInViewer    = hRect.top  - rect.top;
+        var leftInViewer = hRect.left - rect.left;
+        var topInViewer  = hRect.top  - rect.top;
         var imgEl = viewer.querySelector('img');
         var imgRect = imgEl ? imgEl.getBoundingClientRect() : null;
         var displayedW = imgRect ? imgRect.width  : 0;
         var displayedH = imgRect ? imgRect.height : 0;
 
-        // Garde : si l'image n'est pas encore chargée (dimensions 0), on ne
-        // peut pas calculer le ratio. On annule le drag et on remet le
-        // hotspot a sa position de depart.
         if (!displayedW || !displayedH) {
-            setFeedback('Image non charge - re-essaie apres le chargement complet.', true);
+            setFeedback('Image non chargée - réessayer.', true);
             hotspot.style.left   = startLeft   + 'px';
             hotspot.style.bottom = startBottom + 'px';
             return;
         }
-
         var ratioX = imgW / displayedW;
         var ratioY = imgH / displayedH;
         var posX = Math.round(leftInViewer * ratioX);
         var bottomInViewer = displayedH - (topInViewer + hRect.height);
         var posY = Math.round(bottomInViewer * ratioY);
 
-        // Garde supplementaire : NaN possible si les nombres ci-dessus
-        // foirent (cas extreme). On refuse plutot que d'envoyer 'NaN' au
-        // serveur qui rejetterait avec un message obscur.
         if (!Number.isFinite(posX) || !Number.isFinite(posY)) {
-            setFeedback('Positions calculees invalides (NaN/Infinity). Rechargez la page.', true);
+            setFeedback('Positions calculées invalides.', true);
             hotspot.style.left   = startLeft   + 'px';
             hotspot.style.bottom = startBottom + 'px';
             return;
         }
-
-        // Clamp aux limites de l'image
         if (posX < 0) posX = 0; if (posX > imgW) posX = imgW;
         if (posY < 0) posY = 0; if (posY > imgH) posY = imgH;
 
+        // Re-positionnement en % (responsive)
+        hotspot.style.left   = ((posX / imgW)  * 100).toFixed(3) + '%';
+        hotspot.style.bottom = ((posY / imgH) * 100).toFixed(3) + '%';
+        // Visuel "en attente d'enregistrement" : passe en bleu
+        hotspot.classList.remove('ms-hotspot--linked', 'ms-hotspot--orphan');
+        hotspot.classList.add('ms-hotspot--edited');
+
+        // Accumulation du changement
         var idHotspot = parseInt(hotspot.dataset.id, 10);
-        setFeedback('Sauvegarde...', false);
-
-        var formData = new FormData();
-        formData.append('action', 'SaveHotspotPosition');
-        formData.append('id_hotspot', String(idHotspot));
-        formData.append('position_x', String(posX));
-        formData.append('position_y', String(posY));
-
-        fetch(AJAX_URL, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        }).then(function(r) { return r.json(); }).then(function(json) {
-            if (json && json.ok) {
-                // Re-positionner en % (responsive) avec les valeurs serveur arrondies
-                var newLeftPct   = (json.position_x / imgW) * 100;
-                var newBottomPct = (json.position_y / imgH) * 100;
-                hotspot.style.left   = newLeftPct.toFixed(3) + '%';
-                hotspot.style.bottom = newBottomPct.toFixed(3) + '%';
-                // Passe le hotspot en classe "edited" (bleu)
-                hotspot.classList.remove('ms-hotspot--linked', 'ms-hotspot--orphan');
-                hotspot.classList.add('ms-hotspot--edited');
-                setFeedback('Position sauvegardée (' + json.position_x + ', ' + json.position_y + ').', false);
-            } else {
-                setFeedback('Échec sauvegarde : ' + (json && json.error ? json.error : 'erreur inconnue'), true);
-                // Restaure la position d'avant le drag
-                hotspot.style.left   = startLeft   + 'px';
-                hotspot.style.bottom = startBottom + 'px';
-            }
-        }).catch(function(err) {
-            setFeedback('Erreur réseau : ' + err.message, true);
-            hotspot.style.left   = startLeft   + 'px';
-            hotspot.style.bottom = startBottom + 'px';
-        });
+        pendingChanges[idHotspot] = { x: posX, y: posY };
+        updatePending();
+        setFeedback(Object.keys(pendingChanges).length + ' modification(s) en attente. Cliquer Enregistrer.', false);
     }
 
     viewer.addEventListener('mousedown', onPointerDown);
     document.addEventListener('mousemove', onPointerMove);
     document.addEventListener('mouseup',   onPointerUp);
 
-    // -- Revert (boutons dans le tableau de droite) ----------------------
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest ? e.target.closest('.ms-revert-btn') : null;
-        if (!btn) return;
+    // -- Garde-fou : avertir l'admin s'il quitte la page avec des changements
+    //                en attente non sauvegardés.
+    window.addEventListener('beforeunload', function(e) {
+        if (Object.keys(pendingChanges).length === 0) return;
+        // Sauf si c'est notre form save qui submit (geré via un flag)
+        if (saveForm && saveForm.dataset.submitting === '1') return;
         e.preventDefault();
-        var idHotspot = parseInt(btn.dataset.id, 10);
-        if (!idHotspot) return;
-        if (!confirm('Revert ce hotspot vers la position constructeur du CSV ?')) return;
-
-        var formData = new FormData();
-        formData.append('action', 'RevertHotspotPosition');
-        formData.append('id_hotspot', String(idHotspot));
-
-        setFeedback('Revert…', false);
-        fetch(AJAX_URL, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        }).then(function(r) { return r.json(); }).then(function(json) {
-            if (json && json.ok) {
-                setFeedback('Revert OK — rechargement de la page.', false);
-                setTimeout(function() { window.location.reload(); }, 600);
-            } else {
-                setFeedback('Échec revert : ' + (json && json.error ? json.error : 'erreur inconnue'), true);
-            }
-        }).catch(function(err) {
-            setFeedback('Erreur réseau : ' + err.message, true);
-        });
+        e.returnValue = '';
     });
+    if (saveForm) {
+        saveForm.addEventListener('submit', function() {
+            this.dataset.submitting = '1';
+            updatePending(); // s'assurer que le hidden input est bien rempli avant submit
+        });
+    }
+
+    updatePending();
 })();
 </script>
 JS;
-
-        return str_replace('%%AJAX_URL%%', htmlspecialchars($ajaxUrl, ENT_QUOTES, 'UTF-8'), $js);
     }
 
     /**
