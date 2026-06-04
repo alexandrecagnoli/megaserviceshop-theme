@@ -244,6 +244,9 @@ class Megaservice_microfiches extends Module
         if (Tools::isSubmit('submitUploadMicrofichesCsv')) {
             $output .= $this->handleUploadAndImportMicrofiches($importsDir);
         }
+        if (Tools::isSubmit('submitUploadMicrofichesZip')) {
+            $output .= $this->handleUploadZipMicrofiches($importsDir);
+        }
         $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
         foreach ($microficheCsvs as $serial => $info) {
             if (Tools::isSubmit('submitImportMicrofiches_' . $serial)) {
@@ -644,6 +647,96 @@ class Megaservice_microfiches extends Module
     }
 
     /**
+     * Gère l'upload d'un ZIP contenant N CSV microfiches.
+     * Bypass la limite post_max_size + upload_max_filesize en ne payant
+     * qu'un seul transfert HTTP au lieu de N.
+     *
+     * Sécurité :
+     *   - Chaque entrée du ZIP est aplatie via basename() pour éviter le
+     *     path traversal (entrée "../etc/passwd" → ignorée car basename = "passwd"
+     *     sans extension .csv reconnue).
+     *   - Seuls les .csv avec nom serial valide (alphanum + _ + -) sont extraits.
+     *   - Garde-fou anti zip-bomb : maxFiles=5000.
+     *   - ZIP temporaire supprimé après extraction.
+     */
+    private function handleUploadZipMicrofiches(string $importsDir): string
+    {
+        if (!class_exists('ZipArchive')) {
+            return $this->renderAlert('danger', 'L\'extension PHP ZipArchive n\'est pas disponible sur ce serveur.');
+        }
+
+        $upload = $_FILES['microfiches_zip_file'] ?? null;
+        if ($upload === null || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return $this->renderAlert('danger', $this->describeUploadError($upload['error'] ?? UPLOAD_ERR_NO_FILE));
+        }
+
+        $originalName = (string) ($upload['name'] ?? '');
+        if (strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION)) !== 'zip') {
+            return $this->renderAlert('danger', 'Le fichier doit avoir l\'extension .zip (reçu : '
+                . htmlspecialchars($originalName) . ')');
+        }
+
+        $zipTmp = $importsDir . '/.upload_' . uniqid('', true) . '.zip';
+        if (!move_uploaded_file((string) $upload['tmp_name'], $zipTmp)) {
+            return $this->renderAlert('danger', 'Impossible de déplacer le ZIP uploadé.');
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipTmp) !== true) {
+            @unlink($zipTmp);
+            return $this->renderAlert('danger', 'Impossible d\'ouvrir le ZIP (corrompu ou format invalide).');
+        }
+
+        $perFileReport = [];
+        $csvsToImport  = [];
+        $maxFiles      = 5000; // garde-fou anti zip-bomb
+
+        for ($i = 0; $i < $zip->numFiles && $i < $maxFiles; $i++) {
+            $entryName = (string) $zip->getNameIndex($i);
+            $baseName  = basename($entryName);
+
+            // Ignore dossiers (entrées qui se terminent par /)
+            if ($baseName === '' || substr($entryName, -1) === '/') {
+                continue;
+            }
+            // Ignore tout ce qui n'est pas .csv
+            if (strtolower((string) pathinfo($baseName, PATHINFO_EXTENSION)) !== 'csv') {
+                $perFileReport[] = ['file' => $entryName, 'ok' => false, 'msg' => 'Ignoré (pas un .csv).'];
+                continue;
+            }
+            // Valide le serial
+            $serial = pathinfo($baseName, PATHINFO_FILENAME);
+            if (preg_match('/^[A-Za-z0-9_-]+$/', $serial) !== 1) {
+                $perFileReport[] = ['file' => $entryName, 'ok' => false, 'msg' => 'Nom invalide (attendu : alphanumérique + "_" + "-").'];
+                continue;
+            }
+
+            $destPath = $importsDir . '/' . $serial . '.csv';
+            $content  = $zip->getFromIndex($i);
+            if ($content === false || file_put_contents($destPath, $content) === false) {
+                $perFileReport[] = ['file' => $entryName, 'ok' => false, 'msg' => 'Échec extraction.'];
+                continue;
+            }
+
+            $csvsToImport[$serial] = [
+                'path'     => $destPath,
+                'size_ko'  => round(filesize($destPath) / 1024, 1),
+                'modified' => date('Y-m-d H:i:s'),
+            ];
+            $perFileReport[] = ['file' => $entryName, 'ok' => true, 'msg' => 'Extrait : ' . basename($destPath)];
+        }
+
+        $zip->close();
+        @unlink($zipTmp);
+
+        $out = $this->renderUploadBatchSummary($perFileReport);
+        if ($csvsToImport !== []) {
+            $out .= $this->runMicrofichesImports($csvsToImport);
+        }
+        return $out;
+    }
+
+    /**
      * Scanne data/imports/ pour tout .csv qui n'est PAS un CSV motos.
      * @return array<string, array{path: string, size_ko: float, modified: string}>
      */
@@ -707,7 +800,7 @@ class Megaservice_microfiches extends Module
         $pmax = htmlspecialchars((string) ini_get('post_max_size'));
         $out  = '';
 
-        // -- Panel d'upload microfiches -----------------------------------
+        // -- Panel d'upload microfiches (multi-file) ----------------------
         $out .= '<div class="panel">'
             . '<h3>Téléverser un ou plusieurs CSV microfiches</h3>'
             . '<form method="post" action="" enctype="multipart/form-data">'
@@ -724,6 +817,22 @@ class Megaservice_microfiches extends Module
             . '(la moto pivot doit exister dans <code>ps_ms_moto</code>). '
             . 'Limites PHP serveur : upload_max_filesize=' . $umax . ', post_max_size=' . $pmax
             . ' (somme des fichiers).</em></p>'
+            . '</form>'
+            . '</div>';
+
+        // -- Panel d'upload microfiches (ZIP) -----------------------------
+        $out .= '<div class="panel">'
+            . '<h3>Téléverser un ZIP contenant N CSV microfiches</h3>'
+            . '<form method="post" action="" enctype="multipart/form-data">'
+            . '<p>Pour les très gros batches (au-delà des limites HTTP du multi-file), envoyer '
+            . 'un <strong>fichier ZIP</strong> contenant les CSV à plat (1 seul niveau, pas de sous-dossiers). '
+            . 'Chaque CSV à l\'intérieur doit suivre la convention '
+            . '<code>&lt;SERIAL&gt;.csv</code> (autres fichiers ignorés).</p>'
+            . '<p><input type="file" name="microfiches_zip_file" accept=".zip,application/zip" required /> '
+            . '<button type="submit" name="submitUploadMicrofichesZip" value="1" class="btn btn-primary">'
+            . 'Téléverser le ZIP</button></p>'
+            . '<p class="help-block"><em>Sécurité : seuls les <code>.csv</code> à nom valide sont '
+            . 'extraits, les chemins sont aplatis (basename). Garde-fou anti zip-bomb à 5000 fichiers.</em></p>'
             . '</form>'
             . '</div>';
 
