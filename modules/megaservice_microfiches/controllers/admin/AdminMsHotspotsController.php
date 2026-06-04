@@ -1,0 +1,255 @@
+<?php
+/**
+ * Listing + édition des hotspots (ps_ms_microfiche_hotspot).
+ *
+ * Permet à l'admin de corriger manuellement un hotspot mal référencé par
+ * le CSV constructeur (faute sur article_ref, mauvaise séquence, etc.)
+ * sans avoir à modifier le CSV source. Édition des données seulement —
+ * le drag/drop visuel des positions est planifié pour la V2 (brief §6.4).
+ *
+ * V1 : pas de création / suppression possible depuis le BO. Les hotspots
+ * sont créés exclusivement par MicrofichesImporter, supprimés via CASCADE
+ * quand la microfiche parent est supprimée.
+ */
+class AdminMsHotspotsController extends ModuleAdminController
+{
+    public function __construct()
+    {
+        $this->bootstrap    = true;
+        $this->table        = 'ms_microfiche_hotspot';
+        $this->className    = 'MsMicroficheHotspot';
+        $this->identifier   = 'id_hotspot';
+        $this->lang         = false;
+        $this->allow_export = true;
+
+        parent::__construct();
+
+        // JOIN microfiche + catégorie + moto pour affichage lisible et filtres.
+        $this->_select = 'mf.`nom_constructeur` AS `microfiche_nom`, '
+                       . 'mf.`id_moto` AS `id_moto`, '
+                       . 'c.`partie` AS `cat_partie`, '
+                       . 'c.`numero_constructeur` AS `cat_numero`, '
+                       . 'm.`marque` AS `moto_marque`, '
+                       . 'm.`annee` AS `moto_annee`, '
+                       . 'm.`serial_constructeur` AS `moto_serial`';
+        $this->_join = 'LEFT JOIN `' . _DB_PREFIX_ . 'ms_microfiche` mf ON (mf.`id_microfiche` = a.`id_microfiche`) '
+                     . 'LEFT JOIN `' . _DB_PREFIX_ . 'ms_microfiche_categorie` c ON (c.`id_categorie` = mf.`id_categorie`) '
+                     . 'LEFT JOIN `' . _DB_PREFIX_ . 'ms_moto` m ON (m.`id_moto` = mf.`id_moto`)';
+
+        $this->fields_list = [
+            'id_hotspot' => [
+                'title' => 'ID',
+                'width' => 50,
+                'align' => 'left',
+            ],
+            'moto_marque' => [
+                'title'      => 'Marque',
+                'filter_key' => 'm!marque',
+                'width'      => 70,
+            ],
+            'moto_serial' => [
+                'title'      => 'Serial moto',
+                'filter_key' => 'm!serial_constructeur',
+                'width'      => 100,
+            ],
+            'cat_partie' => [
+                'title'      => 'Partie',
+                'type'       => 'select',
+                'list'       => ['cycle' => 'Cycle', 'moteur' => 'Moteur'],
+                'filter_key' => 'c!partie',
+                'width'      => 70,
+            ],
+            'microfiche_nom' => [
+                'title'      => 'Microfiche',
+                'filter_key' => 'mf!nom_constructeur',
+            ],
+            'sequence_number' => [
+                'title' => '#',
+                'align' => 'right',
+                'width' => 50,
+            ],
+            'article_ref' => [
+                'title'    => 'Référence OEM',
+                'callback' => 'renderArticleRefWithLink',
+                'width'    => 160,
+            ],
+            'article_label' => [
+                'title' => 'Libellé',
+            ],
+            'position_x' => [
+                'title' => 'X',
+                'align' => 'right',
+                'width' => 50,
+            ],
+            'position_y' => [
+                'title' => 'Y',
+                'align' => 'right',
+                'width' => 50,
+            ],
+            'qty_recommended' => [
+                'title' => 'Qté',
+                'align' => 'right',
+                'width' => 50,
+            ],
+            'id_product' => [
+                'title'    => 'Produit',
+                'callback' => 'renderProductStatus',
+                'search'   => false,
+                'orderby'  => false,
+                'width'    => 80,
+            ],
+        ];
+
+        $this->_defaultOrderBy  = 'id_hotspot';
+        $this->_defaultOrderWay = 'ASC';
+
+        $this->addRowAction('edit');
+    }
+
+    public function renderForm()
+    {
+        /** @var MsMicroficheHotspot|null $obj */
+        $obj = $this->loadObject(true);
+        if (!$obj) {
+            return '';
+        }
+
+        // Récupère le contexte parent (microfiche + moto + catégorie) pour
+        // l'afficher en lecture seule au-dessus du form — l'admin sait sur
+        // quoi il édite.
+        $contextDesc = $this->buildHotspotContextDescription((int) $obj->id_microfiche);
+
+        $this->fields_form = [
+            'legend' => [
+                'title' => 'Hotspot',
+                'icon'  => 'icon-map-marker',
+            ],
+            'description' => $contextDesc,
+            'input' => [
+                [
+                    'type'  => 'hidden',
+                    'name'  => 'id_microfiche',
+                ],
+                [
+                    'type'     => 'text',
+                    'label'    => 'Référence OEM',
+                    'name'     => 'article_ref',
+                    'required' => true,
+                    'desc'     => 'Référence constructeur de la pièce. Sert de clé de matching vers ps_product.reference.',
+                ],
+                [
+                    'type'  => 'text',
+                    'label' => 'Libellé constructeur',
+                    'name'  => 'article_label',
+                    'desc'  => 'Libellé tel que renvoyé par le CSV constructeur (ex. "Engine case cmpl.").',
+                ],
+                [
+                    'type'     => 'text',
+                    'label'    => 'Numéro de séquence',
+                    'name'     => 'sequence_number',
+                    'required' => true,
+                    'desc'     => 'Numéro affiché à l\'intérieur du cercle hotspot sur le schéma.',
+                ],
+                [
+                    'type'     => 'text',
+                    'label'    => 'Position X (px depuis la gauche)',
+                    'name'     => 'position_x',
+                    'required' => true,
+                    'desc'     => 'Coordonnée en pixels sur l\'image originale, côté coin gauche du marqueur.',
+                ],
+                [
+                    'type'     => 'text',
+                    'label'    => 'Position Y (px depuis le bas)',
+                    'name'     => 'position_y',
+                    'required' => true,
+                    'desc'     => 'Coordonnée en pixels sur l\'image originale, côté coin bas du marqueur (convention constructeur).',
+                ],
+                [
+                    'type'     => 'text',
+                    'label'    => 'Quantité recommandée',
+                    'name'     => 'qty_recommended',
+                    'required' => true,
+                    'desc'     => 'Nombre d\'unités utilisées sur la moto (1 par défaut, peut être 0 pour les pièces issues d\'un kit).',
+                ],
+                [
+                    'type'  => 'text',
+                    'label' => 'ID produit Presta (lien manuel)',
+                    'name'  => 'id_product',
+                    'desc'  => 'Laisser vide pour laisser le cron de rematching trouver automatiquement le produit via article_ref. '
+                             . 'À renseigner uniquement pour forcer un lien manuel à un id_product Presta spécifique.',
+                ],
+            ],
+            'submit' => ['title' => 'Enregistrer'],
+        ];
+
+        return parent::renderForm();
+    }
+
+    /**
+     * Génère un résumé HTML du contexte d'un hotspot (moto + microfiche + catégorie).
+     * Affiché en haut du formulaire d'édition pour orienter l'admin.
+     */
+    private function buildHotspotContextDescription(int $idMicrofiche): string
+    {
+        if ($idMicrofiche <= 0) {
+            return '';
+        }
+        $row = Db::getInstance()->getRow(
+            'SELECT m.`marque`, m.`annee`, m.`nom_fr` AS `moto_nom`, m.`serial_constructeur`, '
+            . 'mf.`nom_constructeur` AS `microfiche_nom`, '
+            . 'c.`partie`, c.`numero_constructeur`, c.`nom_fr` AS `cat_nom` '
+            . 'FROM `' . _DB_PREFIX_ . 'ms_microfiche` mf '
+            . 'JOIN `' . _DB_PREFIX_ . 'ms_moto` m ON (m.`id_moto` = mf.`id_moto`) '
+            . 'JOIN `' . _DB_PREFIX_ . 'ms_microfiche_categorie` c ON (c.`id_categorie` = mf.`id_categorie`) '
+            . 'WHERE mf.`id_microfiche` = ' . $idMicrofiche
+        );
+        if (!$row) {
+            return '';
+        }
+        $catLabel = (string) ($row['cat_nom'] ?: $row['partie']);
+        return sprintf(
+            '<div class="alert alert-info" style="margin-bottom:15px">'
+            . '<strong>Moto :</strong> %s — %s (serial %s)<br>'
+            . '<strong>Catégorie :</strong> %s #%d (%s)<br>'
+            . '<strong>Microfiche :</strong> %s'
+            . '</div>',
+            htmlspecialchars((string) $row['marque'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $row['moto_nom'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $row['serial_constructeur'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($catLabel, ENT_QUOTES, 'UTF-8'),
+            (int) $row['numero_constructeur'],
+            htmlspecialchars((string) $row['partie'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $row['microfiche_nom'], ENT_QUOTES, 'UTF-8')
+        );
+    }
+
+    /**
+     * Affiche la ref OEM avec lien vers la fiche produit Presta si liée.
+     * Callback fields_list.
+     */
+    public function renderArticleRefWithLink($value, $row): string
+    {
+        $ref = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        $idProduct = (int) ($row['id_product'] ?? 0);
+        if ($idProduct > 0) {
+            $link = $this->context->link->getAdminLink('AdminProducts', true)
+                  . '&id_product=' . $idProduct . '&updateproduct';
+            return '<a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '" target="_blank"><code>'
+                . $ref . '</code></a>';
+        }
+        return '<code>' . $ref . '</code>';
+    }
+
+    /**
+     * Badge vert/orange selon si id_product est rempli.
+     * Callback fields_list.
+     */
+    public function renderProductStatus($value, $row): string
+    {
+        $idProduct = (int) $value;
+        if ($idProduct > 0) {
+            return '<span class="label label-success" title="Lié à id_product=' . $idProduct . '">✓ Lié</span>';
+        }
+        return '<span class="label label-warning" title="Aucun produit Presta avec cette référence">Orphelin</span>';
+    }
+}

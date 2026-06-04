@@ -148,13 +148,15 @@ class Megaservice_microfiches extends Module
 
     /**
      * Sous-tabs enfants : classname → libellé (FR).
-     * Les controllers correspondants seront livrés dans les commits suivants
-     * de la PR4 (Catégories d'abord car action immédiate la plus utile).
+     * Ajoutés au fur et à mesure des PRs. installTabs() est idempotent
+     * (skip les Tabs déjà installés), donc un nouveau classname dans cette
+     * liste est créé automatiquement au prochain appel de getContent().
      */
     private const CHILD_TABS = [
         'AdminMsMotos'       => 'Motos',
         'AdminMsMicrofiches' => 'Microfiches',
         'AdminMsCategories'  => 'Catégories',
+        'AdminMsHotspots'    => 'Hotspots',
     ];
 
     private function installSql(): bool
@@ -214,6 +216,11 @@ class Megaservice_microfiches extends Module
     {
         $importsDir = _PS_ROOT_DIR_ . '/data/imports';
         $output     = '';
+
+        // Idempotent : crée les Tabs ajoutés via mise à jour du module sans
+        // exiger un désinstall/réinstall manuel (utile quand on ajoute un
+        // nouveau controller admin entre deux versions).
+        $this->installTabs();
 
         // Crée le dossier s'il n'existe pas (cas d'un premier déploiement).
         if (!is_dir($importsDir) && !@mkdir($importsDir, 0755, true)) {
