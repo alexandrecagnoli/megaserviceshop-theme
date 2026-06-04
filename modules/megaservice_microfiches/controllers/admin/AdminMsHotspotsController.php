@@ -266,16 +266,14 @@ class AdminMsHotspotsController extends ModuleAdminController
      * POST : id_hotspot, position_x, position_y
      * Réponse JSON : {ok: bool, position_x: int, position_y: int, manually_edited: bool, error?: string}
      */
-    public function ajaxProcessSaveHotspotPosition(): void
+    public function ajaxProcessSaveHotspotPosition()
     {
-        header('Content-Type: application/json');
-
         $idHotspot = (int) Tools::getValue('id_hotspot');
         $posX      = Tools::getValue('position_x');
         $posY      = Tools::getValue('position_y');
 
         if ($idHotspot <= 0 || $posX === false || $posY === false || !ctype_digit((string) $posX) || !ctype_digit((string) $posY)) {
-            echo json_encode(['ok' => false, 'error' => 'Paramètres invalides (id_hotspot, position_x, position_y requis et entiers positifs).']);
+            $this->jsonReply(['ok' => false, 'error' => 'Paramètres invalides (id_hotspot, position_x, position_y requis et entiers positifs).']);
             return;
         }
         $posX = (int) $posX;
@@ -283,7 +281,7 @@ class AdminMsHotspotsController extends ModuleAdminController
 
         $hotspot = new MsMicroficheHotspot($idHotspot);
         if (!Validate::isLoadedObject($hotspot)) {
-            echo json_encode(['ok' => false, 'error' => 'Hotspot introuvable (id=' . $idHotspot . ').']);
+            $this->jsonReply(['ok' => false, 'error' => 'Hotspot introuvable (id=' . $idHotspot . ').']);
             return;
         }
 
@@ -296,11 +294,11 @@ class AdminMsHotspotsController extends ModuleAdminController
         );
 
         if (!$ok) {
-            echo json_encode(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
+            $this->jsonReply(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
             return;
         }
 
-        echo json_encode([
+        $this->jsonReply([
             'ok'              => true,
             'id_hotspot'      => $idHotspot,
             'position_x'      => $posX,
@@ -318,13 +316,11 @@ class AdminMsHotspotsController extends ModuleAdminController
      * POST : id_hotspot
      * Réponse JSON : {ok: bool, position_x: int, position_y: int, manually_edited: false, error?: string}
      */
-    public function ajaxProcessRevertHotspotPosition(): void
+    public function ajaxProcessRevertHotspotPosition()
     {
-        header('Content-Type: application/json');
-
         $idHotspot = (int) Tools::getValue('id_hotspot');
         if ($idHotspot <= 0) {
-            echo json_encode(['ok' => false, 'error' => 'Paramètre id_hotspot manquant ou invalide.']);
+            $this->jsonReply(['ok' => false, 'error' => 'Paramètre id_hotspot manquant ou invalide.']);
             return;
         }
 
@@ -334,11 +330,11 @@ class AdminMsHotspotsController extends ModuleAdminController
             . 'WHERE `id_hotspot` = ' . $idHotspot
         );
         if (!$row) {
-            echo json_encode(['ok' => false, 'error' => 'Hotspot introuvable.']);
+            $this->jsonReply(['ok' => false, 'error' => 'Hotspot introuvable.']);
             return;
         }
         if ($row['position_x_original'] === null || $row['position_y_original'] === null) {
-            echo json_encode(['ok' => false, 'error' => 'Aucune position constructeur en référence (champs _original NULL). Le revert n\'est pas possible — il faudra réimporter le CSV constructeur ou drag/drop manuellement.']);
+            $this->jsonReply(['ok' => false, 'error' => 'Aucune position constructeur en référence (champs _original NULL). Le revert n\'est pas possible — il faudra réimporter le CSV constructeur ou drag/drop manuellement.']);
             return;
         }
 
@@ -354,16 +350,34 @@ class AdminMsHotspotsController extends ModuleAdminController
         );
 
         if (!$ok) {
-            echo json_encode(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
+            $this->jsonReply(['ok' => false, 'error' => Db::getInstance()->getMsgError()]);
             return;
         }
 
-        echo json_encode([
+        $this->jsonReply([
             'ok'              => true,
             'id_hotspot'      => $idHotspot,
             'position_x'      => $posX,
             'position_y'      => $posY,
             'manually_edited' => false,
         ]);
+    }
+
+    /**
+     * Helper : envoie une réponse JSON propre et termine l'exécution.
+     * Sans ce die() explicite, PrestaShop continuerait le rendu et
+     * concaténerait le JSON avec le HTML du layout admin classique
+     * (-> "Unexpected token '<', '<!doctype...' côté fetch JS).
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function jsonReply(array $payload): void
+    {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate');
+        }
+        echo json_encode($payload);
+        die();
     }
 }
