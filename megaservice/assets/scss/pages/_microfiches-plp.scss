@@ -1,0 +1,301 @@
+// ============================================================================
+// PR6 — PLP moto : grille des microfiches d'une moto + filtre catégorie.
+// Maquette : PLP_CAT_SPAREPARTS. Template : modules/megaservice_microfiches/
+// views/templates/front/moto.tpl
+// ============================================================================
+
+.ms-plp {
+  @include container;
+  padding-top: $spacing-lg;
+  padding-bottom: $spacing-xxl;
+
+  // ---- Titre ----
+  &__title {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $font-size-h1;
+    line-height: $line-height-heading;
+    margin: 0 0 $spacing-lg;
+
+    @include media-md {
+      font-size: $font-size-h2;
+    }
+  }
+
+  &__title-model {
+    color: $color-ktm;
+  }
+
+  // ---- Bannière modèle courant ----
+  &__model-banner {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    background: $color-black;
+    color: $color-white;
+    border-radius: $border-radius;
+    padding: $spacing-md $spacing-lg;
+    margin-bottom: $spacing-lg;
+  }
+
+  &__model-thumb {
+    width: 84px;
+    height: auto;
+    flex: 0 0 auto;
+    object-fit: contain;
+  }
+
+  &__model-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__model-label {
+    font-size: $font-size-sm;
+    color: $color-gray-35;
+  }
+
+  &__model-name {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: $color-ktm;
+    font-size: $font-size-lg;
+  }
+
+  // ---- Corps : sidebar + grille ----
+  &__body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: $spacing-xl;
+
+    @include media-lg {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ---- Sidebar filtre ----
+  &__filter {
+    border: 1px solid $color-border;
+    border-radius: $border-radius;
+    padding: $spacing-md;
+  }
+
+  &__filter-head {
+    @include flex-between;
+    align-items: baseline;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__filter-title {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $font-size-base;
+  }
+
+  &__filter-clear {
+    background: none;
+    border: 0;
+    color: $color-text-light;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      color: $color-ktm;
+    }
+  }
+
+  &__filter-list {
+    list-style: none;
+    margin: 0 0 $spacing-md;
+    padding: 0;
+  }
+
+  &__filter-item + &__filter-item {
+    border-top: 1px solid $color-gray-5;
+  }
+
+  &__filter-label {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm 0;
+    cursor: pointer;
+    font-size: $font-size-sm;
+  }
+
+  &__filter-text {
+    flex: 1 1 auto;
+  }
+
+  &__filter-cb {
+    order: 2;
+    accent-color: $color-ktm;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+
+  &__filter-count {
+    order: 1;
+    color: $color-gray-35;
+    font-size: $font-size-sm;
+  }
+
+  &__filter-reset {
+    width: 100%;
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: transparent;
+    color: $color-black;
+    border: 1px solid $color-black;
+    border-radius: $border-radius;
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    @include transition(background-color, color);
+
+    &:hover {
+      background: $color-black;
+      color: $color-white;
+    }
+  }
+
+  // ---- Toolbar ----
+  &__toolbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: $spacing-md;
+  }
+
+  &__count {
+    font-size: $font-size-sm;
+    color: $color-text-light;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  // ---- Grille ----
+  &__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-lg;
+
+    @include media-lg {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include media-sm {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__card-wrap {
+    display: block;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid $color-border;
+    border-radius: $border-radius;
+    background: $color-white;
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+    @include transition(box-shadow);
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: $spacing-sm;
+    right: $spacing-sm;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: $color-success;
+    color: $color-white;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    padding: 2px $spacing-sm;
+    border-radius: $border-radius;
+
+    &::after {
+      content: "\2713"; // ✓
+    }
+  }
+
+  &__card-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    background: $color-white;
+    padding: $spacing-md;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    // Fallback quand l'image hotlink constructeur échoue (onerror JS).
+    &.is-broken::after {
+      content: "\2014"; // —
+      color: $color-gray-20;
+      font-size: 2rem;
+    }
+  }
+
+  &__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: $spacing-md;
+    border-top: 1px solid $color-gray-5;
+  }
+
+  &__card-name {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $font-size-base;
+    line-height: $line-height-heading;
+  }
+
+  &__card-brand {
+    color: $color-text-light;
+    font-size: $font-size-sm;
+  }
+
+  &__card-count {
+    color: $color-gray-50;
+    font-size: $font-size-sm;
+  }
+
+  // ---- États vides ----
+  &__empty,
+  &__empty-filtered {
+    padding: $spacing-xl;
+    text-align: center;
+    color: $color-text-light;
+  }
+}
