@@ -34,6 +34,11 @@ body#module-megaservice_microfiches-moto {
   }
 }
 
+// .ms-product-card { display:flex } a une spécificité plus forte que le
+// [hidden] natif → sans ça, masquer une carte filtrée (card.hidden=true en JS)
+// n'a aucun effet visuel et le filtre catégorie semble cassé.
+.ms-plp-card[hidden] { display: none !important; }
+
 // ── Carte microfiche : la vue éclatée ne doit pas être rognée ──
 .ms-plp-card {
   .ms-product-card__media {
