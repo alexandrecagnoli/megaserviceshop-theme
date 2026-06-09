@@ -36,6 +36,15 @@ class MotosImporter
     private const MODELNUMBER_PREFIX = '$M-';
 
     /**
+     * Suffixes d'article_number (= serial_constructeur) qui identifient une
+     * moto cross-badging hors marche europeen (decision client MSS du
+     * 2026-06-05). Les motos correspondantes sont skippees a l'import.
+     * L'equivalent europeen existe deja en base sous serial = 'F' + base
+     * (ex: 7487V2_CFMOTO -> F7487V2 deja present).
+     */
+    private const BLACKLISTED_SERIAL_SUFFIXES = ['_CFMOTO', '_FTI'];
+
+    /**
      * Importe un CSV motos complet.
      *
      * @param string      $csvPath  Chemin absolu vers le CSV.
@@ -112,6 +121,19 @@ class MotosImporter
             return null;
         }
 
+        $serial = trim((string) ($csvRow['article_number'] ?? ''));
+
+        // Filtre cross-badging CFMOTO / FTI : ces motos sont fabriquees pour
+        // d'autres marches que l'europeen, le client MSS les considere comme
+        // hors perimetre. Une moto europeenne equivalente existe deja en base
+        // (serial obtenu en retirant le suffixe et ajoutant 'F' devant) — pas
+        // besoin de la creer en plus. Decision actee avec le client le 2026-06-05.
+        foreach (self::BLACKLISTED_SERIAL_SUFFIXES as $suffix) {
+            if (substr($serial, -strlen($suffix)) === $suffix) {
+                return null;
+            }
+        }
+
         $coreName  = MotosTaxonomy::coreName($categoryFr);
         if ($coreName === '') {
             $coreName = $categoryFr;
@@ -119,7 +141,6 @@ class MotosImporter
         $type       = MotosTaxonomy::type($coreName);
         $cylindree  = MotosTaxonomy::cylindree($coreName);
         $isElectric = MotosTaxonomy::isElectric($type);
-        $serial     = trim((string) ($csvRow['article_number'] ?? ''));
         $picture    = trim((string) ($csvRow['picture'] ?? ''));
         $textFr     = trim((string) ($csvRow['text_fr'] ?? ''));
 

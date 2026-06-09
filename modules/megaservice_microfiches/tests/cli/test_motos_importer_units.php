@@ -111,6 +111,33 @@ check('buildRow rejette HTML noise', MotosImporter::buildRow([
     'modelnumber' => '<td style="...">',
 ], 'KTM'), null);
 
+// Cross-badging CFMOTO / FTI : rejete (decision client 2026-06-05)
+check('buildRow rejette serial _CFMOTO', MotosImporter::buildRow([
+    'modelnumber'   => '$M-300EXCSDTPI2022',
+    'annee'         => '2022',
+    'category_fr'   => '300 EXC TPI SIX DAYS 2022',
+    'model_name_fr' => 'KTM 300 EXC TPI SIX DAYS 2022',
+    'article_number'=> '7487V2_CFMOTO',
+], 'KTM'), null);
+
+check('buildRow rejette serial _FTI', MotosImporter::buildRow([
+    'modelnumber'   => '$M-NORDEN9012024',
+    'annee'         => '2024',
+    'category_fr'   => 'Norden 901 2024',
+    'model_name_fr' => 'NORDEN 901 - 2024',
+    'article_number'=> '2887X1_FTI',
+], 'HQV'), null);
+
+// Le serial F-prefixe equivalent doit etre accepte
+$accepted = MotosImporter::buildRow([
+    'modelnumber'   => '$M-NORDEN9012024',
+    'annee'         => '2024',
+    'category_fr'   => 'Norden 901 2024',
+    'model_name_fr' => 'NORDEN 901 - 2024',
+    'article_number'=> 'F2887X1',
+], 'HQV');
+check('buildRow accepte serial F-prefixe equivalent', $accepted['serial_constructeur'], 'F2887X1');
+
 check('buildRow rejette MODELNUMBER absent', MotosImporter::buildRow([
     'modelnumber' => '',
 ], 'KTM'), null);
