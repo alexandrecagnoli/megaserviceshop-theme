@@ -72,8 +72,7 @@
   // (AdminMsMicrofichesController : .ms-microfiche-viewer).
   &__image-wrap {
     position: relative;
-    display: inline-block;
-    max-width: 100%;
+    display: block;
     line-height: 0;
     border: 1px solid $color-border;
     background: $color-gray-5;
@@ -94,7 +93,7 @@
 
   &__image {
     display: block;
-    max-width: 100%;
+    width: 100%;
     height: auto;
   }
 
