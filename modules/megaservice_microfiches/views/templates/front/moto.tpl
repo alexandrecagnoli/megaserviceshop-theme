@@ -111,30 +111,32 @@
         </button>
       </header>
 
-      <div id="js-search-filters-wrapper">
-        <div id="search_filters">
-          <section class="facet clearfix">
-            <p class="h6 facet-title">
-              {l s='Catégorie' d='Modules.Megaservicemicrofiches.Shop'}
-              <button type="button" class="ms-plp-clear js-ms-plp-clear">{l s='Effacer' d='Modules.Megaservicemicrofiches.Shop'}</button>
-            </p>
-            <ul>
-              {foreach from=$ms_categories item=cat}
-                <li>
-                  <label class="facet-label">
-                    <span class="custom-checkbox">
-                      <input type="checkbox" class="js-ms-plp-cb" value="{$cat.id_categorie}" checked>
-                      <span><i class="material-icons rtl-no-flip checkbox-checked">&#xE5CA;</i></span>
-                    </span>
-                    <span class="search-link">
-                      {$cat.label|escape:'html'}
-                      <span class="magnitude">({$cat.count})</span>
-                    </span>
-                  </label>
-                </li>
-              {/foreach}
-            </ul>
-          </section>
+      {* Facettes AUTONOMES (classes ms-plp-*) : volontairement HORS de
+         #search_filters / .facet-label, sinon le handler capture ps_facetedsearch
+         d'app.js fait stopImmediatePropagation() et bloque le toggle. Style
+         répliqué dans _microfiches-plp.scss. Filtre = simple listener change. *}
+      <div class="ms-plp-facets">
+        <div class="ms-plp-facet">
+          <p class="ms-plp-facet-title">
+            {l s='Catégorie' d='Modules.Megaservicemicrofiches.Shop'}
+            <button type="button" class="ms-plp-clear js-ms-plp-clear">{l s='Effacer' d='Modules.Megaservicemicrofiches.Shop'}</button>
+          </p>
+          <ul class="ms-plp-facet-list">
+            {foreach from=$ms_categories item=cat}
+              <li>
+                <label class="ms-plp-facet-row">
+                  <span class="ms-plp-facet-text">
+                    {$cat.label|escape:'html'}
+                    <span class="ms-plp-facet-count">({$cat.count})</span>
+                  </span>
+                  <span class="ms-plp-checkbox">
+                    <input type="checkbox" class="js-ms-plp-cb" value="{$cat.id_categorie}" checked>
+                    <span class="ms-plp-checkbox-box" aria-hidden="true"></span>
+                  </span>
+                </label>
+              </li>
+            {/foreach}
+          </ul>
         </div>
       </div>
 

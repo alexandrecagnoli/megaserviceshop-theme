@@ -88,14 +88,106 @@ body#module-megaservice_microfiches-microfiche {
   font-size: 13px;
 }
 
+// ── Facettes autonomes (style répliqué du #search_filters natif, mais sous nos
+//    propres classes pour éviter le hijack capture de ps_facetedsearch) ──
+.ms-plp-facets {
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-plp-facet {
+  border-bottom: 1px solid $color-gray-20;
+  padding: $spacing-md 0;
+}
+
+.ms-plp-facet-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: $font-heading;
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0 0 12px;
+}
+
+.ms-plp-facet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li { margin: 0; }
+}
+
+.ms-plp-facet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.ms-plp-facet-text {
+  flex: 1;
+  font-family: $font-main;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.ms-plp-facet-count {
+  color: $color-gray-35;
+  font-size: 13px;
+}
+
+.ms-plp-checkbox {
+  position: relative;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+
+  input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    z-index: 1;
+  }
+
+  input:checked + .ms-plp-checkbox-box {
+    background-color: $color-ktm;
+    border-color: $color-ktm;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
+.ms-plp-checkbox-box {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 1px solid $color-black;
+  background-color: $color-white;
+  background-repeat: no-repeat;
+  background-position: center;
+  @include transition(background-color, border-color);
+}
+
 // ── "Effacer" dans le titre de facette ──
 .ms-plp-clear {
-  float: right;
   background: none;
   border: 0;
   padding: 0;
   color: $color-text-light;
   font-size: 13px;
+  font-family: $font-main;
+  font-weight: 400;
   text-transform: none;
   cursor: pointer;
 
