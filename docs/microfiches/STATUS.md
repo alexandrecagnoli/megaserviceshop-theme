@@ -16,19 +16,17 @@ décision actée : on attend que toute la V1 marche).
 
 **Dernière session (2026-06-09, suite)** : audit de la protection anti-écrasement hotspots → **bug d'archi trouvé et corrigé**. La UNIQUE KEY portait sur la position *vivante* (décision #5 / migration 001), ce qui défaisait la protection `manually_edited` (migration 003) : un réimport CSV après un drag manuel créait un **doublon** (reproduit en preprod). Fix livré = **migration 005** (rebase la clé sur `position_x_original`/`position_y_original` + dedup des doublons existants) + `install.sql` + commentaire upsert alignés.
 
+**Migration 005 + test #5 = ✅ clos (2026-06-09)** : clé rebasée, doublon nettoyé, réimport-après-drag validé sans fantôme. La protection anti-écrasement des hotspots est opérationnelle de bout en bout.
+
 ### Prochaines étapes priorisées
 
-1. **Appliquer la migration 005** (`005_hotspot_unique_on_original_position.sql`) sur preprod via phpMyAdmin (3 blocs dans l'ordre, vérif finale = 0). Elle nettoie les doublons déjà créés ET rebase la clé. **C'est la priorité** : tant qu'elle n'est pas jouée, chaque drag + réimport recrée un doublon.
-
-2. **Rejouer le test #5** APRÈS migration 005 : drag de 2-3 hotspots (→ `manually_edited=1`), réimport `F0403X7.csv`, vérifier (a) **pas de doublon** créé, (b) les hotspots déplacés **gardent leur position**. C'est la validation de bout en bout du fix.
-
-3. **Décider la suite fonctionnelle** parmi les PRs §2 non bloquées :
+1. **Décider la suite fonctionnelle** parmi les PRs §2 non bloquées :
    - PR-Visuels (cron download images motos) — bloqué tant que MSS n'a pas envoyé les URLs base par marque (cf. §4.1)
    - PR8 (cron rematching hotspot → ps_product) — débloqué techniquement mais inutile tant que le catalogue spareparts n'est pas alimenté (cf. §4.4)
    - PR9 (tests d'intégration DB réelle) — toujours utile, jamais bloqué
    - Merge `feat/microfiches-skeleton` → `main` quand toute la V1 sera validée fonctionnellement (cf. en-tête)
 
-4. **Relancer le client MSS** sur les points §4 en attente (surtout maquettes Figma + URLs visuels motos qui bloquent 2 PRs).
+2. **Relancer le client MSS** sur les points §4 en attente (surtout maquettes Figma + URLs visuels motos qui bloquent 2 PRs).
 
 ### Récap features récentes (livrées mais pas listées au §2 — à incorporer un jour)
 
@@ -130,7 +128,7 @@ Liste à remonter avant prochaine session de dev :
 | 002 | `002_align_collation_with_prestashop.sql` | ✅ appliquée |
 | 003 | `003_hotspot_position_protection.sql` | ✅ appliquée (confirmée 2026-06-09 : colonne `manually_edited` présente, indexée) |
 | 004 | `004_cleanup_crossbadging_cfmoto_fti.sql` | ✅ appliquée 2026-06-09 (13 motos supprimées) |
-| 005 | `005_hotspot_unique_on_original_position.sql` | ⏳ **À APPLIQUER** — rebase la UNIQUE KEY hotspots sur `position_x_original`/`position_y_original`. Corrige le bug où un réimport après drag créait un doublon (la protection 003 était défaite par la clé basée sur la position vivante). Nettoie aussi les doublons déjà créés. |
+| 005 | `005_hotspot_unique_on_original_position.sql` | ✅ appliquée 2026-06-09 (1 doublon nettoyé, swap de clé OK, vérif finale = 0). **Test #5 validé** : drag de hotspots + réimport `F0403X7.csv` → aucun fantôme recréé, positions déplacées conservées. La protection anti-écrasement est désormais effective. |
 
 Pour rejouer une migration (toutes sont idempotentes sauf 004 qui est ponctuelle) :
 
