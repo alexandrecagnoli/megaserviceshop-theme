@@ -15,9 +15,8 @@
     </div>
 
     <div class="ms-catalog-context">
-      {if $ms_moto.picture}
-        <img src="{$ms_moto.picture}" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
-      {/if}
+      {* Image générique (comme le bloc natif) — vraies photos via PR-Visuels. *}
+      <img src="{$urls.theme_assets}img/moto-context.png" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
