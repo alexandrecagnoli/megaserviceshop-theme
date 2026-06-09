@@ -18,15 +18,18 @@ décision actée : on attend que toute la V1 marche).
 
 **Migration 005 + test #5 = ✅ clos (2026-06-09)** : clé rebasée, doublon nettoyé, réimport-après-drag validé sans fantôme. La protection anti-écrasement des hotspots est opérationnelle de bout en bout.
 
+**Session front 2026-06-09 (suite)** :
+- **PR6 (PLP moto)** poussée : front controller + template + scss + js filtre catégorie. Joignable `/module/megaservice_microfiches/moto?id_moto=2587`. **Validation visuelle preprod encore à faire.**
+- **PR8 (rattachement produit↔hotspot)** livrée et **validée** : service `HotspotProductMatcher`, hooks produit auto + bouton BO « Rematcher tout ». Testé : produit OEM `75030085100` → hotspots passés orphelins→liés.
+- Clarifié : le **garage/sélecteur** = périmètre **everyparts**, pas nous (memory `project_garage_everyparts`). Maquettes front faites en interne → PR6/PR7 ne sont plus bloquées.
+
 ### Prochaines étapes priorisées
 
-1. **Décider la suite fonctionnelle** parmi les PRs §2 non bloquées :
-   - PR-Visuels (cron download images motos) — bloqué tant que MSS n'a pas envoyé les URLs base par marque (cf. §4.1)
-   - PR8 (cron rematching hotspot → ps_product) — débloqué techniquement mais inutile tant que le catalogue spareparts n'est pas alimenté (cf. §4.4)
-   - PR9 (tests d'intégration DB réelle) — toujours utile, jamais bloqué
-   - Merge `feat/microfiches-skeleton` → `main` quand toute la V1 sera validée fonctionnellement (cf. en-tête)
-
-2. **Relancer le client MSS** sur les points §4 en attente (surtout maquettes Figma + URLs visuels motos qui bloquent 2 PRs).
+1. **Valider PR6 visuellement** sur preprod (`/module/megaservice_microfiches/moto?id_moto=2587`) si pas encore fait.
+2. **PR7 — PDP microfiche front** (la suite logique) : vue éclatée + hotspots cliquables + liste pièces, avec prix/panier sur les pièces désormais liées (PR8) et dégradation propre sur les orphelines. Maquette `PDP_microfiche` dispo.
+3. **PR9** (tests d'intégration DB réelle) — toujours utile, idéal pour figer le scénario réimport-après-drag + le matching PR8.
+4. **Relancer MSS** sur les points §4 restants : URLs visuels motos (PR-Visuels) + stratégie catalogue spareparts (alimentation `ps_product` à grande échelle).
+5. Merge `feat/microfiches-skeleton` → `main` quand la V1 front sera validée.
 
 ### Récap features récentes (livrées mais pas listées au §2 — à incorporer un jour)
 
@@ -62,25 +65,27 @@ décision actée : on attend que toute la V1 marche).
 | **PR2** | Importer motos (3 marques) + taxonomie 8 types + page BO upload + patch dictionnaire | `8465879` → `2c64822` |
 | **PR3** | Importer microfiches + auto-création catégories + page BO upload + fixes (LIMIT, UNIQUE KEY hotspots) | `c1c6a37` → `b1ab36e` |
 | **PR4** | Tabs BO sous Catalogue + 3 AdminControllers (Motos, Microfiches, Catégories) | `591d033` → `f191a06` |
-| *(fixes)* | Collation alignée sur PrestaShop | `da5c843` |
+| **PR5 / PR5-bis** | Éditeur visuel hotspots BO (image + cercles overlay, drag/drop POST batch, revert, légende) + AdminMsHotspots + Tab Hotspots | cf. §0 récap |
+| **PR8** | Rattachement `hotspot.id_product` ↔ `ps_product.reference` : service `HotspotProductMatcher` (match non-destructif + matchAll autoritatif) + hooks `actionProductAdd/Update` + bouton BO « Rematcher tout » | `161ad87` → `ff35db0` ✅ validé preprod 2026-06-09 |
+| *(fixes)* | Collation alignée sur PrestaShop ; protection positions hotspots (migrations 003+005) | `da5c843`, `4ad5cf1` |
 
 **Tests unitaires CLI** : 142 passants (motos 88, microfiches 54) dans `tests/cli/`.
 
-### 🔴 Bloquées (dépendances externes)
+### 🟢 En cours
 
-| PR | Quoi | Débloquée par |
+| PR | Quoi | État |
 |---|---|---|
-| **PR6** | Front PDP moto (page d'une moto avec ses microfiches) | Réception maquette `PLP_CAT_SPAREPARTS.png` côté MSS |
-| **PR7** | Front PDP microfiche (vue éclatée + hotspots cliquables) | Réception maquette `PDP_microfiche.png` côté MSS |
+| **PR6** | Front PLP moto (grille des microfiches d'une moto + filtre catégorie) | Code poussé (`b50e36c` → `441dded`), joignable `/module/megaservice_microfiches/moto?id_moto=2587` — **validation visuelle preprod en attente** |
 
 ### 🟡 Non commencées (priorisables)
 
 | PR | Quoi | Effort estimé | Bloqueur |
 |---|---|---|---|
+| **PR7** | Front PDP microfiche (vue éclatée + hotspots cliquables + liste pièces + prix/panier sur pièces liées) | ~4-5 commits | **Aucun** — maquette `PDP_microfiche` dispo (faite en interne). Commerce dégradé là où `id_product` NULL (politique à trancher en codant) |
 | **PR-Visuels** | Cron download images motos (URL base × marque → `img/ms_moto/<id>/main.png`) | ~3h | URLs base à demander à MSS |
-| **PR5** | Éditeur visuel hotspots BO (cercles overlayés sur l'image, read-only V1) | ~4 commits | Aucun |
-| **PR8** | Cron rematching `hotspot.id_product` ↔ `ps_product.reference` + hook `actionProductAdd` | ~3 commits | Aucun techniquement, mais inutile tant que `ps_product` n'a pas les pièces OEM |
 | **PR9** | Tests d'intégration (DB réelle) | ~5 commits | Aucun |
+
+> Note : les maquettes front (`PLP_CAT_SPAREPARTS`, `PDP_microfiche`) ne sont **plus un bloqueur** — elles sont faites en interne. Le **sélecteur de modèle / garage** est construit par **everyparts**, pas par nous (cf. memory `project_garage_everyparts`) ; nos pages front sont joignables par URL `id_moto`.
 
 ---
 
