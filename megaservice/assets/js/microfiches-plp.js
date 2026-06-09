@@ -56,8 +56,19 @@
       }
     }
 
+    // ATTENTION : on ne peut PAS se fier à l'événement `change` natif des
+    // checkboxes. Le moteur de facettes natif (app.js) pose un handler global
+    // qui fait e.preventDefault() sur tout clic dans `#search_filters .facet-label`
+    // (pour piloter ps_facetedsearch). Comme nos checkboxes sont dans ce conteneur
+    // — réutilisé pour le design — le toggle natif est bloqué et `change` ne part
+    // jamais. On gère donc le clic nous-mêmes : toggle manuel de la case + apply.
     checkboxes.forEach(function (cb) {
-      cb.addEventListener('change', apply);
+      var label = cb.closest('.facet-label') || cb.parentNode;
+      label.addEventListener('click', function (e) {
+        e.preventDefault();
+        cb.checked = !cb.checked;
+        apply();
+      });
     });
 
     if (clearBtn) {
