@@ -22,6 +22,7 @@ require_once __DIR__ . '/classes/importers/MotosImporter.php';
 require_once __DIR__ . '/classes/importers/MicrofichesTaxonomy.php';
 require_once __DIR__ . '/classes/importers/MicrofichesImportReport.php';
 require_once __DIR__ . '/classes/importers/MicrofichesImporter.php';
+require_once __DIR__ . '/classes/HotspotProductMatcher.php';
 
 class Megaservice_microfiches extends Module
 {
@@ -159,6 +160,51 @@ class Megaservice_microfiches extends Module
                 Configuration::updateValue('MS_MICROFICHES_TABS_VERSION', self::TABS_VERSION);
             }
         }
+    }
+
+    // =====================================================================
+    // PR8 — Rattachement produit ↔ hotspot (par référence OEM).
+    // Régime hook = NON-DESTRUCTIF : on ne remplit que les hotspots orphelins.
+    // Le réalignement autoritatif se fait via le bouton "Rematcher tout"
+    // (cf. getContent / HotspotProductMatcher::matchAll).
+    // =====================================================================
+
+    public function hookActionProductAdd(array $params): void
+    {
+        $this->matchHookProduct($params);
+    }
+
+    public function hookActionProductUpdate(array $params): void
+    {
+        $this->matchHookProduct($params);
+    }
+
+    /**
+     * Facteur commun aux 2 hooks : résout le produit + sa référence depuis les
+     * params du hook, puis lie les hotspots orphelins de même article_ref.
+     * Silencieux si produit inactif / sans référence (rien à lier).
+     */
+    private function matchHookProduct(array $params): void
+    {
+        $product   = $params['product'] ?? null;
+        $idProduct = (int) ($params['id_product'] ?? (is_object($product) ? ($product->id ?? 0) : 0));
+        if ($idProduct <= 0) {
+            return;
+        }
+
+        if (!($product instanceof Product)) {
+            $product = new Product($idProduct);
+        }
+        if (!Validate::isLoadedObject($product) || !(bool) $product->active) {
+            return;
+        }
+
+        $reference = (string) $product->reference;
+        if ($reference === '') {
+            return;
+        }
+
+        HotspotProductMatcher::matchProduct($idProduct, $reference);
     }
 
     /**
@@ -305,7 +351,49 @@ class Megaservice_microfiches extends Module
         }
         $output .= $this->renderMicrofichesPage($importsDir, $microficheCsvs);
 
+        // -- Rattachement produits ↔ hotspots (PR8) -----------------------
+        if (Tools::isSubmit('submitRematchAll')) {
+            $res = HotspotProductMatcher::matchAll();
+            $output .= $this->renderAlert('success', sprintf(
+                'Rematch terminé : %d hotspot(s) lié(s), %d délié(s).',
+                $res['linked'],
+                $res['unlinked']
+            ));
+        }
+        $output .= $this->renderRematchPage();
+
         return $output;
+    }
+
+    /**
+     * Panel BO « Rattachement produits » : stats de liaison + bouton autoritatif
+     * « Rematcher tout » (réaligne hotspot.id_product sur ps_product.reference).
+     *
+     * À utiliser après avoir créé/importé des produits OEM dont la `reference`
+     * correspond aux `article_ref` des hotspots. Les nouveaux produits se lient
+     * ensuite automatiquement (hooks actionProductAdd/Update), ce bouton sert
+     * au backfill des produits déjà présents + au nettoyage des liens obsolètes.
+     */
+    private function renderRematchPage(): string
+    {
+        $s   = HotspotProductMatcher::stats();
+        $pct = $s['total'] > 0 ? round($s['linked'] / $s['total'] * 100, 1) : 0;
+
+        return '<div class="panel">'
+            . '<h3>Rattachement produits ↔ hotspots</h3>'
+            . '<p>État courant : <strong>' . (int) $s['linked'] . '</strong> hotspot(s) lié(s) à un produit '
+            . 'sur <strong>' . (int) $s['total'] . '</strong> au total '
+            . '(<strong>' . $pct . '%</strong>) — '
+            . '<strong>' . (int) $s['orphans'] . '</strong> orphelin(s).</p>'
+            . '<form method="post" action="">'
+            . '<p><button type="submit" name="submitRematchAll" value="1" class="btn btn-primary">'
+            . 'Rematcher tout</button></p>'
+            . '<p class="help-block"><em>Autoritatif : lie chaque hotspot au produit actif dont '
+            . '<code>reference = article_ref</code>, et délie les hotspots dont la référence n\'a plus '
+            . 'aucun produit correspondant. Les produits créés/modifiés après le déploiement de PR8 '
+            . 'se lient automatiquement (hooks) — ce bouton sert au backfill des produits déjà présents.</em></p>'
+            . '</form>'
+            . '</div>';
     }
 
     /**
