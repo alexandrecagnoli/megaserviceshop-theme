@@ -105,15 +105,22 @@
     }
   }
 
+  // Conteneur collé à l'image, SANS padding : c'est l'ancêtre positionné des
+  // pastilles, il doit faire exactement la taille de l'image rendue pour que
+  // les % (left/bottom) tombent juste. Reproduit le BO
+  // (AdminMsMicrofichesController : .ms-microfiche-viewer).
   &__image-wrap {
     position: relative;
+    display: inline-block;
+    max-width: 100%;
+    line-height: 0;
     border: 1px solid $color-border;
-    border-radius: $border-radius;
-    background: $color-white;
-    padding: $spacing-md;
-    // Conserve un ratio pour positionner les pastilles en % même avant chargement.
-    min-height: 320px;
+    background: $color-gray-5;
 
+    &.is-broken {
+      display: block;
+      line-height: normal;
+    }
     &.is-broken::after {
       content: "\2014";
       display: block;
@@ -126,34 +133,38 @@
 
   &__image {
     display: block;
-    width: 100%;
+    max-width: 100%;
     height: auto;
   }
 
-  // Pastilles numérotées positionnées (left/bottom en % depuis le controller).
+  // Pastille CORNER-ANCHORED, identique au BO : position_x/position_y désignent
+  // le COIN du marqueur (pas son centre). Donc PAS de translate — juste
+  // left/bottom en % + margin -1px d'ajustement. Taille fixe 24px.
   &__dot {
     position: absolute;
-    transform: translate(-50%, 50%);
-    min-width: 26px;
-    height: 26px;
-    padding: 0 6px;
-    border-radius: 999px;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin-left: -1px;
+    margin-bottom: -1px;
+    border-radius: 50%;
     border: 2px solid $color-white;
     background: $color-ktm;
     color: $color-white;
     font-family: $font-heading;
     font-weight: 900;
-    font-size: $font-size-sm;
-    line-height: 22px;
+    font-size: 11px;
+    line-height: 20px;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
     @include transition(transform);
 
     &:hover,
     &.is-active {
-      transform: translate(-50%, 50%) scale(1.25);
-      z-index: 3;
+      transform: scale(1.4);
+      z-index: 10;
     }
   }
 
