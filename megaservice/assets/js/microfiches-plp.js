@@ -16,7 +16,7 @@
     }
 
     var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.js-ms-plp-cb'));
-    var cards      = Array.prototype.slice.call(grid.querySelectorAll('.ms-plp__card-wrap'));
+    var cards      = Array.prototype.slice.call(grid.querySelectorAll('[data-categorie]'));
     var countEl    = document.querySelector('.js-ms-plp-count');
     var emptyEl    = document.querySelector('.js-ms-plp-empty');
     var clearBtn   = document.querySelector('.js-ms-plp-clear');
