@@ -68,13 +68,19 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche` (
   CONSTRAINT `fk_microfiche_categorie` FOREIGN KEY (`id_categorie`) REFERENCES `PREFIX_ms_microfiche_categorie`(`id_categorie`)     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Note : la UNIQUE KEY inclut position_x ET position_y car une meme piece
--- (ex. vis M6 #10) peut apparaitre plusieurs fois sur la vue eclatee a des
--- endroits visuels differents -- chaque occurrence est un vrai hotspot.
--- La spec initiale du brief 4.3 sous-specifiait la cle naturelle, on a
--- mesure une perte de 14,5% des hotspots sur le 1er CSV teste (cf. TECH_DEBT).
+-- Note : la UNIQUE KEY inclut la position CONSTRUCTEUR (position_x_original /
+-- position_y_original) car une meme piece (ex. vis M6 #10) peut apparaitre
+-- plusieurs fois sur la vue eclatee a des endroits differents -- chaque
+-- occurrence est un vrai hotspot. La spec initiale du brief 4.3 sous-specifiait
+-- la cle naturelle, on a mesure une perte de 14,5% des hotspots sur le 1er CSV
+-- teste (cf. TECH_DEBT).
+-- IMPORTANT : la cle porte sur les *_original (et NON sur position_x/position_y
+-- vivantes) afin que la protection manually_edited tienne au reimport : un drag
+-- manuel modifie la position vivante mais pas l'originale, donc le reimport
+-- percute toujours la bonne ligne -> ON DUPLICATE -> IF(manually_edited=1,...).
+-- Baser la cle sur la position vivante creait des doublons (cf. migration 005).
 -- position_x_original / position_y_original : copie figee des positions du
--- dernier CSV constructeur. Sert au revert d une edition manuelle.
+-- dernier CSV constructeur. Sert au revert d une edition manuelle ET de cle.
 -- manually_edited : flag de protection contre l ecrasement par reimport
 -- (cf. MicrofichesImporter::upsertHotspot).
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
@@ -91,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_hotspot` (
   `qty_recommended`     TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `manually_edited`     TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_hotspot`),
-  UNIQUE KEY `uk_hotspot_naturel` (`id_microfiche`, `article_ref`, `sequence_number`, `position_x`, `position_y`),
+  UNIQUE KEY `uk_hotspot_naturel` (`id_microfiche`, `article_ref`, `sequence_number`, `position_x_original`, `position_y_original`),
   KEY `idx_id_microfiche` (`id_microfiche`),
   KEY `idx_id_product` (`id_product`),
   KEY `idx_article_ref` (`article_ref`),

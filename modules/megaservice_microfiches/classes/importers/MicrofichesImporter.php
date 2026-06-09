@@ -282,13 +282,23 @@ class MicrofichesImporter
      * modifications manuelles de l'admin contre l'ecrasement par un reimport
      * du CSV constructeur.
      *
+     * PREREQUIS CLE (cf. migration 005) : la UNIQUE KEY uk_hotspot_naturel porte
+     * sur (id_microfiche, article_ref, sequence_number, position_x_original,
+     * position_y_original) -- la position CONSTRUCTEUR, PAS la position vivante.
+     * C'est ce qui rend la protection effective : un drag manuel modifie
+     * position_x/position_y mais pas les *_original, donc le reimport percute
+     * toujours la bonne ligne -> ON DUPLICATE -> IF(manually_edited=1,...).
+     * Si la cle portait sur les positions vivantes, un reimport apres drag ne
+     * matcherait plus la ligne deplacee et creerait un doublon (bug corrige 005).
+     *
      * Champs proteges par manually_edited :
      *   - position_x, position_y : preservees si flag = 1, sinon updatees CSV
      *   - qty_recommended        : idem
      *
      * Champs TOUJOURS updates au reimport (independants du flag) :
      *   - position_x_original, position_y_original : referencent toujours la
-     *     derniere position CSV connue, utilisees pour le revert
+     *     derniere position CSV connue (= la cle naturelle). L'auto-assignation
+     *     VALUES(position_x) sur match est un no-op (la cle a deja matche dessus).
      *   - article_label : libelle constructeur, peut evoluer
      *
      * Champ JAMAIS touche par l'import :
