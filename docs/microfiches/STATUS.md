@@ -75,7 +75,8 @@ décision actée : on attend que toute la V1 marche).
 
 | PR | Quoi | État |
 |---|---|---|
-| **PR6** | Front PLP moto (grille des microfiches d'une moto + filtre catégorie) | Code poussé (`b50e36c` → `441dded`), joignable `/module/megaservice_microfiches/moto?id_moto=2587` — **validation visuelle preprod en attente** |
+| **PR6** | Front PLP moto (grille des microfiches d'une moto + filtre catégorie) | ✅ **validée preprod 2026-06-09** (`b50e36c` → `441dded`). Note : penser à vider le cache PS (Performance → CCC) après chaque build front, sinon assets périmés servis. |
+| **PR7** | Front PDP microfiche (vue éclatée + hotspots + liste pièces + panier) | 🏗️ en construction — les cartes PLP linkent déjà vers `controllers/front/microfiche.php` (404 tant que pas livrée) |
 
 ### 🟡 Non commencées (priorisables)
 
