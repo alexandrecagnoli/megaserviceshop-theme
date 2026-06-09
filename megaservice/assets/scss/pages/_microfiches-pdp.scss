@@ -4,30 +4,12 @@
 // views/templates/front/microfiche.tpl
 // ============================================================================
 
+// Le titre + la bannière modèle vivent dans .ms-catalog-hero / .ms-catalog-context
+// (chrome catégorie natif, full-bleed), AVANT .ms-pdp. Cf. moto.tpl / microfiche.tpl.
 .ms-pdp {
   @include container;
   padding-top: $spacing-lg;
   padding-bottom: $spacing-xxl;
-
-  &__title {
-    font-family: $font-heading;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-size: $font-size-h1;
-    line-height: $line-height-heading;
-    margin: 0 0 $spacing-md;
-
-    @include media-md {
-      font-size: $font-size-h2;
-    }
-  }
-
-  // Bannière modèle : on réutilise .ms-catalog-context (cf. _catalog.scss),
-  // juste une marge basse pour la séparer du bandeau compatibilité.
-  .ms-catalog-context {
-    margin-top: $spacing-md;
-    margin-bottom: $spacing-md;
-  }
 
   // ---- Bandeau compatibilité ----
   &__compat {

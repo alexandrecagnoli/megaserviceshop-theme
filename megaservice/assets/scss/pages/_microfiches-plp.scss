@@ -5,9 +5,10 @@
 // ============================================================================
 
 // Les overrides full-bleed du catalogue sont scopés sur body#category — on les
-// réplique pour la PLP moto (même chrome de page catégorie). La PDP microfiche
-// a son propre layout et garde le breadcrumb sur blanc (cf. maquette).
-body#module-megaservice_microfiches-moto {
+// réplique pour nos pages module (PLP + PDP) qui réutilisent le hero/contexte
+// catégorie : content-wrapper pleine largeur + breadcrumb noir fusionné au hero.
+body#module-megaservice_microfiches-moto,
+body#module-megaservice_microfiches-microfiche {
   overflow-x: hidden;
 
   #wrapper > .container {
@@ -34,13 +35,10 @@ body#module-megaservice_microfiches-moto {
   }
 }
 
-// .ms-catalog-context est display:none sauf body.has-moto-selected (piloté par
-// le sélecteur). Sur nos pages on connaît la moto (via id_moto) → on force la
-// bannière visible. S'applique PLP + PDP.
-body#module-megaservice_microfiches-moto .ms-catalog-context,
-body#module-megaservice_microfiches-microfiche .ms-catalog-context {
-  display: block;
-}
+// NB : .ms-catalog-context (bloc modèle noir) est géré nativement par le thème
+// (display:none jusqu'à body.has-moto-selected, rempli par le sélecteur du
+// header). On ne le force PAS : il apparaît avec le bon design quand le modèle
+// est choisi dans le modal. PLP et PDP l'utilisent toutes deux dans leur hero.
 
 // .ms-product-card { display:flex } a une spécificité plus forte que le
 // [hidden] natif → sans ça, masquer une carte filtrée (card.hidden=true en JS)

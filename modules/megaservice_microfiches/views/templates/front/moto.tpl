@@ -26,7 +26,8 @@
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-          <strong class="ms-catalog-context__moto-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+          {* Nom rempli nativement par le sélecteur du header (js-model-current-name). *}
+          <strong class="ms-catalog-context__moto-name js-model-current-name">{$ms_moto.nom_fr|escape:'html'}</strong>
         </div>
         <div class="ms-catalog-context__actions">
           <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>

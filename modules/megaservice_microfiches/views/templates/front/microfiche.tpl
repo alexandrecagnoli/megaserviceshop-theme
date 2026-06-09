@@ -5,11 +5,15 @@
 {extends file='layouts/layout-full-width.tpl'}
 
 {block name='content'}
-  <section class="ms-pdp">
 
-    <h1 class="ms-pdp__title">{$ms_microfiche.display_name|escape:'html'}</h1>
+  {* Hero noir + bannière modèle : MÊME chrome natif que la PLP. .ms-catalog-context
+     vit DANS le hero (sinon son image moto en position:absolute déborde sur le
+     titre). Affiché nativement quand un modèle est choisi (body.has-moto-selected). *}
+  <div class="ms-catalog-hero ms-catalog-hero--with-context">
+    <div class="ms-catalog-hero__inner">
+      <h1 class="ms-catalog-hero__title">{$ms_microfiche.display_name|escape:'html'}</h1>
+    </div>
 
-    {* Bannière modèle — réutilise le chrome catégorie .ms-catalog-context. *}
     <div class="ms-catalog-context">
       {if $ms_moto.picture}
         <img src="{$ms_moto.picture}" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
@@ -17,7 +21,7 @@
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-          <strong class="ms-catalog-context__moto-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+          <strong class="ms-catalog-context__moto-name js-model-current-name">{$ms_moto.nom_fr|escape:'html'}</strong>
         </div>
         <div class="ms-catalog-context__actions">
           <a href="{$ms_moto.url}" class="ms-catalog-context__link">{l s='Retour au modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
@@ -25,6 +29,9 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <section class="ms-pdp">
 
     <div class="ms-pdp__compat">
       {l s='Compatible avec' d='Modules.Megaservicemicrofiches.Shop'} <strong>{$ms_moto.nom_fr|escape:'html'}</strong>
