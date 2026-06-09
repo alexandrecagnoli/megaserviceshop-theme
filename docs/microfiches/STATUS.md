@@ -18,18 +18,19 @@ décision actée : on attend que toute la V1 marche).
 
 **Migration 005 + test #5 = ✅ clos (2026-06-09)** : clé rebasée, doublon nettoyé, réimport-après-drag validé sans fantôme. La protection anti-écrasement des hotspots est opérationnelle de bout en bout.
 
-**Session front 2026-06-09 (suite)** :
-- **PR6 (PLP moto)** poussée : front controller + template + scss + js filtre catégorie. Joignable `/module/megaservice_microfiches/moto?id_moto=2587`. **Validation visuelle preprod encore à faire.**
-- **PR8 (rattachement produit↔hotspot)** livrée et **validée** : service `HotspotProductMatcher`, hooks produit auto + bouton BO « Rematcher tout ». Testé : produit OEM `75030085100` → hotspots passés orphelins→liés.
-- Clarifié : le **garage/sélecteur** = périmètre **everyparts**, pas nous (memory `project_garage_everyparts`). Maquettes front faites en interne → PR6/PR7 ne sont plus bloquées.
+**Session front 2026-06-09 (suite) — PR6 + PR7 + PR8 LIVRÉES & VALIDÉES preprod** :
+- **PR6 (PLP moto)** ✅ : page catégorie réutilisant le chrome natif du thème (`.ms-catalog-hero`/`.ms-catalog-context`/`.ms-catalog-layout`/`.ms-product-card`) + filtre catégorie client-side. Joignable `/module/megaservice_microfiches/moto?id_moto=2587`.
+- **PR7 (PDP microfiche)** ✅ : vue éclatée + pastilles overlay alignées (corner-anchored, identique au BO) + liste pièces (prix/panier sur pièces liées PR8, « Bientôt disponible » sur orphelines) + carrousel microfiches liées.
+- **PR8 (rattachement produit↔hotspot)** ✅ : service `HotspotProductMatcher`, hooks produit auto + bouton BO « Rematcher tout ». Testé : produit OEM `75030085100` → hotspots orphelins→liés.
+- Garage/sélecteur = périmètre **everyparts** (memory `project_garage_everyparts`). Bannière modèle noire = `.ms-catalog-context` natif (apparaît quand un modèle est choisi dans le modal). Image moto = placeholder générique `moto-context.png` en attendant PR-Visuels.
+
+**Pièges front rencontrés (consignés en memory)** : (1) toujours vider le cache PS CCC après build front ; (2) ne PAS réutiliser `#search_filters`/`.facet-label` pour un filtre custom (handler capture ps_facetedsearch le bloque) → utiliser ses propres classes `ms-plp-*`.
 
 ### Prochaines étapes priorisées
 
-1. **Valider PR6 visuellement** sur preprod (`/module/megaservice_microfiches/moto?id_moto=2587`) si pas encore fait.
-2. **PR7 — PDP microfiche front** (la suite logique) : vue éclatée + hotspots cliquables + liste pièces, avec prix/panier sur les pièces désormais liées (PR8) et dégradation propre sur les orphelines. Maquette `PDP_microfiche` dispo.
-3. **PR9** (tests d'intégration DB réelle) — toujours utile, idéal pour figer le scénario réimport-après-drag + le matching PR8.
-4. **Relancer MSS** sur les points §4 restants : URLs visuels motos (PR-Visuels) + stratégie catalogue spareparts (alimentation `ps_product` à grande échelle).
-5. Merge `feat/microfiches-skeleton` → `main` quand la V1 front sera validée.
+1. **PR9** (tests d'intégration DB réelle) — figer le scénario réimport-après-drag (migration 005) + le matching PR8. Seule PR dev non bloquée restante.
+2. **Relancer MSS** sur les points §4 : URLs visuels motos (PR-Visuels) + stratégie d'alimentation `ps_product` à grande échelle (le front commerce s'allume tout seul au fur et à mesure que les produits OEM arrivent).
+3. **Merge `feat/microfiches-skeleton` → `main`** : la V1 front est validée fonctionnellement → le merge est envisageable (décider avec le client).
 
 ### Récap features récentes (livrées mais pas listées au §2 — à incorporer un jour)
 
