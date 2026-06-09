@@ -9,16 +9,21 @@
 
     <h1 class="ms-pdp__title">{$ms_microfiche.display_name|escape:'html'}</h1>
 
-    {* Bannière modèle courant (inerte — garage = everyparts). *}
-    <div class="ms-pdp__model-banner">
+    {* Bannière modèle — réutilise le chrome catégorie .ms-catalog-context. *}
+    <div class="ms-catalog-context">
       {if $ms_moto.picture}
-        <img class="ms-pdp__model-thumb" src="{$ms_moto.picture}" alt="{$ms_moto.nom_fr|escape:'html'}" loading="lazy">
+        <img src="{$ms_moto.picture}" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       {/if}
-      <div class="ms-pdp__model-info">
-        <span class="ms-pdp__model-label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-        <strong class="ms-pdp__model-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+      <div class="ms-catalog-context__inner">
+        <div class="ms-catalog-context__text">
+          <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
+          <strong class="ms-catalog-context__moto-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+        </div>
+        <div class="ms-catalog-context__actions">
+          <a href="{$ms_moto.url}" class="ms-catalog-context__link">{l s='Retour au modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
+          <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
+        </div>
       </div>
-      <a class="ms-pdp__model-back" href="{$ms_moto.url}">{l s='Retour au modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
     </div>
 
     <div class="ms-pdp__compat">
@@ -106,20 +111,31 @@
         <h2 class="ms-pdp__related-title">
           {l s='Pièces d\'origine compatibles avec' d='Modules.Megaservicemicrofiches.Shop'} {$ms_moto.marque} {$ms_moto.core_name}
         </h2>
-        <ul class="ms-pdp__related-grid">
+        <div class="ms-pdp__related-grid">
           {foreach from=$ms_related item=r}
-            <li class="ms-pdp__related-card-wrap">
-              <a class="ms-pdp__related-card" href="{$r.url}">
-                <span class="ms-pdp__related-img">
-                  <img src="{$r.thumb}" alt="{$r.display_name|escape:'html'}" loading="lazy"
-                       onerror="this.closest('.ms-pdp__related-img').classList.add('is-broken');this.remove();">
+            <article class="ms-product-card js-product ms-plp-card">
+              <a href="{$r.url}" class="ms-product-card__media">
+                <img src="{$r.thumb}" alt="{$r.display_name|escape:'html'}" loading="lazy"
+                     onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
+                <div class="ms-product-card__overlay">
+                  <span class="ms-product-card__overlay-btn">{l s='VOIR LA MICROFICHE' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                </div>
+                <span class="ms-product-card__compat" aria-hidden="true">
+                  {l s='Compatible' d='Modules.Megaservicemicrofiches.Shop'}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12L10 17L20 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </span>
-                <span class="ms-pdp__related-name">{$r.display_name|escape:'html'}</span>
-                <span class="ms-pdp__related-count">{l s='%d pièces' sprintf=[$r.nb_pieces] d='Modules.Megaservicemicrofiches.Shop'}</span>
               </a>
-            </li>
+              <div class="ms-product-card__body">
+                <h2 class="ms-product-card__name"><a href="{$r.url}">{$r.display_name|escape:'html'}</a></h2>
+                <div class="ms-plp-card__meta">
+                  <span class="ms-plp-card__count">{l s='%d pièces' sprintf=[$r.nb_pieces] d='Modules.Megaservicemicrofiches.Shop'}</span>
+                </div>
+              </div>
+            </article>
           {/foreach}
-        </ul>
+        </div>
       </div>
     {/if}
 
