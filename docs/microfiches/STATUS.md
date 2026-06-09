@@ -12,11 +12,40 @@ décision actée : on attend que toute la V1 marche).
 
 ---
 
+## 0. Reprise rapide (à lire en premier après une nouvelle session)
+
+**Dernière session (2026-06-09)** : cleanup cross-badging CFMOTO/FTI livré (commit `7ee0157`), migration 004 jouée sur preprod (13 motos supprimées : 8 KTM + 5 HQV), action client §4.6 résolue.
+
+### Prochaines étapes priorisées
+
+1. **Vérifier que la migration 003** (`003_hotspot_position_protection.sql`) est bien appliquée sur preprod — elle ajoute les colonnes `manually_edited`, `original_position_x`, `original_position_y` sur `ps_ms_microfiche_hotspot` pour protéger les positions custom au réimport CSV. Le drag/drop BO en dépend (donc probablement déjà jouée puisque ça marche, mais à confirmer via `SHOW COLUMNS FROM ps_ms_microfiche_hotspot LIKE 'manually_edited'`).
+
+2. **Test #5 drag/drop** non encore réalisé : réimporter le CSV `F0403X7.csv` (preprod) et vérifier que les hotspots avec `manually_edited = 1` (= ceux qu'on a déplacés manuellement) **ne bougent pas**. C'est le test critique de la protection anti-écrasement.
+
+3. **Décider la suite fonctionnelle** parmi les PRs §2 non bloquées :
+   - PR-Visuels (cron download images motos) — bloqué tant que MSS n'a pas envoyé les URLs base par marque (cf. §4.1)
+   - PR8 (cron rematching hotspot → ps_product) — débloqué techniquement mais inutile tant que le catalogue spareparts n'est pas alimenté (cf. §4.4)
+   - PR9 (tests d'intégration DB réelle) — toujours utile, jamais bloqué
+   - Merge `feat/microfiches-skeleton` → `main` quand toute la V1 sera validée fonctionnellement (cf. en-tête)
+
+4. **Relancer le client MSS** sur les points §4 en attente (surtout maquettes Figma + URLs visuels motos qui bloquent 2 PRs).
+
+### Récap features récentes (livrées mais pas listées au §2 — à incorporer un jour)
+
+- **PR5** : éditeur visuel hotspots BO (image + cercles overlay cliquables, drag/drop, revert, liste détaillée 2 colonnes)
+- **PR5-bis** : AdminMsHotspotsController + Tab "Hotspots" (édition données hotspot, lien depuis l'éditeur visuel)
+- **Upload BO** : photo cycle + photo moteur depuis fiche moto, multi-file CSV, ZIP avec N CSV, tableau CSV enrichi (statut + nb + search + batch import)
+- **Listings BO** : colonne `serial_constructeur` (motos + microfiches), preview 2 colonnes Cycle/Moteur sur listing motos, exports CSV enrichis
+- **CI** : bump GitHub Actions vers Node 24-compatibles (`actions/checkout@v6`, `setup-node@v6`)
+- **Filtre cross-badging** : `MotosImporter::BLACKLISTED_SERIAL_SUFFIXES = ['_CFMOTO', '_FTI']` — empêche la recréation des 13 motos supprimées au prochain import CSV
+
+---
+
 ## 1. État BDD preprod (au dernier point de validation)
 
 | Table | Rows | Notes |
 |---|---|---|
-| `ps_ms_moto` | **1830** | 3 marques (KTM 1218 / HQV 429 / GASGAS 183) |
+| `ps_ms_moto` | **1817** | 3 marques après cleanup cross-badging 2026-06-09 (KTM 1210 / HQV 424 / GASGAS 183 — comptages à reconfirmer) |
 | `ps_ms_microfiche_categorie` | **25** | Toutes en `code = TODO_xxx` jusqu'à renommage manuel |
 | `ps_ms_microfiche` | **45** | Toutes liées à `serial_constructeur = F0403X7` (GASGAS EC 300 2024, `id_moto = 2587`) |
 | `ps_ms_microfiche_hotspot` | **1463** | `id_product` = NULL pour les 1463 (catalogue spareparts pas peuplé) |
@@ -93,15 +122,20 @@ Liste à remonter avant prochaine session de dev :
 
 ## 5. SQL utiles (à exécuter en phpMyAdmin)
 
-### Migrations en attente sur preprod
+### Migrations — état d'application sur preprod
+
+| # | Fichier | État preprod |
+|---|---|---|
+| 001 | `001_hotspot_unique_with_position.sql` | ✅ appliquée |
+| 002 | `002_align_collation_with_prestashop.sql` | ✅ appliquée |
+| 003 | `003_hotspot_position_protection.sql` | ⚠️ **À CONFIRMER** (le drag/drop BO fonctionnant, probable que oui — vérifier avec `SHOW COLUMNS FROM ps_ms_microfiche_hotspot LIKE 'manually_edited'`) |
+| 004 | `004_cleanup_crossbadging_cfmoto_fti.sql` | ✅ appliquée 2026-06-09 (13 motos supprimées) |
+
+Pour rejouer une migration (toutes sont idempotentes sauf 004 qui est ponctuelle) :
 
 ```sql
--- Migration 002 : aligner collation (à appliquer une fois)
--- Source : modules/megaservice_microfiches/sql/migrations/002_align_collation_with_prestashop.sql
-ALTER TABLE `ps_ms_moto`                  CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-ALTER TABLE `ps_ms_microfiche_categorie`  CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-ALTER TABLE `ps_ms_microfiche`            CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-ALTER TABLE `ps_ms_microfiche_hotspot`    CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+-- Source : modules/megaservice_microfiches/sql/migrations/00X_*.sql
+-- Copier-coller le contenu du fichier dans phpMyAdmin.
 ```
 
 ### Renommage des 25 catégories TODO_xxx en français
