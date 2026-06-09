@@ -1,94 +1,111 @@
 /**
  * PR6 — PLP moto : filtre catégorie client-side.
  * La grille des microfiches est rendue côté serveur (controllers/front/moto.php).
- * Ici on se contente de montrer/cacher les cartes selon les catégories cochées,
- * et de tenir à jour le compteur de résultats + l'état vide.
+ * On montre/cache les cartes selon les catégories cochées + maj du compteur.
  *
- * Aucun appel réseau : tout est déjà dans le DOM (peu de microfiches par moto).
+ * IMPORTANT — collision avec ps_facetedsearch (app.js) :
+ * app.js enregistre un handler click en phase CAPTURE sur document qui, pour
+ * tout clic dans `#search_filters .facet-label`, fait preventDefault() +
+ * stopImmediatePropagation(). On réutilise justement ce conteneur pour le
+ * design des facettes → ce handler tuait l'événement avant tout listener bubble.
+ *
+ * Parade : on enregistre NOTRE handler aussi en CAPTURE sur document, mais
+ * MAINTENANT (au moment de l'import de ce module, qui s'exécute AVANT le corps
+ * d'app.js et donc avant son addEventListener capture). Étant enregistré en
+ * premier, il s'exécute en premier ; sur nos checkboxes on prend la main
+ * (toggle manuel + stopImmediatePropagation). Les vraies facettes ps (sans
+ * .js-ms-plp-cb) passent intactes — on return avant de couper quoi que ce soit.
  */
 (function () {
   'use strict';
 
-  function init() {
+  var countTemplate = null;
+
+  function ctx() {
     var grid = document.querySelector('.js-ms-plp-grid');
     if (!grid) {
-      return; // pas sur la PLP
+      return null;
     }
+    return {
+      checkboxes: Array.prototype.slice.call(document.querySelectorAll('.js-ms-plp-cb')),
+      cards: Array.prototype.slice.call(grid.querySelectorAll('[data-categorie]')),
+      countEl: document.querySelector('.js-ms-plp-count'),
+      emptyEl: document.querySelector('.js-ms-plp-empty')
+    };
+  }
 
-    var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.js-ms-plp-cb'));
-    var cards      = Array.prototype.slice.call(grid.querySelectorAll('[data-categorie]'));
-    var countEl    = document.querySelector('.js-ms-plp-count');
-    var emptyEl    = document.querySelector('.js-ms-plp-empty');
-    var clearBtn   = document.querySelector('.js-ms-plp-clear');
-    var resetBtn   = document.querySelector('.js-ms-plp-reset');
-
-    var countTemplate = countEl ? countEl.textContent.replace(/\d+/, '%d') : '';
-
-    function selectedCategories() {
-      var set = {};
-      checkboxes.forEach(function (cb) {
-        if (cb.checked) {
-          set[cb.value] = true;
-        }
-      });
-      return set;
-    }
-
-    function apply() {
-      var selected = selectedCategories();
-      var noneSelected = Object.keys(selected).length === 0;
-      var visible = 0;
-
-      cards.forEach(function (card) {
-        // noneSelected = aucune case cochée → on masque tout (état "Effacer").
-        var show = !noneSelected && selected[card.getAttribute('data-categorie')] === true;
-        card.hidden = !show;
-        if (show) {
-          visible++;
-        }
-      });
-
-      if (countEl && countTemplate) {
-        countEl.textContent = countTemplate.replace('%d', visible);
-      }
-      if (emptyEl) {
-        emptyEl.hidden = visible !== 0;
-      }
-    }
-
-    // ATTENTION : on ne peut PAS se fier à l'événement `change` natif des
-    // checkboxes. Le moteur de facettes natif (app.js) pose un handler global
-    // qui fait e.preventDefault() sur tout clic dans `#search_filters .facet-label`
-    // (pour piloter ps_facetedsearch). Comme nos checkboxes sont dans ce conteneur
-    // — réutilisé pour le design — le toggle natif est bloqué et `change` ne part
-    // jamais. On gère donc le clic nous-mêmes : toggle manuel de la case + apply.
-    checkboxes.forEach(function (cb) {
-      var label = cb.closest('.facet-label') || cb.parentNode;
-      label.addEventListener('click', function (e) {
-        e.preventDefault();
-        cb.checked = !cb.checked;
-        apply();
-      });
+  function apply(c) {
+    var selected = {};
+    var any = false;
+    c.checkboxes.forEach(function (cb) {
+      if (cb.checked) { selected[cb.value] = true; any = true; }
     });
 
+    var visible = 0;
+    c.cards.forEach(function (card) {
+      // any=false (aucune cochée) → on masque tout (état "Effacer").
+      var show = any && selected[card.getAttribute('data-categorie')] === true;
+      card.hidden = !show;
+      if (show) { visible++; }
+    });
+
+    if (c.countEl) {
+      if (countTemplate === null) {
+        countTemplate = c.countEl.textContent.replace(/\d+/, '%d');
+      }
+      c.countEl.textContent = countTemplate.replace('%d', visible);
+    }
+    if (c.emptyEl) {
+      c.emptyEl.hidden = visible !== 0;
+    }
+  }
+
+  // --- Handler CAPTURE, enregistré dès l'import (avant celui d'app.js) ---
+  document.addEventListener('click', function (e) {
+    var label = e.target.closest('.facet-label');
+    if (!label) {
+      return;
+    }
+    var cb = label.querySelector('.js-ms-plp-cb');
+    if (!cb) {
+      return; // facette ps_facetedsearch réelle → on laisse app.js gérer
+    }
+    var c = ctx();
+    if (!c) {
+      return;
+    }
+    // C'est une de nos cases : on prend la main avant le handler natif.
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    cb.checked = !cb.checked;
+    apply(c);
+  }, true);
+
+  // --- Boutons Effacer / Réinitialiser (hors .facet-label, non interceptés) ---
+  function initButtons() {
+    var c = ctx();
+    if (!c) {
+      return;
+    }
+    var clearBtn = document.querySelector('.js-ms-plp-clear');
+    var resetBtn = document.querySelector('.js-ms-plp-reset');
     if (clearBtn) {
       clearBtn.addEventListener('click', function () {
-        checkboxes.forEach(function (cb) { cb.checked = false; });
-        apply();
+        c.checkboxes.forEach(function (cb) { cb.checked = false; });
+        apply(c);
       });
     }
-
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
-        checkboxes.forEach(function (cb) { cb.checked = true; });
-        apply();
+        c.checkboxes.forEach(function (cb) { cb.checked = true; });
+        apply(c);
       });
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', initButtons);
   } else {
-    init();
+    initButtons();
   }
 })();
