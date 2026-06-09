@@ -34,6 +34,14 @@ body#module-megaservice_microfiches-moto {
   }
 }
 
+// .ms-catalog-context est display:none sauf body.has-moto-selected (piloté par
+// le sélecteur). Sur nos pages on connaît la moto (via id_moto) → on force la
+// bannière visible. S'applique PLP + PDP.
+body#module-megaservice_microfiches-moto .ms-catalog-context,
+body#module-megaservice_microfiches-microfiche .ms-catalog-context {
+  display: block;
+}
+
 // .ms-product-card { display:flex } a une spécificité plus forte que le
 // [hidden] natif → sans ça, masquer une carte filtrée (card.hidden=true en JS)
 // n'a aucun effet visuel et le filtre catégorie semble cassé.
