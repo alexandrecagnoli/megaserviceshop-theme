@@ -14,13 +14,13 @@ décision actée : on attend que toute la V1 marche).
 
 ## 0. Reprise rapide (à lire en premier après une nouvelle session)
 
-**Dernière session (2026-06-09)** : cleanup cross-badging CFMOTO/FTI livré (commit `7ee0157`), migration 004 jouée sur preprod (13 motos supprimées : 8 KTM + 5 HQV), action client §4.6 résolue.
+**Dernière session (2026-06-09, suite)** : audit de la protection anti-écrasement hotspots → **bug d'archi trouvé et corrigé**. La UNIQUE KEY portait sur la position *vivante* (décision #5 / migration 001), ce qui défaisait la protection `manually_edited` (migration 003) : un réimport CSV après un drag manuel créait un **doublon** (reproduit en preprod). Fix livré = **migration 005** (rebase la clé sur `position_x_original`/`position_y_original` + dedup des doublons existants) + `install.sql` + commentaire upsert alignés.
 
 ### Prochaines étapes priorisées
 
-1. **Vérifier que la migration 003** (`003_hotspot_position_protection.sql`) est bien appliquée sur preprod — elle ajoute les colonnes `manually_edited`, `original_position_x`, `original_position_y` sur `ps_ms_microfiche_hotspot` pour protéger les positions custom au réimport CSV. Le drag/drop BO en dépend (donc probablement déjà jouée puisque ça marche, mais à confirmer via `SHOW COLUMNS FROM ps_ms_microfiche_hotspot LIKE 'manually_edited'`).
+1. **Appliquer la migration 005** (`005_hotspot_unique_on_original_position.sql`) sur preprod via phpMyAdmin (3 blocs dans l'ordre, vérif finale = 0). Elle nettoie les doublons déjà créés ET rebase la clé. **C'est la priorité** : tant qu'elle n'est pas jouée, chaque drag + réimport recrée un doublon.
 
-2. **Test #5 drag/drop** non encore réalisé : réimporter le CSV `F0403X7.csv` (preprod) et vérifier que les hotspots avec `manually_edited = 1` (= ceux qu'on a déplacés manuellement) **ne bougent pas**. C'est le test critique de la protection anti-écrasement.
+2. **Rejouer le test #5** APRÈS migration 005 : drag de 2-3 hotspots (→ `manually_edited=1`), réimport `F0403X7.csv`, vérifier (a) **pas de doublon** créé, (b) les hotspots déplacés **gardent leur position**. C'est la validation de bout en bout du fix.
 
 3. **Décider la suite fonctionnelle** parmi les PRs §2 non bloquées :
    - PR-Visuels (cron download images motos) — bloqué tant que MSS n'a pas envoyé les URLs base par marque (cf. §4.1)
@@ -128,8 +128,9 @@ Liste à remonter avant prochaine session de dev :
 |---|---|---|
 | 001 | `001_hotspot_unique_with_position.sql` | ✅ appliquée |
 | 002 | `002_align_collation_with_prestashop.sql` | ✅ appliquée |
-| 003 | `003_hotspot_position_protection.sql` | ⚠️ **À CONFIRMER** (le drag/drop BO fonctionnant, probable que oui — vérifier avec `SHOW COLUMNS FROM ps_ms_microfiche_hotspot LIKE 'manually_edited'`) |
+| 003 | `003_hotspot_position_protection.sql` | ✅ appliquée (confirmée 2026-06-09 : colonne `manually_edited` présente, indexée) |
 | 004 | `004_cleanup_crossbadging_cfmoto_fti.sql` | ✅ appliquée 2026-06-09 (13 motos supprimées) |
+| 005 | `005_hotspot_unique_on_original_position.sql` | ⏳ **À APPLIQUER** — rebase la UNIQUE KEY hotspots sur `position_x_original`/`position_y_original`. Corrige le bug où un réimport après drag créait un doublon (la protection 003 était défaite par la clé basée sur la position vivante). Nettoie aussi les doublons déjà créés. |
 
 Pour rejouer une migration (toutes sont idempotentes sauf 004 qui est ponctuelle) :
 

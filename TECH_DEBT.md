@@ -435,3 +435,28 @@ Conforme au brief qui prévoit explicitement de loguer ces motos pour correction
 **Fix proposé** : après le 1er import complet, mesurer la proportion et décider. Si patch dictionnaire, ajouter les règles avant `Motocross (SX|MC)` pour ne pas voler des matchs légitimes.
 
 **Statut** : 🟡 à mesurer après import complet sur preprod.
+
+---
+
+## 🔴→🟢 Module microfiches — UNIQUE KEY hotspots basée sur la position vivante défaisait la protection `manually_edited`
+
+**Fichiers** :
+- [modules/megaservice_microfiches/sql/migrations/005_hotspot_unique_on_original_position.sql](modules/megaservice_microfiches/sql/migrations/005_hotspot_unique_on_original_position.sql) (fix)
+- [modules/megaservice_microfiches/sql/install.sql](modules/megaservice_microfiches/sql/install.sql) (clé alignée)
+- [modules/megaservice_microfiches/classes/importers/MicrofichesImporter.php](modules/megaservice_microfiches/classes/importers/MicrofichesImporter.php) (`upsertHotspot`, doc)
+
+**Contexte** : deux décisions livrées séparément se contredisaient.
+- Migration 001 / décision archi #5 : `uk_hotspot_naturel` étendue avec `position_x`/`position_y` **vivantes** (pour autoriser une même pièce à plusieurs endroits de la vue éclatée).
+- Migration 003 : flag `manually_edited` + `IF(manually_edited=1, ...)` dans le `ON DUPLICATE KEY UPDATE` de `upsertHotspot`, censé protéger les positions déplacées au drag/drop BO contre l'écrasement au réimport CSV.
+
+Or le `ON DUPLICATE` ne se déclenche que si la clé UNIQUE entrante percute une ligne existante. Le save drag/drop BO modifie `position_x`/`position_y` — donc **modifie la clé elle-même**. Au réimport, le CSV porte la position constructeur d'origine : l'INSERT ne percute plus la ligne déplacée → INSERT frais → **doublon** (un hotspot fantôme constructeur réapparaît à côté du déplacé). La branche `TRUE` du `IF` n'était jamais atteinte : la protection 003 était du code mort dès qu'on bougeait un cercle.
+
+**Reproduit en preprod (2026-06-09)** : drag d'un hotspot puis réimport → 2 hotspots pour la même pièce.
+
+**Fix** : rebaser la clé naturelle sur `position_x_original`/`position_y_original` (position constructeur, stable au drag). Le réimport percute alors toujours la bonne ligne → `ON DUPLICATE` → `IF(manually_edited=1,...)` protège enfin la position vivante. L'intention de #5 est préservée (une même pièce à N endroits du CSV = N originaux distincts = N clés distinctes). Migration 005 nettoie aussi les doublons déjà créés (conserve la ligne `manually_edited=1` en priorité) avant le swap de clé.
+
+**Impact** :
+- Migration 005 **ponctuelle** (pas idempotente sur le bloc dedup) — à jouer une seule fois sur preprod.
+- Edge case non couvert : si un CSV constructeur **repositionne** réellement une pièce (original change), l'ancienne ligne devient orpheline plutôt que d'être updatée — comportement identique à l'ancienne clé, hors scope ici.
+
+**Statut** : 🟢 corrigé en code, ⏳ migration 005 à appliquer sur preprod + retest #5 de bout en bout.
