@@ -3,7 +3,12 @@
  * Parser + importer CSV pour les relations Powerparts.
  *
  * Format CSV attendu (3 cols requises, 2 optionnelles) :
- *   id_product_source, relation_type, id_product_target [, position] [, recommended_qty]
+ *   ref_product_source, relation_type, ref_product_target [, position] [, recommended_qty]
+ *
+ * Les produits sont identifiés par leur RÉFÉRENCE (ps_product.reference), pas
+ * par l'id PrestaShop (absent des fichiers d'import). Chaque référence est
+ * résolue en id_product à l'import ; le stockage reste en id_product.
+ * Réf ambiguë (plusieurs produits) → plus petit id_product (déterministe).
  *
  * Robustesse :
  * - Auto-détection du séparateur (, ou ;)
@@ -21,7 +26,7 @@ require_once __DIR__ . '/ProductRelationService.php';
 
 class MsRelationsCsvImporter
 {
-    const REQUIRED_COLS = ['id_product_source', 'relation_type', 'id_product_target'];
+    const REQUIRED_COLS = ['ref_product_source', 'relation_type', 'ref_product_target'];
     const OPTIONAL_COLS = ['position', 'recommended_qty'];
 
     /**
@@ -125,9 +130,13 @@ class MsRelationsCsvImporter
     {
         $pairs = [];
         foreach ($rows as $r) {
-            $idSrc = (int) ($r['data'][$colIdx['id_product_source']] ?? 0);
-            $type  = trim((string) ($r['data'][$colIdx['relation_type']] ?? ''));
-            if ($idSrc && $type) {
+            $refSrc = trim((string) ($r['data'][$colIdx['ref_product_source']] ?? ''));
+            $type   = trim((string) ($r['data'][$colIdx['relation_type']] ?? ''));
+            if ($refSrc === '' || $type === '') {
+                continue;
+            }
+            $idSrc = $this->resolveReference($refSrc);
+            if ($idSrc) {
                 $pairs[$idSrc][$type] = true;
             }
         }
@@ -155,24 +164,20 @@ class MsRelationsCsvImporter
 
     private function processRow(array $row, $lineNum, array $colIdx, array &$stats)
     {
-        $idSrc    = (int) ($row[$colIdx['id_product_source']] ?? 0);
-        $type     = trim((string) ($row[$colIdx['relation_type']] ?? ''));
-        $idTarget = (int) ($row[$colIdx['id_product_target']] ?? 0);
-        $position = isset($colIdx['position']) ? (int) ($row[$colIdx['position']] ?? 0) : 0;
-        $qty      = isset($colIdx['recommended_qty']) ? (int) ($row[$colIdx['recommended_qty']] ?? 1) : 1;
-        $qty      = max(1, $qty);
+        $refSrc    = trim((string) ($row[$colIdx['ref_product_source']] ?? ''));
+        $type      = trim((string) ($row[$colIdx['relation_type']] ?? ''));
+        $refTarget = trim((string) ($row[$colIdx['ref_product_target']] ?? ''));
+        $position  = isset($colIdx['position']) ? (int) ($row[$colIdx['position']] ?? 0) : 0;
+        $qty       = isset($colIdx['recommended_qty']) ? (int) ($row[$colIdx['recommended_qty']] ?? 1) : 1;
+        $qty       = max(1, $qty);
 
         // Validation
-        if (!$idSrc) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'id_product_source manquant ou non numérique'];
+        if ($refSrc === '') {
+            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_source manquante'];
             return;
         }
-        if (!$idTarget) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'id_product_target manquant ou non numérique'];
-            return;
-        }
-        if ($idSrc === $idTarget) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'id_product_source et id_product_target identiques (' . $idSrc . ')'];
+        if ($refTarget === '') {
+            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_target manquante'];
             return;
         }
         if (!in_array($type, MsProductRelationService::allTypes(), true)) {
@@ -183,13 +188,19 @@ class MsRelationsCsvImporter
             return;
         }
 
-        // Vérifie que les produits existent
-        if (!$this->productExists($idSrc)) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'id_product_source ' . $idSrc . ' inexistant'];
+        // Résolution référence → id_product (le fichier d'import n'a pas l'id PS)
+        $idSrc = $this->resolveReference($refSrc);
+        if (!$idSrc) {
+            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_source "' . $refSrc . '" introuvable dans le catalogue'];
             return;
         }
-        if (!$this->productExists($idTarget)) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'id_product_target ' . $idTarget . ' inexistant'];
+        $idTarget = $this->resolveReference($refTarget);
+        if (!$idTarget) {
+            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_target "' . $refTarget . '" introuvable dans le catalogue'];
+            return;
+        }
+        if ($idSrc === $idTarget) {
+            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'source et cible identiques (réf "' . $refSrc . '" / "' . $refTarget . '" → produit ' . $idSrc . ')'];
             return;
         }
 
@@ -214,18 +225,26 @@ class MsRelationsCsvImporter
         return empty(array_filter($row, function ($v) { return trim((string) $v) !== ''; }));
     }
 
-    private $productExistsCache = [];
+    private $refCache = [];
 
-    private function productExists($idProduct)
+    /**
+     * Résout une référence produit (ps_product.reference) en id_product.
+     * Réf ambiguë (plusieurs produits) → plus petit id_product (déterministe).
+     * @return int id_product, ou 0 si aucune correspondance.
+     */
+    private function resolveReference($ref)
     {
-        $idProduct = (int) $idProduct;
-        if (isset($this->productExistsCache[$idProduct])) {
-            return $this->productExistsCache[$idProduct];
+        $ref = (string) $ref;
+        if ($ref === '') {
+            return 0;
         }
-        $val = Db::getInstance()->getValue(
-            'SELECT 1 FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . $idProduct
+        if (isset($this->refCache[$ref])) {
+            return $this->refCache[$ref];
+        }
+        $id = (int) Db::getInstance()->getValue(
+            'SELECT MIN(`id_product`) FROM `' . _DB_PREFIX_ . 'product` WHERE `reference` = "' . pSQL($ref) . '"'
         );
-        return $this->productExistsCache[$idProduct] = (bool) $val;
+        return $this->refCache[$ref] = $id;
     }
 
     private function relationExists($idSrc, $type, $idTarget)
