@@ -460,3 +460,53 @@ Or le `ON DUPLICATE` ne se déclenche que si la clé UNIQUE entrante percute une
 - Edge case non couvert : si un CSV constructeur **repositionne** réellement une pièce (original change), l'ancienne ligne devient orpheline plutôt que d'être updatée — comportement identique à l'ancienne clé, hors scope ici.
 
 **Statut** : 🟢 corrigé en code, ⏳ migration 005 à appliquer sur preprod + retest #5 de bout en bout.
+
+---
+
+## 🔵 Motos — 3e visuel « Accessoires Powerparts » (à implémenter)
+
+**Fichiers concernés (à terme)** : `classes/MsMoto.php`, `sql/install.sql` (+ migration), `controllers/admin/AdminMsMotosController.php` (form upload + listing previews).
+
+**Contexte** : aujourd'hui la moto a 3 champs image (`picture_main`, `picture_cycle`, `picture_moteur`), mais **`picture_main` = `picture_cycle`** (même vue : la moto entière). Le client veut **3 visuels DISTINCTS** par moto :
+1. **Cycle** (= la moto entière, aujourd'hui `picture_main` issu du CSV / à terme PR-Visuels)
+2. **Moteur** (upload manuel actuel)
+3. **Accessoires Powerparts** (NOUVEAU — visuel des accessoires Powerparts pour la moto)
+
+**À faire** :
+- Ajouter un champ `picture_powerparts` (ou repurposer `picture_cycle` qui fait doublon avec `picture_main`) → décider du modèle à l'implémentation.
+- Câbler l'upload BO + les previews listing pour ce 3e visuel.
+- Clarifier au passage la redondance `picture_main`/`picture_cycle`.
+
+**Statut** : 🔵 à implémenter — pas urgent, consigné le 2026-06-24.
+
+---
+
+## 🔵 Visuels motos — import en masse (à implémenter)
+
+**Fichier concerné (à terme)** : `controllers/admin/AdminMsMotosController.php` (ou page `getContent` dédiée).
+
+**Contexte** : les visuels moto (`cycle`, `moteur`, et bientôt `powerparts`) s'uploadent **un par un** depuis la fiche moto BO. Sur **1 817 motos**, c'est ingérable à la main.
+
+**À faire** : un **import en masse** des visuels (sur le modèle du ZIP microfiches déjà en place) :
+- Upload d'un ZIP d'images, nommées par convention (ex. `<serial>_cycle.png`, `<serial>_moteur.png`, `<serial>_powerparts.png`), rangées dans `img/ms_moto/<id_moto>/`.
+- Pivot par `serial_constructeur` (ou `modelnumber`) pour rattacher chaque image à sa moto.
+- Rapport d'import (matchées / orphelines / ignorées), comme l'upload microfiches.
+
+**Statut** : 🔵 à implémenter — dépend aussi de PR-Visuels (URLs MSS) pour le visuel principal. Consigné le 2026-06-24.
+
+---
+
+## 🔵 Listings BO — lien « voir la page publique » (à implémenter)
+
+**Fichiers concernés (à terme)** : `controllers/admin/AdminMsMotosController.php`, `controllers/admin/AdminMsMicrofichesController.php`.
+
+**Contexte** : depuis les listings BO, pas de moyen rapide d'ouvrir la **vue publique** (front) d'une moto ou d'une microfiche pour vérifier le rendu.
+
+**À faire** : ajouter dans chaque listing une **colonne / action « Voir sur le site »** :
+- Motos → lien vers la PLP : `getModuleLink('megaservice_microfiches', 'moto', ['id_moto' => …])`
+- Microfiches → lien vers la PDP : `getModuleLink('megaservice_microfiches', 'microfiche', ['id_microfiche' => …])`
+- Ouverture dans un nouvel onglet.
+
+Quick win : les front controllers + `getModuleLink` existent déjà, il ne reste qu'à poser le lien dans les fields_list.
+
+**Statut** : 🔵 à implémenter — facile, consigné le 2026-06-24.
