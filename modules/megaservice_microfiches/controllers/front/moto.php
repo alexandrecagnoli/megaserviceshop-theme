@@ -56,6 +56,12 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             $partie = '';
         }
 
+        // Pas de partie → page HUB moto (3 accès + blocs). Sinon → PLP scopée.
+        if ($partie === '') {
+            $this->initHub();
+            return;
+        }
+
         $microfiches = $this->fetchMicrofiches((int) $this->moto->id, $partie);
         $categories  = $this->buildCategoryFacets($microfiches);
 
@@ -68,6 +74,74 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto.tpl');
+    }
+
+    /**
+     * Page "hub moto" (URL /motos/{id}-{slug} sans partie) — maquette composite :
+     * hero + bannière modèle, 3 accès (Cycle / Moteur / Powerparts), bloc
+     * "Dernières microfiches". Le bloc "Accessoires Powerparts" + la cible de la
+     * carte Powerparts = Phase 2 (intégration ukooparts, produits filtrés moto).
+     */
+    protected function initHub(): void
+    {
+        $idMoto = (int) $this->moto->id;
+        $slug   = Tools::str2url($this->moto->nom_fr);
+
+        $partieLink = function ($p) use ($idMoto, $slug) {
+            return $this->context->link->getModuleLink(
+                'megaservice_microfiches', 'moto',
+                ['id_moto' => $idMoto, 'slug' => $slug, 'partie' => $p]
+            );
+        };
+
+        $this->context->smarty->assign([
+            'ms_moto'        => $this->motoToTemplate($this->moto),
+            'ms_cycle_url'   => $partieLink('cycle'),
+            'ms_moteur_url'  => $partieLink('moteur'),
+            // Phase 2 : cible Powerparts (ukooparts, filtré moto). Placeholder pour l'instant.
+            'ms_powerparts_url' => '#',
+            'ms_latest'      => $this->fetchLatestMicrofiches($idMoto, 4),
+            'ms_latest_more' => $partieLink('cycle'),
+        ]);
+
+        $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
+    }
+
+    /**
+     * N dernières microfiches de la moto (toutes parties confondues) pour le hub.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    protected function fetchLatestMicrofiches(int $idMoto, int $limit): array
+    {
+        $rows = Db::getInstance()->executeS(
+            'SELECT mf.`id_microfiche`, mf.`nom_constructeur`, mf.`nom_fr`,
+                    mf.`image_thumb_url`, mf.`image_full_url`,
+                    COUNT(h.`id_hotspot`) AS nb_pieces
+             FROM `' . _DB_PREFIX_ . 'ms_microfiche` mf
+             LEFT JOIN `' . _DB_PREFIX_ . 'ms_microfiche_hotspot` h
+                    ON h.`id_microfiche` = mf.`id_microfiche`
+             WHERE mf.`id_moto` = ' . $idMoto . ' AND mf.`active` = 1
+             GROUP BY mf.`id_microfiche`
+             ORDER BY mf.`date_add` DESC, mf.`id_microfiche` DESC
+             LIMIT ' . (int) $limit
+        ) ?: [];
+
+        foreach ($rows as &$r) {
+            $r['id_microfiche'] = (int) $r['id_microfiche'];
+            $r['nb_pieces']     = (int) $r['nb_pieces'];
+            $r['display_name']  = ($r['nom_fr'] !== null && $r['nom_fr'] !== '')
+                ? $r['nom_fr'] : $r['nom_constructeur'];
+            $r['thumb']         = ($r['image_thumb_url'] !== null && $r['image_thumb_url'] !== '')
+                ? $r['image_thumb_url'] : $r['image_full_url'];
+            $r['url']           = $this->context->link->getModuleLink(
+                'megaservice_microfiches', 'microfiche',
+                ['id_microfiche' => $r['id_microfiche'], 'slug' => Tools::str2url($r['display_name'])]
+            );
+        }
+        unset($r);
+
+        return $rows;
     }
 
     /**
