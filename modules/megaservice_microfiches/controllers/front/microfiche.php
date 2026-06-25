@@ -223,6 +223,21 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
                 'megaservice_microfiches', 'moto', ['id_moto' => (int) $this->moto->id]
             ),
         ];
+
+        // Niveau "Partie" (cycle / moteur) dérivé de la catégorie de la microfiche.
+        $partie = Validate::isLoadedObject($this->categorie) ? (string) $this->categorie->partie : '';
+        if (in_array($partie, MsMicroficheCategorie::PARTIES, true)) {
+            $breadcrumb['links'][] = [
+                'title' => $partie === 'moteur'
+                    ? $this->module->l('Partie moteur', 'microfiche')
+                    : $this->module->l('Partie cycle', 'microfiche'),
+                'url'   => $this->context->link->getModuleLink(
+                    'megaservice_microfiches', 'moto',
+                    ['id_moto' => (int) $this->moto->id, 'partie' => $partie]
+                ),
+            ];
+        }
+
         $breadcrumb['links'][] = [
             'title' => $this->microfiche->nom_fr ?: $this->microfiche->nom_constructeur,
             'url'   => $this->context->link->getModuleLink(
