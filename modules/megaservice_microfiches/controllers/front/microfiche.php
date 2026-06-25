@@ -138,7 +138,10 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
         // hors stock ne passent PAS par le panier (décision client) → un parcours
         // alternatif sera proposé. On ne se fie PAS à $product->out_of_stock
         // (champ produit) qui ne reflète pas le vrai stock vendable du panier.
-        $h['available']    = $qty > 0;
+        // Commandable = en stock ET disponible à la vente. Sans le check
+        // available_for_order, on affichait le bouton sur des produits que le
+        // panier refuse ("quantité maximum") — cas des OEM importés en non-vendable.
+        $h['available']    = $qty > 0 && (bool) $product->available_for_order;
         $h['quantity']     = $qty;
         // Sélecteur de quantité borné au stock réel (sinon "quantité maximum
         // atteinte" au panier). Défaut = qté recommandée, plafonnée au stock.
