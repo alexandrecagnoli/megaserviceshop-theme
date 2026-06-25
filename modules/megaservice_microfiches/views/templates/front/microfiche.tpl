@@ -87,7 +87,7 @@
                       <form class="ms-pdp__part-form js-ajax-add-to-cart" method="post" action="{$h.add_to_cart_url}">
                         <input type="hidden" name="token" value="{$ms_cart_token}">
                         <input type="hidden" name="id_product" value="{$h.id_product}">
-                        <input type="hidden" name="id_product_attribute" value="0">
+                        <input type="hidden" name="id_product_attribute" value="{$h.id_product_attribute}">
                         <label class="ms-pdp__part-qty">
                           <span class="ms-pdp__part-qty-label">{l s='Qté recommandée' d='Modules.Megaservicemicrofiches.Shop'}</span>
                           <select name="qty">

@@ -119,11 +119,17 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             return; // dangling → reste orphelin côté affichage
         }
 
+        // Combinaison par défaut : si le produit en a une, son stock (et le check
+        // panier) sont portés par CETTE combinaison, pas par l'attribut 0. Envoyer
+        // 0 en dur faisait voir 0 stock au panier → "quantité maximum". 0 si simple.
+        $idAttr = (int) Product::getDefaultAttribute($idProduct);
+
         $price = (float) Product::getPriceStatic($idProduct, true);
-        $qty   = (int) StockAvailable::getQuantityAvailableByProduct($idProduct);
+        $qty   = (int) StockAvailable::getQuantityAvailableByProduct($idProduct, $idAttr);
 
         $h['has_product']  = true;
         $h['id_product']   = $idProduct;
+        $h['id_product_attribute'] = $idAttr;
         $h['product_url']  = $this->context->link->getProductLink($product);
         $h['price']        = $this->context->currentLocale
             ? $this->context->currentLocale->formatPrice($price, $this->context->currency->iso_code)
@@ -144,7 +150,7 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
         $h['add_to_cart_url'] = $this->context->link->getPageLink('cart', true, null, [
             'add'                  => 1,
             'id_product'           => $idProduct,
-            'id_product_attribute' => 0,
+            'id_product_attribute' => $idAttr,
             'token'                => Tools::getToken(false),
         ]);
     }
