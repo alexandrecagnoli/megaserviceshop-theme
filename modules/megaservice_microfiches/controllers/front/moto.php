@@ -98,13 +98,83 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_moto'        => $this->motoToTemplate($this->moto),
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
-            // Phase 2 : cible Powerparts (ukooparts, filtré moto). Placeholder pour l'instant.
-            'ms_powerparts_url' => '#',
+            // Phase 1 : Powerparts NON filtré moto (catégorie générique). Le
+            // filtrage par compatibilité moto = Phase 2 (ukooparts).
+            'ms_powerparts_url' => $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID),
+            'ms_powerparts'  => $this->fetchPowerpartsProducts(4),
             'ms_latest'      => $this->fetchLatestMicrofiches($idMoto, 4),
             'ms_latest_more' => $partieLink('cycle'),
+            'static_token'   => Tools::getToken(false), // requis par la miniature produit (form panier)
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
+    }
+
+    /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */
+    const POWERPARTS_CATEGORY_ID = 41;
+
+    /**
+     * Produits Powerparts (catégorie 41 + sous-arbre), présentés au format natif
+     * PS pour réutiliser la miniature produit du thème (image, prix, panier).
+     * Phase 1 : NON filtré par compatibilité moto (Phase 2 = ukooparts).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    protected function fetchPowerpartsProducts(int $limit): array
+    {
+        $idShop = (int) $this->context->shop->id;
+        $rows = Db::getInstance()->executeS(
+            'SELECT DISTINCT cp.`id_product`
+             FROM `' . _DB_PREFIX_ . 'category_product` cp
+             JOIN `' . _DB_PREFIX_ . 'category` c   ON c.`id_category` = cp.`id_category`
+             JOIN `' . _DB_PREFIX_ . 'category` root ON root.`id_category` = ' . (int) self::POWERPARTS_CATEGORY_ID . '
+             JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                  ON ps.`id_product` = cp.`id_product` AND ps.`id_shop` = ' . $idShop . '
+             WHERE c.`nleft` >= root.`nleft` AND c.`nright` <= root.`nright`
+               AND ps.`active` = 1 AND ps.`visibility` IN ("both", "catalog")
+             ORDER BY ps.`date_add` DESC
+             LIMIT ' . (int) $limit
+        ) ?: [];
+
+        $ids = array_map(static function ($r) { return (int) $r['id_product']; }, $rows);
+
+        return $this->presentProducts($ids);
+    }
+
+    /**
+     * Présente des produits par id via l'assembleur + presenter PS (mêmes objets
+     * que le listing natif) → tableau exploitable par la miniature produit.
+     *
+     * @param int[] $ids
+     * @return array<int,array<string,mixed>>
+     */
+    protected function presentProducts(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        $assembler = new ProductAssembler($this->context);
+        $factory   = new ProductPresenterFactory($this->context);
+        $settings  = $factory->getPresentationSettings();
+        $presenter = new \PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter(
+            new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link),
+            $this->context->link,
+            new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter(),
+            new \PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever(),
+            $this->context->getTranslator()
+        );
+
+        $out = [];
+        foreach ($ids as $id) {
+            try {
+                $raw   = $assembler->assembleProduct(['id_product' => (int) $id]);
+                $out[] = $presenter->present($settings, $raw, $this->context->language);
+            } catch (\Exception $e) {
+                // produit cassé / inexistant : skip silencieusement
+            }
+        }
+
+        return $out;
     }
 
     /**

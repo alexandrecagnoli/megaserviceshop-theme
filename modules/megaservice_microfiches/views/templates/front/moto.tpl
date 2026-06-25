@@ -76,7 +76,8 @@
             {foreach from=$ms_microfiches item=mf}
               <article class="ms-product-card js-product ms-plp-card" data-categorie="{$mf.id_categorie}" data-name="{$mf.display_name|escape:'html'}" data-pieces="{$mf.nb_pieces}">
                 <a href="{$mf.url}" class="ms-product-card__media">
-                  <img src="{$mf.thumb}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
+                  {* Image entière de la microfiche (sans rognage). Miniature : $mf.thumb *}
+                  <img src="{$mf.image_full_url}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
                        onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
                   <div class="ms-product-card__overlay">
                     <span class="ms-product-card__overlay-btn">{l s='VOIR LA MICROFICHE' d='Modules.Megaservicemicrofiches.Shop'}</span>

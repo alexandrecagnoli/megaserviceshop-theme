@@ -58,7 +58,10 @@
           {foreach from=$ms_latest item=mf}
             <article class="ms-product-card js-product ms-plp-card">
               <a href="{$mf.url}" class="ms-product-card__media">
-                <img src="{$mf.thumb}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
+                {* Image ENTIÈRE de la microfiche (vue éclatée), redimensionnée sans
+                   rognage (object-fit:contain). Pour repasser à la miniature
+                   générée : remplacer $mf.image_full_url par $mf.thumb. *}
+                <img src="{$mf.image_full_url}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
                      onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
                 <div class="ms-product-card__overlay">
                   <span class="ms-product-card__overlay-btn">{l s='VOIR LA MICROFICHE' d='Modules.Megaservicemicrofiches.Shop'}</span>
@@ -83,10 +86,26 @@
       </section>
     {/if}
 
-    {* ── Phase 2 (intégration ukooparts) ──
-       - Bloc "Accessoires Powerparts" : produits Powerparts filtrés sur la moto
-       - Bloc "Récemment consultés"
-       à câbler une fois la récupération produits ukooparts définie. *}
+    {* ── Accessoires Powerparts ──
+       Phase 1 : produits NON filtrés moto (catégorie 41 générique). Le filtrage
+       par compatibilité moto = Phase 2 (ukooparts). On réutilise la miniature
+       produit NATIVE du thème → cartes prix + "Ajouter" panier identiques au
+       reste du site (et l'ajout AJAX sidebar marche déjà via app.js). *}
+    {if $ms_powerparts}
+      <section class="ms-hub__section">
+        <header class="ms-hub__section-head">
+          <h2 class="ms-hub__section-title">{l s='Accessoires Powerparts' d='Modules.Megaservicemicrofiches.Shop'}</h2>
+          <a href="{$ms_powerparts_url}" class="ms-hub__section-more">{l s='Voir plus' d='Modules.Megaservicemicrofiches.Shop'}</a>
+        </header>
+        <div class="ms-hub__grid">
+          {foreach from=$ms_powerparts item=product}
+            {include file='catalog/_partials/miniatures/product.tpl' product=$product}
+          {/foreach}
+        </div>
+      </section>
+    {/if}
+
+    {* ── Phase 2 : "Récemment consultés" (bloc cookie natif) ── *}
 
   </div>
 {/block}
