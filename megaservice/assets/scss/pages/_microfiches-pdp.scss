@@ -287,3 +287,10 @@
     @include media-sm { grid-template-columns: 1fr; }
   }
 }
+
+// Pièce liée mais hors stock : pas de panier (parcours alternatif à venir).
+.ms-pdp__part-oncommand {
+  font-size: $font-size-sm;
+  color: $color-gray-50;
+  font-style: italic;
+}

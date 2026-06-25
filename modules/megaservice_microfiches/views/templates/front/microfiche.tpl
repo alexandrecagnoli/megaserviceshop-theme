@@ -80,22 +80,29 @@
                 {if $h.has_product}
                   <div class="ms-pdp__part-buy">
                     <span class="ms-pdp__part-price">{$h.price}</span>
-                    {* Form AJAX : intercepté par app.js (.js-ajax-add-to-cart) →
-                       ajout sans rechargement + ouverture du panneau panier latéral. *}
-                    <form class="ms-pdp__part-form js-ajax-add-to-cart" method="post" action="{$h.add_to_cart_url}">
-                      <input type="hidden" name="token" value="{$ms_cart_token}">
-                      <input type="hidden" name="id_product" value="{$h.id_product}">
-                      <input type="hidden" name="id_product_attribute" value="0">
-                      <label class="ms-pdp__part-qty">
-                        <span class="ms-pdp__part-qty-label">{l s='Qté recommandée' d='Modules.Megaservicemicrofiches.Shop'}</span>
-                        <select name="qty">
-                          {section name=q start=1 loop=11}
-                            <option value="{$smarty.section.q.index}"{if $smarty.section.q.index == $h.qty_recommended} selected{/if}>{$smarty.section.q.index}</option>
-                          {/section}
-                        </select>
-                      </label>
-                      <button type="submit" class="ms-pdp__part-add">{l s='Ajouter au panier' d='Modules.Megaservicemicrofiches.Shop'}</button>
-                    </form>
+                    {if $h.available}
+                      {* Form AJAX : intercepté par app.js (.js-ajax-add-to-cart) →
+                         ajout sans rechargement + ouverture du panneau panier latéral.
+                         Quantité bornée au stock réel (max_qty) → jamais d'erreur panier. *}
+                      <form class="ms-pdp__part-form js-ajax-add-to-cart" method="post" action="{$h.add_to_cart_url}">
+                        <input type="hidden" name="token" value="{$ms_cart_token}">
+                        <input type="hidden" name="id_product" value="{$h.id_product}">
+                        <input type="hidden" name="id_product_attribute" value="0">
+                        <label class="ms-pdp__part-qty">
+                          <span class="ms-pdp__part-qty-label">{l s='Qté recommandée' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                          <select name="qty">
+                            {for $i=1 to $h.max_qty}
+                              <option value="{$i}"{if $i == $h.default_qty} selected{/if}>{$i}</option>
+                            {/for}
+                          </select>
+                        </label>
+                        <button type="submit" class="ms-pdp__part-add">{l s='Ajouter au panier' d='Modules.Megaservicemicrofiches.Shop'}</button>
+                      </form>
+                    {else}
+                      {* Hors stock : pas d'ajout panier (décision client) — parcours
+                         alternatif à venir (devis / nous consulter). *}
+                      <span class="ms-pdp__part-oncommand">{l s='Sur commande' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                    {/if}
                   </div>
                 {else}
                   <div class="ms-pdp__part-buy ms-pdp__part-buy--soon">

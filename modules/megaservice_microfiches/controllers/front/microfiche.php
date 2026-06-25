@@ -128,8 +128,16 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
         $h['price']        = $this->context->currentLocale
             ? $this->context->currentLocale->formatPrice($price, $this->context->currency->iso_code)
             : Tools::displayPrice($price);
-        $h['available']    = $qty > 0 || (int) $product->out_of_stock === 1; // 1 = autoriser commande
+        // Commandable via panier UNIQUEMENT si réellement en stock. Les pièces
+        // hors stock ne passent PAS par le panier (décision client) → un parcours
+        // alternatif sera proposé. On ne se fie PAS à $product->out_of_stock
+        // (champ produit) qui ne reflète pas le vrai stock vendable du panier.
+        $h['available']    = $qty > 0;
         $h['quantity']     = $qty;
+        // Sélecteur de quantité borné au stock réel (sinon "quantité maximum
+        // atteinte" au panier). Défaut = qté recommandée, plafonnée au stock.
+        $h['max_qty']      = max(1, min(10, $qty));
+        $h['default_qty']  = max(1, min((int) ($h['qty_recommended'] ?? 1), $h['max_qty']));
         // URL d'ajout panier au format natif PS (même construction que les
         // miniatures produit) → interceptée par le handler AJAX d'app.js
         // (.js-ajax-add-to-cart) qui ouvre le panneau latéral.
