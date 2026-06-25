@@ -22,7 +22,7 @@
     var countEl    = document.querySelector('.js-ms-plp-count');
     var emptyEl    = document.querySelector('.js-ms-plp-empty');
     var clearBtn   = document.querySelector('.js-ms-plp-clear');
-    var resetBtn   = document.querySelector('.js-ms-plp-reset');
+    var resetBtns  = Array.prototype.slice.call(document.querySelectorAll('.js-ms-plp-reset'));
 
     var countTemplate = countEl ? countEl.textContent.replace(/\d+/, '%d') : '';
 
@@ -60,10 +60,25 @@
       });
     }
 
-    if (resetBtn) {
-      resetBtn.addEventListener('click', function () {
+    // "Réinitialiser" présent en plusieurs exemplaires (sidebar desktop + footer
+    // sheet mobile) → on lie tous les .js-ms-plp-reset.
+    resetBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
         checkboxes.forEach(function (cb) { cb.checked = true; });
         apply();
+      });
+    });
+
+    // "Voir plus / Voir moins" — déplie les catégories au-delà des 9 premières.
+    var seemore = document.querySelector('.js-ms-plp-seemore');
+    if (seemore) {
+      var extras = Array.prototype.slice.call(document.querySelectorAll('.ms-plp-facet-extra'));
+      seemore.addEventListener('click', function () {
+        var opening = seemore.classList.toggle('is-open');
+        extras.forEach(function (li) { li.hidden = !opening; });
+        seemore.childNodes[0].nodeValue = (opening
+          ? seemore.getAttribute('data-less')
+          : seemore.getAttribute('data-more')) + ' ';
       });
     }
   }

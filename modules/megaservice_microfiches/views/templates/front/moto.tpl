@@ -111,19 +111,29 @@
         </button>
       </header>
 
+      {* ── Carte "Partie" (cycle / moteur) — visible si la PLP est scopée ── *}
+      {if $ms_partie}
+        <div class="ms-plp-partie-card ms-plp-partie-card--{$ms_partie}">
+          <span class="ms-plp-partie-card__label">
+            {if $ms_partie == 'moteur'}{l s='Partie moteur' d='Modules.Megaservicemicrofiches.Shop'}
+            {else}{l s='Partie cycle' d='Modules.Megaservicemicrofiches.Shop'}{/if}
+          </span>
+        </div>
+      {/if}
+
       {* Facettes AUTONOMES (classes ms-plp-*) : volontairement HORS de
          #search_filters / .facet-label, sinon le handler capture ps_facetedsearch
          d'app.js fait stopImmediatePropagation() et bloque le toggle. Style
          répliqué dans _microfiches-plp.scss. Filtre = simple listener change. *}
       <div class="ms-plp-facets">
-        <div class="ms-plp-facet">
+        <div class="ms-plp-facet js-ms-plp-collapse">
           <p class="ms-plp-facet-title">
             {l s='Catégorie' d='Modules.Megaservicemicrofiches.Shop'}
             <button type="button" class="ms-plp-clear js-ms-plp-clear">{l s='Effacer' d='Modules.Megaservicemicrofiches.Shop'}</button>
           </p>
           <ul class="ms-plp-facet-list">
-            {foreach from=$ms_categories item=cat}
-              <li>
+            {foreach from=$ms_categories item=cat name=cats}
+              <li{if $smarty.foreach.cats.index >= 9} class="ms-plp-facet-extra" hidden{/if}>
                 <label class="ms-plp-facet-row">
                   <span class="ms-plp-facet-text">
                     {$cat.label|escape:'html'}
@@ -137,7 +147,45 @@
               </li>
             {/foreach}
           </ul>
+          {if $ms_categories|count > 9}
+            <button type="button" class="ms-plp-seemore js-ms-plp-seemore"
+                    data-more="{l s='Voir plus' d='Modules.Megaservicemicrofiches.Shop'}"
+                    data-less="{l s='Voir moins' d='Modules.Megaservicemicrofiches.Shop'}">
+              {l s='Voir plus' d='Modules.Megaservicemicrofiches.Shop'}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          {/if}
         </div>
+
+        {* ── Disponibilité (visuel — câblage réel quand le catalogue OEM sera peuplé) ── *}
+        <div class="ms-plp-facet">
+          <p class="ms-plp-facet-title">{l s='Disponibilité' d='Modules.Megaservicemicrofiches.Shop'}</p>
+          <ul class="ms-plp-facet-list">
+            <li>
+              <label class="ms-plp-facet-row">
+                <span class="ms-plp-facet-text">{l s='Disponible maintenant' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                <span class="ms-plp-radio">
+                  <input type="radio" name="ms_dispo" value="available" disabled>
+                  <span class="ms-plp-radio-dot" aria-hidden="true"></span>
+                </span>
+              </label>
+            </li>
+            <li>
+              <label class="ms-plp-facet-row">
+                <span class="ms-plp-facet-text">{l s='Tout' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                <span class="ms-plp-radio">
+                  <input type="radio" name="ms_dispo" value="all" checked disabled>
+                  <span class="ms-plp-radio-dot" aria-hidden="true"></span>
+                </span>
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        {* ── Réinitialiser (visible desktop + mobile) ── *}
+        <button type="button" class="ms-plp-reset js-ms-plp-reset">{l s='Réinitialiser' d='Modules.Megaservicemicrofiches.Shop'}</button>
       </div>
 
       <footer class="ms-catalog__sidebar-foot">
