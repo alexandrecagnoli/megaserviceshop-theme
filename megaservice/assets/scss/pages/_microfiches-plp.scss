@@ -312,3 +312,13 @@ body#module-megaservice_microfiches-microfiche {
 
   &:hover { background: $color-black; color: $color-white; }
 }
+
+// Items de tri rendus en <button> (au lieu de <a>) : reset pour matcher
+// pixel-perfect le .select-list natif du dropdown de tri.
+.ms-plp-sort .select-list {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

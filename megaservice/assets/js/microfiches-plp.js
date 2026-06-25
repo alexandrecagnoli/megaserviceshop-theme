@@ -69,6 +69,37 @@
       });
     });
 
+    // ── Tri client-side (réordonne les cartes dans la grille) ──
+    var originalOrder = cards.slice(); // ordre serveur = "Tri par défaut"
+    var sortLabel = document.querySelector('.js-ms-plp-sort-label');
+
+    function sortCards(mode) {
+      var ordered;
+      if (mode === 'name-asc' || mode === 'name-desc') {
+        ordered = cards.slice().sort(function (a, b) {
+          var na = (a.getAttribute('data-name') || '').toLowerCase();
+          var nb = (b.getAttribute('data-name') || '').toLowerCase();
+          return na < nb ? -1 : (na > nb ? 1 : 0);
+        });
+        if (mode === 'name-desc') { ordered.reverse(); }
+      } else if (mode === 'pieces-desc') {
+        ordered = cards.slice().sort(function (a, b) {
+          return (parseInt(b.getAttribute('data-pieces'), 10) || 0)
+               - (parseInt(a.getAttribute('data-pieces'), 10) || 0);
+        });
+      } else {
+        ordered = originalOrder.slice();
+      }
+      ordered.forEach(function (card) { grid.appendChild(card); }); // re-append = réordonne
+    }
+
+    Array.prototype.slice.call(document.querySelectorAll('.js-ms-plp-sort')).forEach(function (item) {
+      item.addEventListener('click', function () {
+        sortCards(item.getAttribute('data-sort'));
+        if (sortLabel) { sortLabel.textContent = item.textContent.trim(); }
+      });
+    });
+
     // "Voir plus / Voir moins" — déplie les catégories au-delà des 9 premières.
     var seemore = document.querySelector('.js-ms-plp-seemore');
     if (seemore) {

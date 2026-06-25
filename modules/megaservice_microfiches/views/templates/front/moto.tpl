@@ -48,6 +48,21 @@
               {l s='Affichage de %d résultats' sprintf=[$ms_total] d='Modules.Megaservicemicrofiches.Shop'}
             </p>
             <div class="ms-catalog-topbar__right">
+              {* Tri client-side : réutilise le visuel .products-sort-order du thème
+                 (ouverture/fermeture gérée par app.js) mais items js-ms-plp-sort
+                 (PAS js-search-link, sinon ça déclenche ps_facetedsearch). *}
+              <div class="products-sort-order dropdown ms-plp-sort">
+                <button class="btn-unstyle select-title" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="js-ms-plp-sort-label">{l s='Tri par défaut' d='Modules.Megaservicemicrofiches.Shop'}</span>
+                  <i class="material-icons float-xs-right">&#xE5C5;</i>
+                </button>
+                <div class="dropdown-menu">
+                  <button type="button" class="select-list js-ms-plp-sort" data-sort="default">{l s='Tri par défaut' d='Modules.Megaservicemicrofiches.Shop'}</button>
+                  <button type="button" class="select-list js-ms-plp-sort" data-sort="name-asc">{l s='Nom A → Z' d='Modules.Megaservicemicrofiches.Shop'}</button>
+                  <button type="button" class="select-list js-ms-plp-sort" data-sort="name-desc">{l s='Nom Z → A' d='Modules.Megaservicemicrofiches.Shop'}</button>
+                  <button type="button" class="select-list js-ms-plp-sort" data-sort="pieces-desc">{l s='Plus de pièces' d='Modules.Megaservicemicrofiches.Shop'}</button>
+                </div>
+              </div>
               <button type="button" class="ms-catalog-topbar__filter-btn js-search-toggler">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -59,7 +74,7 @@
 
           <div class="products js-ms-plp-grid">
             {foreach from=$ms_microfiches item=mf}
-              <article class="ms-product-card js-product ms-plp-card" data-categorie="{$mf.id_categorie}">
+              <article class="ms-product-card js-product ms-plp-card" data-categorie="{$mf.id_categorie}" data-name="{$mf.display_name|escape:'html'}" data-pieces="{$mf.nb_pieces}">
                 <a href="{$mf.url}" class="ms-product-card__media">
                   <img src="{$mf.thumb}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
                        onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
