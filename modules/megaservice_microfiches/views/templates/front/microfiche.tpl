@@ -129,8 +129,8 @@
           {foreach from=$ms_related item=r}
             <article class="ms-product-card js-product ms-plp-card">
               <a href="{$r.url}" class="ms-product-card__media">
-                {* Image entière de la microfiche (sans rognage). Miniature : $r.thumb *}
-                <img src="{$r.image_full_url}" alt="{$r.display_name|escape:'html'}" loading="lazy"
+                {* Miniature normalisée → cards homogènes. Image entière : $r.image_full_url *}
+                <img src="{$r.thumb}" alt="{$r.display_name|escape:'html'}" loading="lazy"
                      onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
                 <div class="ms-product-card__overlay">
                   <span class="ms-product-card__overlay-btn">{l s='VOIR LA MICROFICHE' d='Modules.Megaservicemicrofiches.Shop'}</span>

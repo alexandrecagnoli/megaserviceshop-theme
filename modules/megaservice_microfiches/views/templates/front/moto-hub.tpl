@@ -58,10 +58,9 @@
           {foreach from=$ms_latest item=mf}
             <article class="ms-product-card js-product ms-plp-card">
               <a href="{$mf.url}" class="ms-product-card__media">
-                {* Image ENTIÈRE de la microfiche (vue éclatée), redimensionnée sans
-                   rognage (object-fit:contain). Pour repasser à la miniature
-                   générée : remplacer $mf.image_full_url par $mf.thumb. *}
-                <img src="{$mf.image_full_url}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
+                {* Miniature générée (taille normalisée) → cards homogènes. Pour
+                   l'image entière (tailles variables) : $mf.image_full_url. *}
+                <img src="{$mf.thumb}" alt="{$mf.display_name|escape:'html'}" loading="lazy"
                      onerror="this.closest('.ms-product-card__media').classList.add('is-broken');this.remove();">
                 <div class="ms-product-card__overlay">
                   <span class="ms-product-card__overlay-btn">{l s='VOIR LA MICROFICHE' d='Modules.Megaservicemicrofiches.Shop'}</span>
