@@ -197,6 +197,21 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             ),
         ];
 
+        // Niveau "Partie" (cycle / moteur) après la moto, si la PLP est scopée.
+        $partie = (string) Tools::getValue('partie');
+        if (in_array($partie, MsMicroficheCategorie::PARTIES, true)) {
+            $breadcrumb['links'][] = [
+                'title' => $partie === 'moteur'
+                    ? $this->module->l('Partie moteur', 'moto')
+                    : $this->module->l('Partie cycle', 'moto'),
+                'url'   => $this->context->link->getModuleLink(
+                    'megaservice_microfiches',
+                    'moto',
+                    ['id_moto' => (int) $this->moto->id, 'partie' => $partie]
+                ),
+            ];
+        }
+
         return $breadcrumb;
     }
 }
