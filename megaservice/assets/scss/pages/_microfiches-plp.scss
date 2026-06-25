@@ -45,19 +45,16 @@ body#module-megaservice_microfiches-microfiche {
 // n'a aucun effet visuel et le filtre catégorie semble cassé.
 .ms-plp-card[hidden] { display: none !important; }
 
-// ── Carte microfiche : l'image (vue éclatée, souvent large) remplit toute la
-//    largeur de la card et harmonise la hauteur (~280×270). On rogne le vertical
-//    (object-fit:cover) plutôt que de laisser des bandes blanches (contain).
-//    Pour repasser au "sans rognage" : aspect-ratio 250/171 + object-fit contain.
+// ── Carte microfiche : la vue éclatée ne doit pas être rognée (miniature
+//    normalisée affichée en entier, ratio de base 250/171). ──
 .ms-plp-card {
   .ms-product-card__media {
     background: $color-gray-5;
-    aspect-ratio: 280 / 270;
 
     img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
     }
 
     &.is-broken {
