@@ -80,11 +80,12 @@
                 {if $h.has_product}
                   <div class="ms-pdp__part-buy">
                     <span class="ms-pdp__part-price">{$h.price}</span>
-                    <form class="ms-pdp__part-form" method="get" action="{$ms_cart_url}">
-                      <input type="hidden" name="controller" value="cart">
-                      <input type="hidden" name="add" value="1">
-                      <input type="hidden" name="id_product" value="{$h.id_product}">
+                    {* Form AJAX : intercepté par app.js (.js-ajax-add-to-cart) →
+                       ajout sans rechargement + ouverture du panneau panier latéral. *}
+                    <form class="ms-pdp__part-form js-ajax-add-to-cart" method="post" action="{$h.add_to_cart_url}">
                       <input type="hidden" name="token" value="{$ms_cart_token}">
+                      <input type="hidden" name="id_product" value="{$h.id_product}">
+                      <input type="hidden" name="id_product_attribute" value="0">
                       <label class="ms-pdp__part-qty">
                         <span class="ms-pdp__part-qty-label">{l s='Qté recommandée' d='Modules.Megaservicemicrofiches.Shop'}</span>
                         <select name="qty">

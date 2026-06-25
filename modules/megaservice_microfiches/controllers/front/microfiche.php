@@ -130,6 +130,15 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             : Tools::displayPrice($price);
         $h['available']    = $qty > 0 || (int) $product->out_of_stock === 1; // 1 = autoriser commande
         $h['quantity']     = $qty;
+        // URL d'ajout panier au format natif PS (même construction que les
+        // miniatures produit) → interceptée par le handler AJAX d'app.js
+        // (.js-ajax-add-to-cart) qui ouvre le panneau latéral.
+        $h['add_to_cart_url'] = $this->context->link->getPageLink('cart', true, null, [
+            'add'                  => 1,
+            'id_product'           => $idProduct,
+            'id_product_attribute' => 0,
+            'token'                => Tools::getToken(false),
+        ]);
     }
 
     /**
