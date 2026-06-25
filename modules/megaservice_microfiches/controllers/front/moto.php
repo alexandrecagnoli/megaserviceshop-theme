@@ -115,11 +115,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             $row['thumb']         = $row['image_thumb_url'] !== null && $row['image_thumb_url'] !== ''
                 ? $row['image_thumb_url']
                 : $row['image_full_url'];
-            // Lien vers la PDP microfiche (PR7).
+            // Lien vers la PDP microfiche (PR7) — URL propre /microfiches/{id}-{slug}.
             $row['url']           = $this->context->link->getModuleLink(
                 'megaservice_microfiches',
                 'microfiche',
-                ['id_microfiche' => $row['id_microfiche']]
+                ['id_microfiche' => $row['id_microfiche'], 'slug' => Tools::str2url($row['display_name'])]
             );
         }
         unset($row);
@@ -188,12 +188,13 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'title' => $this->module->l('Pièces détachées d\'origine', 'moto'),
             'url'   => '#',
         ];
+        $motoSlug = Tools::str2url($this->moto->nom_fr);
         $breadcrumb['links'][] = [
             'title' => $this->moto->nom_fr,
             'url'   => $this->context->link->getModuleLink(
                 'megaservice_microfiches',
                 'moto',
-                ['id_moto' => (int) $this->moto->id]
+                ['id_moto' => (int) $this->moto->id, 'slug' => $motoSlug]
             ),
         ];
 
@@ -207,7 +208,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
                 'url'   => $this->context->link->getModuleLink(
                     'megaservice_microfiches',
                     'moto',
-                    ['id_moto' => (int) $this->moto->id, 'partie' => $partie]
+                    ['id_moto' => (int) $this->moto->id, 'slug' => $motoSlug, 'partie' => $partie]
                 ),
             ];
         }

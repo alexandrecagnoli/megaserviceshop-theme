@@ -51,7 +51,53 @@ class Megaservice_microfiches extends Module
             && $this->registerHook('displayHeader')
             && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('actionProductAdd')
-            && $this->registerHook('actionProductUpdate');
+            && $this->registerHook('actionProductUpdate')
+            && $this->registerHook('moduleRoutes');
+    }
+
+    /**
+     * URLs propres (friendly URLs) des pages front du module.
+     * Schéma id-based (robuste, comme produits/catégories PS) :
+     *   - /motos/{id}-{slug}              → page moto (toutes parties)
+     *   - /motos/{id}-{slug}/{partie}     → moto scopée cycle|moteur
+     *   - /microfiches/{id}-{slug}        → PDP microfiche
+     * Les contrôleurs résolvent par id_moto / id_microfiche ; le slug est SEO.
+     */
+    public function hookModuleRoutes(array $params): array
+    {
+        $base = ['fc' => 'module', 'module' => $this->name];
+
+        return [
+            // Route partie d'abord (plus spécifique).
+            'module-megaservice_microfiches-moto-partie' => [
+                'controller' => 'moto',
+                'rule'       => 'motos/{id_moto}-{slug}/{partie}',
+                'keywords'   => [
+                    'id_moto' => ['regexp' => '[0-9]+',          'param' => 'id_moto'],
+                    'slug'    => ['regexp' => '[_a-zA-Z0-9-]*',  'param' => 'slug'],
+                    'partie'  => ['regexp' => '(?:cycle|moteur)', 'param' => 'partie'],
+                ],
+                'params'     => $base,
+            ],
+            'module-megaservice_microfiches-moto' => [
+                'controller' => 'moto',
+                'rule'       => 'motos/{id_moto}-{slug}',
+                'keywords'   => [
+                    'id_moto' => ['regexp' => '[0-9]+',         'param' => 'id_moto'],
+                    'slug'    => ['regexp' => '[_a-zA-Z0-9-]*', 'param' => 'slug'],
+                ],
+                'params'     => $base,
+            ],
+            'module-megaservice_microfiches-microfiche' => [
+                'controller' => 'microfiche',
+                'rule'       => 'microfiches/{id_microfiche}-{slug}',
+                'keywords'   => [
+                    'id_microfiche' => ['regexp' => '[0-9]+',         'param' => 'id_microfiche'],
+                    'slug'          => ['regexp' => '[_a-zA-Z0-9-]*', 'param' => 'slug'],
+                ],
+                'params'     => $base,
+            ],
+        ];
     }
 
     /**
@@ -159,6 +205,13 @@ class Megaservice_microfiches extends Module
             if ($this->installTabs()) {
                 Configuration::updateValue('MS_MICROFICHES_TABS_VERSION', self::TABS_VERSION);
             }
+        }
+
+        // Enregistre moduleRoutes sur les installations existantes (ajouté après
+        // coup) sans exiger un désinstall/réinstall. Idempotent (1 SELECT/pageview
+        // BO une fois enregistré).
+        if (!$this->isRegisteredInHook('moduleRoutes')) {
+            $this->registerHook('moduleRoutes');
         }
     }
 
