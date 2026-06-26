@@ -510,3 +510,22 @@ Or le `ON DUPLICATE` ne se déclenche que si la clé UNIQUE entrante percute une
 Quick win : les front controllers + `getModuleLink` existent déjà, il ne reste qu'à poser le lien dans les fields_list.
 
 **Statut** : 🔵 à implémenter — facile, consigné le 2026-06-24.
+
+---
+
+## 🔵 Visuel moto EveryParts non poussé sur la fiche véhicule (à investiguer)
+
+**Périmètre** : intégration **EveryParts ↔ serveur Megaservice** (hors de notre module microfiches).
+
+**Contexte** : le visuel moto importé dans EveryParts n'apparaît pas sur la fiche véhicule. Hypothèse everyparts : une **restriction côté notre serveur** empêcherait la copie/le push de l'image quand leur panel l'envoie. **Non bloquant pour le POC** (juste pas joli), remonté le 2026-06-25.
+
+**Important** : nos visuels moto (`picture_main` / `picture_cycle` / `picture_moteur` sur `ms_moto`, upload via `AdminMsMotosController`) sont **indépendants** de l'image véhicule EveryParts — l'image poussée **ne transite pas par notre module**.
+
+**À investiguer (par mécanisme de push)** :
+- **URL référencée** → hotlink/referrer protection, ou **mixed content** (image en `http` sur page `https` → bloquée navigateur).
+- **Copie fichier** → **permissions d'écriture** du dossier cible (owner/chmod).
+- **Upload HTTP/API** → limites PHP (`upload_max_filesize` / `post_max_size`), **WAF/ModSecurity**, règles `.htaccess`/nginx sur `img/`.
+
+**Test rapide** : ouvrir l'URL de l'image en direct (200 vs 403/404) + console navigateur sur la fiche véhicule (mixed-content / 403).
+
+**Statut** : 🔵 à investiguer avec EveryParts + hébergeur — pas urgent, consigné le 2026-06-25.
