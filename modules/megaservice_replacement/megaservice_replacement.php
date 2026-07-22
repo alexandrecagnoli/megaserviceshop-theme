@@ -14,10 +14,13 @@
  *  - La référence constructeur est la CLÉ, jamais l'id PrestaShop : un
  *    remplaçant peut ne pas encore exister au catalogue. Résolution réf →
  *    id_product à l'exécution.
- *  - `sales_orga` est informatif et HORS clé unique : sur 4 503 références
- *    présentes dans plusieurs organisations de vente, seules 2 ont des cibles
- *    réellement divergentes → la fusion produit le sur-ensemble, comportement
- *    souhaitable. (Le reste n'était que des doublons inter/intra-fichier.)
+ *  - `sales_orga` fait partie de la clé unique, pour permettre un import
+ *    PHOTOGRAPHIQUE PAR ORGANISATION : réimporter le fichier KTM ne doit pas
+ *    effacer les relations Husqvarna ou GasGas. En contrepartie une relation
+ *    mutualisée entre marques existe en plusieurs exemplaires — le FRONT les
+ *    regroupe à la lecture, car il ignore l'orga (la réf constructeur est
+ *    globalement unique chez Pierer). Mesuré : 4 503 réfs sont multi-orga,
+ *    et seules 2 ont des cibles réellement divergentes.
  *  - Pas de pack natif PrestaShop pour les sets : ça créerait des produits à
  *    référence inventée, invisibles de G8 (prix/stock non synchronisés, lignes
  *    de commande non rapprochables en magasin).
@@ -38,7 +41,7 @@ class Megaservice_replacement extends Module
     {
         $this->name          = 'megaservice_replacement';
         $this->tab           = 'administration';
-        $this->version       = '1.0.0';
+        $this->version       = '1.1.0';
         $this->author        = 'Megaservice';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION_];
@@ -397,10 +400,13 @@ class Megaservice_replacement extends Module
     /**
      * Table des relations de remplacement.
      *
-     * Clé unique (`ref_replaced`, `ref_replacement`) SANS `sales_orga` : elle
-     * absorbe naturellement les doublons intra-fichier (216 constatés) et
-     * inter-organisations (6 550 constatés) — 22 963 lignes brutes se réduisent
-     * à 16 405 relations uniques (après rejet des 12 auto-références).
+     * Clé unique (`sales_orga`, `ref_replaced`, `ref_replacement`) : l'orga est
+     * dans la clé pour permettre un import PHOTOGRAPHIQUE PAR ORGA — réimporter
+     * le fichier KTM ne doit pas effacer les relations Husqvarna ou GasGas.
+     *
+     * Conséquence : une relation mutualisée entre marques existe en plusieurs
+     * exemplaires. Le FRONT les regroupe à la lecture (il ignore l'orga, la réf
+     * constructeur étant globalement unique chez Pierer).
      */
     private function createTable()
     {
@@ -418,7 +424,7 @@ class Megaservice_replacement extends Module
             `date_add`        DATETIME NOT NULL,
             `date_upd`        DATETIME NOT NULL,
             PRIMARY KEY (`id_replacement`),
-            UNIQUE KEY `uk_replacement` (`ref_replaced`, `ref_replacement`),
+            UNIQUE KEY `uk_replacement` (`sales_orga`, `ref_replaced`, `ref_replacement`),
             KEY `idx_ref_replaced` (`ref_replaced`),
             KEY `idx_ref_final` (`ref_final`),
             KEY `idx_chain_status` (`chain_status`)

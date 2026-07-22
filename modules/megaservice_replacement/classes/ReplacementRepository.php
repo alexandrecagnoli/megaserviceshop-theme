@@ -30,13 +30,11 @@ class MsReplacementRepository
     /**
      * @param array<int,array<string,mixed>> $rows lignes normalisées (CsvImporter)
      * @param array<string,mixed> $options
-     *        purge : true = fichier PHOTOGRAPHIQUE (les relations absentes du
-     *                jeu importé sont supprimées).
-     *
-     *        ⚠️ N'activer QUE si l'on importe la TOTALITÉ des fichiers
-     *        constructeur en une fois. Avec un seul fichier, la purge
-     *        supprimerait les relations des 5 autres organisations.
-     *        Par défaut false : un import partiel est non destructif.
+     *        purge : true = fichier PHOTOGRAPHIQUE. La purge est SCOPÉE AUX
+     *                ORGANISATIONS PRÉSENTES dans les fichiers importés : les
+     *                relations disparues sont supprimées pour ces orgas
+     *                uniquement, les autres marques ne sont jamais touchées.
+     *                Réimporter le seul fichier KTM est donc sans danger.
      *
      * @return array<string,mixed> rapport d'exécution
      */
@@ -64,9 +62,23 @@ class MsReplacementRepository
         $existing = self::fetchExisting();
         $report['existing'] = count($existing);
 
+        // Organisations couvertes par cet import = périmètre de la purge.
+        $orgas = array_values(array_unique(array_filter(
+            array_map(static function ($r) { return (string) $r['sales_orga']; }, $rows)
+        )));
+        $report['orgas'] = implode(', ', $orgas);
+
         if ($purge) {
-            // Photographique : le fichier fait foi, le reste disparaît.
-            $final = $incoming;
+            // Photographique PAR ORGA : on retire de l'existant tout ce qui
+            // appartient aux orgas importées, puis on repose l'entrant. Les
+            // relations des autres marques sont conservées telles quelles.
+            $kept = [];
+            foreach ($existing as $k => $r) {
+                if (!in_array((string) $r['sales_orga'], $orgas, true)) {
+                    $kept[$k] = $r;
+                }
+            }
+            $final = $kept + $incoming;
         } else {
             // Cumulatif : on complète l'existant, l'entrant est prioritaire.
             $final = array_merge($existing, $incoming);
@@ -88,16 +100,19 @@ class MsReplacementRepository
 
         // ── 4. Purge des relations disparues ────────────────────────────────
         if ($purge) {
-            $report['purged'] = self::purgeAbsent(array_keys($incoming));
+            $report['purged'] = self::purgeAbsent($incoming, $orgas);
         }
 
         return $report;
     }
 
-    /** Clé métier d'une relation (sans l'organisation de vente). */
+    /**
+     * Clé métier d'une relation : (orga, remplacée, remplaçante).
+     * Doit rester identique à MsReplacementCsvImporter::key().
+     */
     private static function key(array $row)
     {
-        return $row['ref_replaced'] . '|' . $row['ref_replacement'];
+        return (string) $row['sales_orga'] . '|' . $row['ref_replaced'] . '|' . $row['ref_replacement'];
     }
 
     /**
@@ -185,25 +200,35 @@ class MsReplacementRepository
     }
 
     /**
-     * Supprime les relations absentes du jeu importé (mode photographique).
-     * On procède par paquets de clés à CONSERVER plutôt qu'un NOT IN géant.
+     * Supprime les relations disparues, UNIQUEMENT pour les organisations
+     * couvertes par l'import (photographique par orga).
      *
-     * @param string[] $keepKeys clés métier "ref_replaced|ref_replacement"
+     * @param array<string,array<string,mixed>> $incoming jeu importé, indexé par clé
+     * @param string[] $orgas organisations concernées
      * @return int nombre de lignes supprimées
      */
-    private static function purgeAbsent(array $keepKeys)
+    private static function purgeAbsent(array $incoming, array $orgas)
     {
+        if (empty($orgas)) {
+            return 0;
+        }
+
         $db   = Db::getInstance();
-        $keep = array_flip($keepKeys);
+        $keep = $incoming;
+
+        $in = implode(',', array_map(static function ($o) {
+            return '"' . pSQL($o) . '"';
+        }, $orgas));
 
         $all = $db->executeS(
-            'SELECT `id_replacement`, `ref_replaced`, `ref_replacement`
-             FROM `' . _DB_PREFIX_ . 'ms_replacement`'
+            'SELECT `id_replacement`, `sales_orga`, `ref_replaced`, `ref_replacement`
+             FROM `' . _DB_PREFIX_ . 'ms_replacement`
+             WHERE `sales_orga` IN (' . $in . ')'
         ) ?: [];
 
         $toDelete = [];
         foreach ($all as $r) {
-            $k = $r['ref_replaced'] . '|' . $r['ref_replacement'];
+            $k = self::key($r);
             if (!isset($keep[$k])) {
                 $toDelete[] = (int) $r['id_replacement'];
             }
@@ -251,25 +276,47 @@ class MsReplacementRepository
 
         // Sens DESCENDANT : cette référence est remplacée par…
         // Le LEFT JOIN sur `product` détecte le cas E (remplaçant absent du catalogue).
+        // GROUP BY : une même relation peut exister dans plusieurs organisations
+        // de vente (mutualisation inter-marques Pierer). Le front ignore l'orga
+        // — la réf constructeur est globalement unique — donc on collapse, sinon
+        // le même remplaçant s'afficherait plusieurs fois.
+        //
+        // Les agrégats sont sûrs : la résolution de chaîne est déterministe pour
+        // un couple (remplacée, remplaçante) donné, donc identique d'une orga à
+        // l'autre. Seul `conversion_type` peut diverger (typé `replace` ici,
+        // `set` là) → `set` l'emporte, il porte l'information la plus complète.
         $replacedBy = $db->executeS(
-            'SELECT r.`ref_replacement`, r.`conversion_type`, r.`quantity`, r.`ref_final`,
-                    r.`final_is_set`, r.`chain_depth`, r.`chain_status`,
-                    p.`id_product` AS target_id, pl.`name` AS target_name
+            'SELECT r.`ref_replacement`,
+                    CASE WHEN SUM(r.`conversion_type` = "set") > 0 THEN "set" ELSE "replace" END AS conversion_type,
+                    MAX(r.`quantity`)     AS quantity,
+                    MAX(r.`ref_final`)    AS ref_final,
+                    MAX(r.`final_is_set`) AS final_is_set,
+                    MAX(r.`chain_depth`)  AS chain_depth,
+                    MIN(r.`chain_status`) AS chain_status,
+                    MAX(p.`id_product`)   AS target_id,
+                    MAX(pl.`name`)        AS target_name
              FROM `' . _DB_PREFIX_ . 'ms_replacement` r
              LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON p.`reference` = r.`ref_final`
              LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                     ON pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . '
              WHERE r.`ref_replaced` = "' . $ref . '"
+             GROUP BY r.`ref_replacement`
              ORDER BY r.`ref_replacement`'
         ) ?: [];
 
         // Sens REMONTANT : quelles anciennes références aboutissent sur ce produit.
         // On interroge `ref_final` (destination réelle après résolution), pas
         // `ref_replacement` : c'est là qu'atterrit le client.
+        // Même collapse multi-orga que ci-dessus. La convergence N:1 est
+        // LÉGITIME (jusqu'à 18 anciennes réfs vers une seule constatées) : on
+        // regroupe les doublons d'orga, jamais les réfs distinctes.
         $replaces = $db->executeS(
-            'SELECT DISTINCT r.`ref_replaced`, r.`conversion_type`, r.`chain_depth`
+            'SELECT r.`ref_replaced`,
+                    CASE WHEN SUM(r.`conversion_type` = "set") > 0 THEN "set" ELSE "replace" END AS conversion_type,
+                    MAX(r.`chain_depth`) AS chain_depth
              FROM `' . _DB_PREFIX_ . 'ms_replacement` r
              WHERE r.`ref_final` = "' . $ref . '"
+             GROUP BY r.`ref_replaced`
              ORDER BY r.`ref_replaced`
              LIMIT 51'
         ) ?: [];

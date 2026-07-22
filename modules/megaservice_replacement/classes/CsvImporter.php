@@ -11,9 +11,13 @@
  * parsing et les contrôles sont testables en CLI sur les vrais fichiers.
  * L'écriture en base est faite par l'appelant.
  *
- * Dédoublonnage : la clé métier est (ref_replaced, ref_replacement) SANS
- * l'organisation de vente. Mesuré sur les 6 fichiers réels : 22 963 lignes →
- * 16 405 relations uniques (6 546 doublons absorbés, 12 auto-références rejetées).
+ * Dédoublonnage : clé (sales_orga, ref_replaced, ref_replacement). L'orga est
+ * dans la clé pour permettre un import PHOTOGRAPHIQUE PAR ORGA — réimporter un
+ * fichier ne doit pas effacer les relations des autres marques.
+ *
+ * Conséquence assumée : une même relation présente dans plusieurs orgas donne
+ * plusieurs lignes. C'est le FRONT qui dédoublonne à la lecture (il ignore
+ * l'orga, la réf constructeur étant globalement unique chez Pierer).
  */
 
 class MsReplacementCsvImporter
@@ -102,14 +106,11 @@ class MsReplacementCsvImporter
                 continue;
             }
 
-            $key = $row['ref_replaced'] . '|' . $row['ref_replacement'];
+            $key = self::key($row);
 
             if (isset($rows[$key])) {
+                // Doublon EXACT au sein d'une même orga (216 constatés).
                 ++$report['duplicates'];
-                // Un même couple peut arriver typé `replace` dans un fichier et
-                // `set` dans un autre (9 lignes concernées sur les fichiers
-                // réels). `set` porte l'information la plus complète → il
-                // l'emporte, sinon on perdrait des composants du set.
                 if ($row['conversion_type'] === MsReplacement::TYPE_SET
                     && $rows[$key]['conversion_type'] !== MsReplacement::TYPE_SET) {
                     $rows[$key]['conversion_type'] = MsReplacement::TYPE_SET;
@@ -181,6 +182,15 @@ class MsReplacementCsvImporter
             'conversion_type' => $conv,
             'quantity'        => (int) $qty,
         ];
+    }
+
+    /**
+     * Clé métier d'une ligne : (orga, remplacée, remplaçante).
+     * Doit rester identique à MsReplacementRepository::key().
+     */
+    public static function key(array $row)
+    {
+        return (string) $row['sales_orga'] . '|' . $row['ref_replaced'] . '|' . $row['ref_replacement'];
     }
 
     /** @return array<string,mixed> */

@@ -74,21 +74,28 @@ class MsReplacementChainResolver
                 continue;
             }
             if (!isset($index[$from])) {
-                $index[$from] = ['is_set' => false, 'target' => null, 'count' => 0];
+                $index[$from] = ['is_set' => false, 'targets' => [], 'target' => null];
             }
-            ++$index[$from]['count'];
 
             if (($row['conversion_type'] ?? '') === MsReplacement::TYPE_SET) {
                 $index[$from]['is_set'] = true;
             } else {
-                $index[$from]['target'] = (string) $row['ref_replacement'];
+                // On collecte les cibles DISTINCTES, pas les lignes : la même
+                // relation existe en plusieurs exemplaires (une par organisation
+                // de vente). Compter les lignes ferait passer une banale 1:1
+                // mutualisée entre marques pour un 1:N déguisé, ce qui stopperait
+                // à tort la traversée des chaînes.
+                $index[$from]['targets'][(string) $row['ref_replacement']] = true;
             }
         }
 
         foreach ($index as &$entry) {
-            if (!$entry['is_set'] && $entry['count'] > 1) {
-                $entry['is_set'] = true; // 1:N déguisé → non traversable
+            $targets = array_keys($entry['targets']);
+            if (!$entry['is_set'] && count($targets) > 1) {
+                $entry['is_set'] = true; // vrai 1:N déguisé → non traversable
             }
+            $entry['target'] = isset($targets[0]) ? $targets[0] : null;
+            unset($entry['targets']);
         }
         unset($entry);
 
