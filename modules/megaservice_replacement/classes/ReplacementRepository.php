@@ -227,6 +227,80 @@ class MsReplacementRepository
     }
 
     /**
+     * Informations de remplacement d'une référence produit, dans les DEUX sens,
+     * pour le bloc de contrôle de la fiche produit BO.
+     *
+     * ⚠️ LECTURE SEULE. La table est intégralement réécrite à chaque import du
+     * fichier constructeur : toute saisie manuelle serait écrasée sans trace.
+     *
+     * Retourne null s'il n'y a rien à afficher → le bloc n'apparaît pas
+     * (sinon c'est du bruit sur des dizaines de milliers de fiches).
+     *
+     * @return array<string,mixed>|null
+     */
+    public static function forReference($reference)
+    {
+        $reference = trim((string) $reference);
+        if ($reference === '') {
+            return null;
+        }
+
+        $ref    = pSQL($reference);
+        $idLang = (int) Context::getContext()->language->id;
+        $db     = Db::getInstance();
+
+        // Sens DESCENDANT : cette référence est remplacée par…
+        // Le LEFT JOIN sur `product` détecte le cas E (remplaçant absent du catalogue).
+        $replacedBy = $db->executeS(
+            'SELECT r.`ref_replacement`, r.`conversion_type`, r.`quantity`, r.`ref_final`,
+                    r.`final_is_set`, r.`chain_depth`, r.`chain_status`,
+                    p.`id_product` AS target_id, pl.`name` AS target_name
+             FROM `' . _DB_PREFIX_ . 'ms_replacement` r
+             LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON p.`reference` = r.`ref_final`
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                    ON pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . '
+             WHERE r.`ref_replaced` = "' . $ref . '"
+             ORDER BY r.`ref_replacement`'
+        ) ?: [];
+
+        // Sens REMONTANT : quelles anciennes références aboutissent sur ce produit.
+        // On interroge `ref_final` (destination réelle après résolution), pas
+        // `ref_replacement` : c'est là qu'atterrit le client.
+        $replaces = $db->executeS(
+            'SELECT DISTINCT r.`ref_replaced`, r.`conversion_type`, r.`chain_depth`
+             FROM `' . _DB_PREFIX_ . 'ms_replacement` r
+             WHERE r.`ref_final` = "' . $ref . '"
+             ORDER BY r.`ref_replaced`
+             LIMIT 51'
+        ) ?: [];
+
+        if (empty($replacedBy) && empty($replaces)) {
+            return null;
+        }
+
+        foreach ($replacedBy as &$r) {
+            $r['target_id']    = (int) $r['target_id'];
+            $r['quantity']     = (int) $r['quantity'];
+            $r['chain_depth']  = (int) $r['chain_depth'];
+            $r['final_is_set'] = (bool) $r['final_is_set'];
+            $r['missing']      = ($r['target_id'] === 0); // cas E
+        }
+        unset($r);
+
+        $truncated = count($replaces) > 50;
+
+        return [
+            'reference'          => $reference,
+            'replaced_by'        => $replacedBy,
+            'is_replaced'        => !empty($replacedBy),
+            'is_set'             => count($replacedBy) > 1,
+            'replaces'           => array_slice($replaces, 0, 50),
+            'replaces_total'     => count($replaces),
+            'replaces_truncated' => $truncated,
+        ];
+    }
+
+    /**
      * Relations dont la référence finale n'existe pas au catalogue PrestaShop
      * (cas E de la spec) — export d'anomalies du BO.
      *

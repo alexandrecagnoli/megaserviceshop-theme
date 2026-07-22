@@ -53,7 +53,63 @@ class Megaservice_replacement extends Module
     public function install()
     {
         return parent::install()
-            && $this->createTable();
+            && $this->createTable()
+            && $this->registerHook('displayBackOfficeHeader');
+    }
+
+    /**
+     * Bloc de CONTRÔLE sur la fiche produit BO : « cette référence est remplacée
+     * par… » / « …remplace ces anciennes références ».
+     *
+     * ⚠️ LECTURE SEULE, volontairement. La table est réécrite intégralement à
+     * chaque import du fichier constructeur — un champ éditable ici verrait
+     * toute saisie manuelle écrasée au ré-import suivant, sans aucune trace.
+     *
+     * Le bloc n'est injecté QUE s'il y a quelque chose à dire : sinon ce serait
+     * du bruit sur des dizaines de milliers de fiches.
+     */
+    public function hookDisplayBackOfficeHeader()
+    {
+        $idProduct = $this->currentProductId();
+        if (!$idProduct) {
+            return '';
+        }
+
+        $product = new Product($idProduct);
+        if (!Validate::isLoadedObject($product) || $product->reference === '') {
+            return '';
+        }
+
+        $data = MsReplacementRepository::forReference($product->reference);
+        if ($data === null) {
+            return '';
+        }
+
+        $this->context->controller->addCSS($this->_path . 'views/css/admin-product-replacement.css');
+        $this->context->controller->addJS($this->_path . 'views/js/admin-product-replacement.js');
+
+        return '<script>window.MS_REPLACEMENT_PANEL = ' . json_encode($data) . ';</script>';
+    }
+
+    /**
+     * Id du produit en cours d'édition.
+     * PrestaShop 8 sert la fiche produit via une route Symfony
+     * (/sell/catalog/products/{id}/edit) : `id_product` n'est pas dans la query
+     * string, il faut le lire dans l'URL. On garde le cas legacy en premier.
+     */
+    private function currentProductId()
+    {
+        $id = (int) Tools::getValue('id_product');
+        if ($id > 0) {
+            return $id;
+        }
+
+        $uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+        if (preg_match('#/sell/catalog/products(?:-v2)?/(\d+)(?:/|$)#', $uri, $m)) {
+            return (int) $m[1];
+        }
+
+        return 0;
     }
 
     /**
@@ -75,6 +131,18 @@ class Megaservice_replacement extends Module
     public function getContent()
     {
         $out = '';
+
+        // Le hook displayBackOfficeHeader a été ajouté APRÈS les premières
+        // installations : install() ne rejoue pas. Il ne peut pas s'auto-
+        // enregistrer depuis lui-même (il ne se déclenche pas tant qu'il n'est
+        // pas enregistré) → on le fait ici, seule page du module toujours
+        // atteignable. Idempotent.
+        if (!$this->isRegisteredInHook('displayBackOfficeHeader')) {
+            $this->registerHook('displayBackOfficeHeader');
+            $out .= $this->displayConfirmation(
+                $this->l('Bloc de contrôle activé sur les fiches produit.')
+            );
+        }
 
         if (Tools::isSubmit('submitMsReplacementImport')) {
             $out .= $this->handleImport();
