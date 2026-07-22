@@ -54,7 +54,9 @@ class Megaservice_replacement extends Module
     {
         return parent::install()
             && $this->createTable()
-            && $this->registerHook('displayBackOfficeHeader');
+            && $this->registerHook('displayBackOfficeHeader')
+            && $this->registerHook('header')
+            && $this->registerHook('displayProductAdditionalInfo');
     }
 
     /**
@@ -89,6 +91,92 @@ class Megaservice_replacement extends Module
         $this->context->controller->addJS($this->_path . 'views/js/admin-product-replacement.js');
 
         return '<script>window.MS_REPLACEMENT_PANEL = ' . json_encode($data) . ';</script>';
+    }
+
+    /** @var array<string,mixed>|null|false Cache du bloc front (false = pas encore calculé). */
+    private $frontBlockCache = false;
+
+    /**
+     * Bloc de remplacement calculé une seule fois par requête : le hook header
+     * (assets) et le hook d'affichage le demandent tous les deux.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function currentFrontBlock($reference = null)
+    {
+        if ($this->frontBlockCache !== false) {
+            return $this->frontBlockCache;
+        }
+
+        if ($reference === null) {
+            $idProduct = (int) Tools::getValue('id_product');
+            if (!$idProduct) {
+                return $this->frontBlockCache = null;
+            }
+            $product = new Product($idProduct);
+            if (!Validate::isLoadedObject($product)) {
+                return $this->frontBlockCache = null;
+            }
+            $reference = $product->reference;
+        }
+
+        if ((string) $reference === '') {
+            return $this->frontBlockCache = null;
+        }
+
+        return $this->frontBlockCache = MsReplacementFrontBlock::build($reference, $this->context);
+    }
+
+    /**
+     * Assets front — chargés uniquement sur une fiche produit effectivement
+     * remplacée, pour ne rien peser sur le reste du catalogue.
+     */
+    public function hookHeader()
+    {
+        if (!isset($this->context->controller->php_self) || $this->context->controller->php_self !== 'product') {
+            return;
+        }
+        if ($this->currentFrontBlock() === null) {
+            return;
+        }
+
+        $this->context->controller->registerStylesheet(
+            'ms-replacement-front',
+            'modules/' . $this->name . '/views/css/front-replacement.css',
+            ['media' => 'all', 'priority' => 150]
+        );
+        $this->context->controller->registerJavascript(
+            'ms-replacement-front',
+            'modules/' . $this->name . '/views/js/front-replacement.js',
+            ['position' => 'bottom', 'priority' => 150]
+        );
+    }
+
+    /**
+     * Bloc « cette référence est remplacée » sur la fiche produit.
+     *
+     * La fiche reste VISIBLE et INDEXABLE — pas de redirection 301 : le client
+     * doit pouvoir confirmer qu'il a trouvé la bonne ancienne référence (celle
+     * gravée sur la pièce ou lue sur une facture), et on conserve le SEO acquis
+     * sur ces anciennes références. Elle n'est simplement plus achetable.
+     */
+    public function hookDisplayProductAdditionalInfo($params)
+    {
+        $reference = '';
+        if (isset($params['product']['reference'])) {
+            $reference = (string) $params['product']['reference'];
+        } elseif (isset($params['product']) && is_object($params['product'])) {
+            $reference = (string) $params['product']->reference;
+        }
+
+        $block = $this->currentFrontBlock($reference !== '' ? $reference : null);
+        if ($block === null) {
+            return '';
+        }
+
+        $this->smarty->assign('ms_repl', $block);
+
+        return $this->display(__FILE__, 'views/templates/hook/product-replacement.tpl');
     }
 
     /**
@@ -132,15 +220,20 @@ class Megaservice_replacement extends Module
     {
         $out = '';
 
-        // Le hook displayBackOfficeHeader a été ajouté APRÈS les premières
-        // installations : install() ne rejoue pas. Il ne peut pas s'auto-
-        // enregistrer depuis lui-même (il ne se déclenche pas tant qu'il n'est
-        // pas enregistré) → on le fait ici, seule page du module toujours
-        // atteignable. Idempotent.
-        if (!$this->isRegisteredInHook('displayBackOfficeHeader')) {
-            $this->registerHook('displayBackOfficeHeader');
+        // Ces hooks ont été ajoutés APRÈS les premières installations :
+        // install() ne rejoue pas, et un hook ne peut pas s'auto-enregistrer
+        // depuis lui-même (il ne se déclenche pas tant qu'il ne l'est pas).
+        // On le fait ici, seule page du module toujours atteignable. Idempotent.
+        $late = [];
+        foreach (['displayBackOfficeHeader', 'header', 'displayProductAdditionalInfo'] as $hook) {
+            if (!$this->isRegisteredInHook($hook)) {
+                $this->registerHook($hook);
+                $late[] = $hook;
+            }
+        }
+        if (!empty($late)) {
             $out .= $this->displayConfirmation(
-                $this->l('Bloc de contrôle activé sur les fiches produit.')
+                $this->l('Hooks activés :') . ' ' . implode(', ', $late)
             );
         }
 
