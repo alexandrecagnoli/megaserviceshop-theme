@@ -34,6 +34,7 @@ require_once __DIR__ . '/classes/MsReplacement.php';
 require_once __DIR__ . '/classes/ChainResolver.php';
 require_once __DIR__ . '/classes/CsvImporter.php';
 require_once __DIR__ . '/classes/ReplacementRepository.php';
+require_once __DIR__ . '/classes/FrontBlock.php';
 
 class Megaservice_replacement extends Module
 {
