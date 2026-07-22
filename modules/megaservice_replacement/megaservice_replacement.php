@@ -59,7 +59,7 @@ class Megaservice_replacement extends Module
         return parent::install()
             && $this->createTable()
             && $this->registerHook('displayBackOfficeHeader')
-            && $this->registerHook('header')
+            && $this->registerHook('displayHeader')
             && $this->registerHook('displayProductAdditionalInfo');
     }
 
@@ -135,7 +135,7 @@ class Megaservice_replacement extends Module
      * Assets front — chargés uniquement sur une fiche produit effectivement
      * remplacée, pour ne rien peser sur le reste du catalogue.
      */
-    public function hookHeader()
+    public function hookDisplayHeader()
     {
         if (!isset($this->context->controller->php_self) || $this->context->controller->php_self !== 'product') {
             return;
@@ -228,11 +228,22 @@ class Megaservice_replacement extends Module
         // install() ne rejoue pas, et un hook ne peut pas s'auto-enregistrer
         // depuis lui-même (il ne se déclenche pas tant qu'il ne l'est pas).
         // On le fait ici, seule page du module toujours atteignable. Idempotent.
+        // ⚠️ Utiliser les noms CANONIQUES, jamais les alias : registerHook()
+        // résout les alias (`header` → `displayHeader`) alors que
+        // isRegisteredInHook() compare le nom littéral. Avec un alias, le hook
+        // est donc vu comme absent à chaque passage et on retente de l'insérer
+        // → violation de clé primaire sur ps_hook_module.
         $late = [];
-        foreach (['displayBackOfficeHeader', 'header', 'displayProductAdditionalInfo'] as $hook) {
-            if (!$this->isRegisteredInHook($hook)) {
+        foreach (['displayBackOfficeHeader', 'displayHeader', 'displayProductAdditionalInfo'] as $hook) {
+            if ($this->isRegisteredInHook($hook)) {
+                continue;
+            }
+            try {
                 $this->registerHook($hook);
                 $late[] = $hook;
+            } catch (Exception $e) {
+                // Déjà enregistré sous un autre nom, ou hook indisponible :
+                // ne jamais faire tomber l'écran de configuration pour ça.
             }
         }
         if (!empty($late)) {
