@@ -145,6 +145,20 @@
               {include file='catalog/_partials/product-add-to-cart.tpl'}
             {/block}
 
+            {* Bloc « cette référence est remplacée » (module megaservice_replacement).
+               Placé juste sous l'achat : c'est là que le client agit, et l'achat
+               est précisément neutralisé sur une référence remplacée.
+
+               Appel RESTREINT à ce module via `mod=` : le partial standard
+               catalog/_partials/product-additional-info.tpl n'était inclus que
+               par le quickview, donc ce hook n'a jamais été rendu sur la fiche.
+               L'ouvrir sans filtre ferait surgir d'un coup le contenu de tous
+               les autres modules qui y sont greffés. Retirer `mod=` pour rouvrir
+               le point d'extension à tous. *}
+            {block name='product_additional_info'}
+              {hook h='displayProductAdditionalInfo' product=$product mod='megaservice_replacement'}
+            {/block}
+
             {block name='product_refresh'}{/block}
           </form>
         {/block}
