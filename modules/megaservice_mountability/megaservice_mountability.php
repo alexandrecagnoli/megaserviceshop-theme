@@ -191,23 +191,33 @@ class Megaservice_mountability extends Module
             return $this->displayError($r['error']);
         }
 
+        // Taux de couverture serials (informatif).
+        $ds   = (int) ($r['distinct_serials'] ?? 0);
+        $rs   = (int) ($r['resolved_serials'] ?? 0);
+        $rate = $ds > 0 ? round(100 * $rs / $ds) : 0;
+
         $rows = '';
         foreach ([
             'marque'           => $this->l('Marque rechargée'),
+            'motos_resolues'   => $this->l('▶ Motos allumées (motos distinctes affichées sur les fiches)'),
+            'loaded'           => $this->l('Relations en base (après dédoublonnage)'),
             'lines_read'       => $this->l('Lignes lues'),
             'valid'            => $this->l('Lignes valides'),
-            'loaded'           => $this->l('Relations en base (après dédoublonnage)'),
             'duplicates'       => $this->l('Doublons absorbés'),
             'rejected_format'  => $this->l('Lignes rejetées (format)'),
             'unresolved_refs'  => $this->l('Références sans produit au catalogue'),
-            'unresolved_motos' => $this->l('Identifiants moto non résolus'),
         ] as $k => $label) {
             $rows .= '<tr><td>' . $label . '</td><td><strong>' . htmlspecialchars((string) $r[$k]) . '</strong></td></tr>';
         }
+        $rows .= '<tr><td>' . $this->l('Serials résolus / distincts')
+            . '</td><td><strong>' . $rs . ' / ' . $ds . ' (' . $rate . '%)</strong></td></tr>';
 
         $motoList = '';
         if (!empty($r['unresolved_moto_list'])) {
-            $motoList = '<p>' . $this->l('Motos inconnues (top 200, signal d\'un delta de référentiel) :') . '</p><ul>';
+            $motoList = '<p><em>' . sprintf(
+                $this->l('%d serials sans ligne ms_moto. Attendu : ce sont surtout des variantes (couleur, CKD/export) d\'une moto-année déjà allumée par un serial frère, ou des modèles hors référentiel. À surveiller seulement si une moto-année n\'apparaît nulle part. Top 200 :'),
+                (int) $r['unresolved_motos']
+            ) . '</em></p><ul>';
             foreach ($r['unresolved_moto_list'] as $m) {
                 $motoList .= '<li><code>' . htmlspecialchars($m['id_moto_constructeur']) . '</code> — '
                     . (int) $m['nb'] . ' ' . $this->l('lignes') . '</li>';
@@ -215,7 +225,10 @@ class Megaservice_mountability extends Module
             $motoList .= '</ul>';
         }
 
-        return $this->displayConfirmation($this->l('Import terminé.'))
+        return $this->displayConfirmation(sprintf(
+            $this->l('Import terminé — %d motos allumées (%d%% des serials résolus).'),
+            (int) $r['motos_resolues'], $rate
+        ))
             . '<div class="panel"><h3><i class="icon-list"></i> ' . $this->l('Rapport d\'import') . '</h3>'
             . '<table class="table"><tbody>' . $rows . '</tbody></table>' . $motoList . '</div>';
     }

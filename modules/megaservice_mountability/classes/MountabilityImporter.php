@@ -43,6 +43,9 @@ class MsMountabilityImporter
             'loaded'            => 0,
             'duplicates'        => 0,
             'unresolved_refs'   => 0,
+            'distinct_serials'  => 0,
+            'resolved_serials'  => 0,
+            'motos_resolues'    => 0,
             'unresolved_motos'  => 0,
             'unresolved_moto_list' => [],
         ];
@@ -150,35 +153,67 @@ class MsMountabilityImporter
     }
 
     /**
-     * Compte les réfs non résolues côté catalogue et les motos non résolues côté
-     * ms_moto — signal d'un delta de référentiel à remonter. La liste des motos
-     * inconnues est plafonnée (téléchargeable en entier via l'écran BO).
+     * Diagnostic post-import.
+     *
+     * L'indicateur qui compte est `motos_resolues` : le nombre de MOTOS
+     * distinctes qui s'allument. Le nombre de serials non résolus n'est PAS un
+     * indicateur d'échec en soi : le constructeur émet un serial par variante
+     * (couleur, assemblage moteur, CKD/export) alors que ms_moto ne garde qu'une
+     * ligne par moto-année. Un serial non résolu dont la moto-année est déjà
+     * allumée par un serial frère est sans conséquence sur l'affichage.
+     *
+     * On expose donc : serials distincts, serials résolus, motos allumées, et le
+     * détail des non-résolus (plafonné à 200) pour repérer un vrai trou.
      */
     private static function countUnresolved(Db $db, $marque, array &$report)
     {
-        $m = pSQL($marque);
+        $m    = pSQL($marque);
+        $col  = bqSQL(MsMountability::MOTO_JOIN_COLUMN);
+        $cTbl = _DB_PREFIX_ . 'ms_mountability';
+        $mTbl = _DB_PREFIX_ . 'ms_moto';
 
         $report['unresolved_refs'] = (int) $db->getValue(
             'SELECT COUNT(DISTINCT c.`reference`)
-             FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+             FROM `' . $cTbl . '` c
              LEFT JOIN `' . _DB_PREFIX_ . 'product` p            ON p.`reference` = c.`reference`
              LEFT JOIN `' . _DB_PREFIX_ . 'product_attribute` pa ON pa.`reference` = c.`reference`
              WHERE c.`marque` = "' . $m . '"
                AND p.`id_product` IS NULL AND pa.`id_product_attribute` IS NULL'
         );
 
-        $unknownMotos = $db->executeS(
+        $report['distinct_serials'] = (int) $db->getValue(
+            'SELECT COUNT(DISTINCT `id_moto_constructeur`) FROM `' . $cTbl . '`
+             WHERE `marque` = "' . $m . '"'
+        );
+
+        // Serials du fichier ayant une ligne ms_moto (numérateur du taux).
+        $report['resolved_serials'] = (int) $db->getValue(
+            'SELECT COUNT(DISTINCT c.`id_moto_constructeur`)
+             FROM `' . $cTbl . '` c
+             INNER JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
+             WHERE c.`marque` = "' . $m . '"'
+        );
+
+        // Le vrai indicateur : motos distinctes réellement allumées.
+        $report['motos_resolues'] = (int) $db->getValue(
+            'SELECT COUNT(DISTINCT mo.`id_moto`)
+             FROM `' . $cTbl . '` c
+             INNER JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
+             WHERE c.`marque` = "' . $m . '"'
+        );
+
+        // Total réel de serials non résolus (non plafonné).
+        $report['unresolved_motos'] = max(0, $report['distinct_serials'] - $report['resolved_serials']);
+
+        // Détail plafonné (les plus fréquents d'abord) pour repérer un vrai trou.
+        $report['unresolved_moto_list'] = $db->executeS(
             'SELECT c.`id_moto_constructeur`, COUNT(*) AS nb
-             FROM `' . _DB_PREFIX_ . 'ms_mountability` c
-             LEFT JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
-                    ON mo.`' . bqSQL(MsMountability::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+             FROM `' . $cTbl . '` c
+             LEFT JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
              WHERE c.`marque` = "' . $m . '" AND mo.`id_moto` IS NULL
              GROUP BY c.`id_moto_constructeur`
              ORDER BY nb DESC
              LIMIT 200'
         ) ?: [];
-
-        $report['unresolved_motos']     = count($unknownMotos);
-        $report['unresolved_moto_list'] = $unknownMotos;
     }
 }
