@@ -1,0 +1,85 @@
+/* Bloc « Motos compatibles » — bas de fiche produit. */
+
+.ms-mount {
+  margin: 32px auto;
+  padding: 24px 0;
+  border-top: 1px solid #eee;
+}
+
+.ms-mount__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Blender Pro", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 22px;
+  margin: 0 0 18px;
+}
+
+.ms-mount__count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: #FE6604;
+  border-radius: 11px;
+  padding: 1px 9px;
+}
+
+.ms-mount__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.ms-mount__list--collapsed .ms-mount__item--extra {
+  display: none;
+}
+
+.ms-mount__list--collapsed.is-open .ms-mount__item--extra {
+  display: block;
+}
+
+.ms-mount__link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #e4e4e4;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #0A0A0A;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.ms-mount__link:hover {
+  border-color: #FE6604;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
+
+.ms-mount__brand {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #FE6604;
+  letter-spacing: .03em;
+}
+
+.ms-mount__name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ms-mount__more {
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #FE6604;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}

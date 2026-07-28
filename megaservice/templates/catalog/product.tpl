@@ -246,7 +246,12 @@
     {/if}
   {/block}
 
-  {block name='product_footer'}{/block}
+  {block name='product_footer'}
+    {* Bloc « Motos compatibles » (module megaservice_mountability). Appel
+       restreint via mod= : ce hook n'était pas rendu par le thème, l'ouvrir
+       sans filtre ferait surgir le contenu footer d'autres modules. *}
+    {hook h='displayFooterProduct' product=$product mod='megaservice_mountability'}
+  {/block}
 
   {block name='product_images_modal'}
     {include file='catalog/_partials/product-images-modal.tpl'}
