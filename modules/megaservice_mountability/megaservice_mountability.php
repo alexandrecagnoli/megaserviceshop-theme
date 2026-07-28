@@ -91,12 +91,20 @@ class Megaservice_mountability extends Module
 
     private function ensureIndex($table, $column, $indexName)
     {
-        $db  = Db::getInstance();
-        $tbl = _DB_PREFIX_ . $table;
-        $exists = $db->executeS('SHOW INDEX FROM `' . $tbl . '` WHERE `Key_name` = "' . pSQL($indexName) . '"');
-        if (empty($exists)) {
-            // 191 = longueur sûre pour utf8mb4 sur un index colonne.
-            @$db->execute('ALTER TABLE `' . $tbl . '` ADD INDEX `' . bqSQL($indexName) . '` (`' . bqSQL($column) . '`(191))');
+        // Index de PERF uniquement (accélère le comptage des non-résolus). Il ne
+        // doit JAMAIS faire échouer l'install : `ps_product.reference` est un
+        // VARCHAR(64), un préfixe (191) y était illégal (erreur 1089) et
+        // interrompait l'install avant l'enregistrement du hook. On indexe la
+        // colonne entière (courte) et on avale toute erreur.
+        try {
+            $db  = Db::getInstance();
+            $tbl = _DB_PREFIX_ . $table;
+            $exists = $db->executeS('SHOW INDEX FROM `' . $tbl . '` WHERE `Key_name` = "' . pSQL($indexName) . '"');
+            if (empty($exists)) {
+                $db->execute('ALTER TABLE `' . $tbl . '` ADD INDEX `' . bqSQL($indexName) . '` (`' . bqSQL($column) . '`)');
+            }
+        } catch (Exception $e) {
+            // Non bloquant : l'absence d'index ne dégrade que la vitesse du rapport.
         }
     }
 
@@ -152,6 +160,15 @@ class Megaservice_mountability extends Module
     public function getContent()
     {
         $out = '';
+
+        // Self-heal : un install() historique a pu échouer avant registerHook
+        // (cf. bug d'index 1089). Un simple passage sur cet écran raccroche le
+        // module, sans dépendre d'une réinstallation. `displayFooterProduct` est
+        // un nom canonique (pas un alias) → isRegisteredInHook fiable.
+        if (!$this->isRegisteredInHook('displayFooterProduct')) {
+            $this->registerHook('displayFooterProduct');
+            $out .= $this->displayConfirmation($this->l('Hook « displayFooterProduct » ré-enregistré : le bloc « Motos compatibles » va désormais s\'afficher en fiche produit.'));
+        }
 
         if (Tools::isSubmit('submitMsMountabilityImport')) {
             $out .= $this->handleImport();
