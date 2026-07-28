@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   var modal    = document.querySelector('.js-model-modal');
   var overlay  = document.querySelector('.js-model-overlay');
-  var triggers = document.querySelectorAll('.ms-header__model-btn, .js-model-trigger-mobile');
+  var triggers = document.querySelectorAll('.ms-header__model-btn, .js-model-trigger-mobile, .js-model-trigger');
 
   if (!modal) return;
 
@@ -126,7 +126,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       applyFilled(label);
       try { localStorage.setItem(STORAGE_KEY, label); } catch (err) {}
-      closeModal();
+
+      // selectModele.value = URL de la page hub de la moto → on y navigue.
+      var url = selectModele ? selectModele.value : '';
+      if (url) {
+        window.location.href = url;
+      } else {
+        closeModal();
+      }
     });
   }
 
@@ -212,54 +219,73 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ── Cascade des selects (démo — à brancher sur l'API du plugin) ──
+  // ── Cascade AJAX (Marque → Année → Pratique → Modèle) ────────────
+
+  var ENDPOINT = modal.getAttribute('data-selector-endpoint') || '';
+
+  function fetchStep(params, cb) {
+    if (!ENDPOINT) { cb([]); return; }
+    var qs = Object.keys(params).map(function (k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    var url = ENDPOINT + (ENDPOINT.indexOf('?') === -1 ? '?' : '&') + qs;
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { cb((d && d.items) || []); })
+      .catch(function () { cb([]); });
+  }
+
+  // Remplit un select avec les items reçus (value/label) + placeholder en tête.
+  function fillSelect(select, placeholder, items) {
+    if (!select) return;
+    select.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = ''; ph.disabled = true; ph.selected = true;
+    ph.textContent = placeholder;
+    select.appendChild(ph);
+    items.forEach(function (it) {
+      var opt = document.createElement('option');
+      opt.value = it.value;
+      opt.textContent = it.label;
+      select.appendChild(opt);
+    });
+    select.disabled = items.length === 0;
+  }
 
   if (selectMarque) {
     selectMarque.addEventListener('change', function () {
-      if (selectAnnee) {
-        selectAnnee.disabled = false;
-        selectAnnee.innerHTML = '<option value="" disabled selected>Année</option>';
-        var currentYear = new Date().getFullYear();
-        for (var y = currentYear; y >= 2000; y--) {
-          var opt = document.createElement('option');
-          opt.value = y;
-          opt.textContent = y;
-          selectAnnee.appendChild(opt);
-        }
-      }
+      resetSelect(selectAnnee);
       resetSelect(selectGamme);
       resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectMarque.value) return;
+      fetchStep({ marque: selectMarque.value }, function (items) {
+        fillSelect(selectAnnee, 'Année', items);
+      });
     });
   }
 
   if (selectAnnee) {
     selectAnnee.addEventListener('change', function () {
-      if (selectGamme) {
-        selectGamme.disabled = false;
-        selectGamme.innerHTML = '<option value="" disabled selected>Gamme</option>'
-          + '<option value="motocross">Motocross</option>'
-          + '<option value="enduro">Enduro</option>'
-          + '<option value="supersport">Supersport</option>'
-          + '<option value="naked">Naked</option>'
-          + '<option value="adventure">Adventure</option>';
-      }
+      resetSelect(selectGamme);
       resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectAnnee.value) return;
+      fetchStep({ marque: selectMarque.value, annee: selectAnnee.value }, function (items) {
+        fillSelect(selectGamme, 'Pratique', items);
+      });
     });
   }
 
   if (selectGamme) {
     selectGamme.addEventListener('change', function () {
-      if (selectModele) {
-        selectModele.disabled = false;
-        selectModele.innerHTML = '<option value="" disabled selected>Modèle</option>'
-          + '<option value="ktm-450-sx-f-2026">KTM 450 SX-F</option>'
-          + '<option value="ktm-990-duke-r">KTM 990 DUKE R</option>'
-          + '<option value="ktm-990-rc-r-track">KTM 990 RC R Track</option>'
-          + '<option value="ktm-890-adventure">KTM 890 Adventure</option>';
-      }
+      resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectGamme.value) return;
+      fetchStep({ marque: selectMarque.value, annee: selectAnnee.value, type: selectGamme.value }, function (items) {
+        fillSelect(selectModele, 'Modèle', items);
+      });
     });
   }
 
@@ -273,6 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
     select.selectedIndex = 0;
     var placeholder = select.options[0];
     select.innerHTML = '';
-    select.appendChild(placeholder);
+    if (placeholder) select.appendChild(placeholder);
   }
 });

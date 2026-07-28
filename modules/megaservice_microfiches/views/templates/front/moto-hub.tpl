@@ -22,7 +22,8 @@
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-          <strong class="ms-catalog-context__moto-name js-model-current-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+          {* Rendu serveur : ANNÉE + MODÈLE (pas de js-model-current-name, cf. moto.tpl). *}
+          <strong class="ms-catalog-context__moto-name">{$ms_moto.annee} {$ms_moto.core_name|escape:'html'}</strong>
         </div>
         <div class="ms-catalog-context__actions">
           <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
