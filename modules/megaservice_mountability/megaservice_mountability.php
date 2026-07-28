@@ -46,7 +46,8 @@ class Megaservice_mountability extends Module
         return parent::install()
             && $this->createTable()
             && $this->ensureCatalogIndexes()
-            && $this->registerHook('displayFooterProduct');
+            && $this->registerHook('displayFooterProduct')
+            && $this->registerHook('actionFrontControllerSetMedia');
     }
 
     /**
@@ -112,6 +113,29 @@ class Megaservice_mountability extends Module
     // Front : bloc « Compatible avec » en bas de fiche produit
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Les assets DOIVENT être enregistrés avant le rendu du <head>.
+     * registerStylesheet appelé depuis displayFooterProduct (en plein <body>)
+     * arrive trop tard → le <link> n'est jamais injecté. On les pose donc ici,
+     * sur les fiches produit uniquement.
+     */
+    public function hookActionFrontControllerSetMedia($params)
+    {
+        if ($this->context->controller->php_self !== 'product') {
+            return;
+        }
+        $this->context->controller->registerStylesheet(
+            'ms-mountability-front',
+            'modules/' . $this->name . '/views/css/front-mountability.css',
+            ['media' => 'all', 'priority' => 150]
+        );
+        $this->context->controller->registerJavascript(
+            'ms-mountability-front',
+            'modules/' . $this->name . '/views/js/front-mountability.js',
+            ['position' => 'bottom', 'priority' => 150]
+        );
+    }
+
     public function hookDisplayFooterProduct($params)
     {
         $reference = '';
@@ -128,17 +152,6 @@ class Megaservice_mountability extends Module
         if (empty($groups)) {
             return ''; // masqué si aucune moto résolue
         }
-
-        $this->context->controller->registerStylesheet(
-            'ms-mountability-front',
-            'modules/' . $this->name . '/views/css/front-mountability.css',
-            ['media' => 'all', 'priority' => 150]
-        );
-        $this->context->controller->registerJavascript(
-            'ms-mountability-front',
-            'modules/' . $this->name . '/views/js/front-mountability.js',
-            ['position' => 'bottom', 'priority' => 150]
-        );
 
         $this->smarty->assign([
             'ms_mount_groups' => $groups,
@@ -157,12 +170,21 @@ class Megaservice_mountability extends Module
         $out = '';
 
         // Self-heal : un install() historique a pu échouer avant registerHook
-        // (cf. bug d'index 1089). Un simple passage sur cet écran raccroche le
-        // module, sans dépendre d'une réinstallation. `displayFooterProduct` est
-        // un nom canonique (pas un alias) → isRegisteredInHook fiable.
-        if (!$this->isRegisteredInHook('displayFooterProduct')) {
-            $this->registerHook('displayFooterProduct');
-            $out .= $this->displayConfirmation($this->l('Hook « displayFooterProduct » ré-enregistré : le bloc « Motos compatibles » va désormais s\'afficher en fiche produit.'));
+        // (cf. bug d'index 1089), ou tourner avant l'ajout d'un hook. Un simple
+        // passage sur cet écran raccroche les hooks manquants, sans réinstaller.
+        // (Noms canoniques → isRegisteredInHook fiable.)
+        $healed = [];
+        foreach (['displayFooterProduct', 'actionFrontControllerSetMedia'] as $h) {
+            if (!$this->isRegisteredInHook($h)) {
+                $this->registerHook($h);
+                $healed[] = $h;
+            }
+        }
+        if ($healed) {
+            $out .= $this->displayConfirmation(
+                $this->l('Hooks ré-enregistrés : ') . implode(', ', $healed)
+                . $this->l('. Le bloc « Compatible avec » et son style vont s\'afficher en fiche produit.')
+            );
         }
 
         if (Tools::isSubmit('submitMsMountabilityImport')) {
