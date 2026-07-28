@@ -4,7 +4,7 @@
  * Recherche client-side (js-ms-mount-search) + zébrage recalculé au filtrage.
  * Masqué si aucune moto résolue (géré côté hook).
  *}
-<section class="ms-mount">
+<section class="ms-mount ms-container">
   <h2 class="ms-mount__title">{l s='Compatible avec' mod='megaservice_mountability'}</h2>
 
   <div class="ms-mount__search">
