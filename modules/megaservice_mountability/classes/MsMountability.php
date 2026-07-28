@@ -49,13 +49,20 @@ class MsMountability extends ObjectModel
     /**
      * Colonne de ms_moto sur laquelle se résout `id_moto_constructeur`.
      *
-     * ⚠️ À CONFIRMER sur un échantillon au premier import réel. Le fichier
-     * constructeur nomme la colonne « id_moto » ; on suppose qu'elle référence
-     * le même identifiant que `ms_moto.modelnumber`. Si l'échantillon montre
-     * autre chose (serial_constructeur, ou l'id_moto PK), c'est le SEUL point à
-     * changer — toute la résolution passe par ici.
+     * CONFIRMÉ sur échantillon réel (montabilite_ktm) : la colonne « id_moto »
+     * du fichier contient des SERIALS constructeur (F8401W5, 6301H0, F9903N2…),
+     * pas le modelnumber d'enrichissement ($M-…). C'est le même identifiant que
+     * `ms_moto.serial_constructeur` (cf. importer microfiches, qui pivote lui
+     * aussi les microfiches sur cette colonne).
+     *
+     * ⚠️ Cardinalité : le constructeur émet un serial par variante
+     * moteur/couleur, plus fin que ms_moto (1 ligne = 1 modèle/année, 1 serial
+     * représentatif). Certains serials du fichier n'ont donc pas de ligne
+     * ms_moto → comptés dans `unresolved_motos` du rapport d'import. C'est
+     * attendu ; le SELECT DISTINCT allume la moto dès qu'UN serial de la famille
+     * produit matche.
      */
-    const MOTO_JOIN_COLUMN = 'modelnumber';
+    const MOTO_JOIN_COLUMN = 'serial_constructeur';
 
     // ─────────────────────────────────────────────────────────────────────────
     // Service : produit → motos compatibles

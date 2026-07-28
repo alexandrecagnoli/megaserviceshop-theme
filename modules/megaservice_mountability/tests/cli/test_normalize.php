@@ -20,11 +20,13 @@ function check($label, $actual, $expected)
     printf("  ✗ %s\n      attendu : %s\n      obtenu  : %s\n", $label, var_export($expected, true), var_export($actual, true));
 }
 
-echo "\n1. Ligne valide (3 colonnes)\n";
-$r = MsMountabilityImporter::normalizeRow(['3PW240069700', 'KTM_990_RC_R', 'ktm']);
-check('reference',   $r['reference'], '3PW240069700');
-check('id moto',     $r['id_moto_constructeur'], 'KTM_990_RC_R');
-check('marque en MAJ', $r['marque'], 'KTM');
+echo "\n1. Ligne réelle (fichier montabilite_ktm : reference;id_moto;marque;libelle_moto)\n";
+$r = MsMountabilityImporter::normalizeRow(['150606800', 'F8401W5', 'KTM', '450 SX-F 2023']);
+check('reference',            $r['reference'], '150606800');
+check('serial constructeur',  $r['id_moto_constructeur'], 'F8401W5');
+check('marque en MAJ',        $r['marque'], 'KTM');
+$r = MsMountabilityImporter::normalizeRow(['10000042', '6100H1', 'KTM', '125 SXS 2008']);
+check('serial ancien (sans F)', $r['id_moto_constructeur'], '6100H1');
 
 echo "\n2. Espaces superflus\n";
 $r = MsMountabilityImporter::normalizeRow(['  ABC123 ', '  M1  ', ' hqv ']);
