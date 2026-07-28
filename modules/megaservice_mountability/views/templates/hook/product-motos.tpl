@@ -22,10 +22,10 @@
 
   <div class="ms-mount__table js-ms-mount-list">
     {foreach from=$ms_mount_groups item=g}
-      <div class="ms-mount__row" data-search="{$g.search|escape:'htmlall':'UTF-8'}">
-        <span class="ms-mount__model">{$g.model|escape:'htmlall':'UTF-8'}</span>
-        <span class="ms-mount__type">{$g.type|escape:'htmlall':'UTF-8'}</span>
-        <span class="ms-mount__years">{foreach from=$g.years item=y name=yrs}<a class="ms-mount__year" href="{$y.url|escape:'htmlall':'UTF-8'}">{$y.annee}</a>{if !$smarty.foreach.yrs.last}, {/if}{/foreach}</span>
+      <div class="ms-mount__row" data-search="{$g.search|escape:'html'}">
+        <span class="ms-mount__model">{$g.model|escape:'html'}</span>
+        <span class="ms-mount__type">{$g.type|escape:'html'}</span>
+        <span class="ms-mount__years">{foreach from=$g.years item=y name=yrs}<a class="ms-mount__year" href="{$y.url|escape:'html'}">{$y.annee}</a>{if !$smarty.foreach.yrs.last}, {/if}{/foreach}</span>
       </div>
     {/foreach}
     <p class="ms-mount__empty js-ms-mount-empty" hidden>{l s='Aucune moto ne correspond à votre recherche.' mod='megaservice_mountability'}</p>
