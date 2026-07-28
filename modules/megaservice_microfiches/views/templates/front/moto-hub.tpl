@@ -87,10 +87,10 @@
     {/if}
 
     {* ── Accessoires Powerparts ──
-       Phase 1 : produits NON filtrés moto (catégorie 41 générique). Le filtrage
-       par compatibilité moto = Phase 2 (ukooparts). On réutilise la miniature
-       produit NATIVE du thème → cartes prix + "Ajouter" panier identiques au
-       reste du site (et l'ajout AJAX sidebar marche déjà via app.js). *}
+       Produits Powerparts FILTRÉS sur la compatibilité de cette moto (module
+       montabilité). Miniature produit NATIVE du thème → cartes prix + "Ajouter"
+       panier identiques au reste du site. Badge « Compatible » actif via
+       ms_show_moto_context (tous les produits ici sont compatibles). *}
     {if $ms_powerparts}
       <section class="ms-hub__section">
         <header class="ms-hub__section-head">

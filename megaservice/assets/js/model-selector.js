@@ -15,10 +15,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Open / Close ─────────────────────────────
 
+  var restored = false;
+
   function openModal() {
     modal.removeAttribute('hidden');
     overlay.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    // Rejoue la sélection mémorisée une fois (DOM neuf après navigation) pour
+    // que « Afficher les pièces compatibles » soit ré-accessible directement.
+    if (!restored) {
+      restored = true;
+      var sel = readSelection();
+      if (sel) restoreSelection(sel);
+    }
+  }
+
+  // Lecture tolérante du localStorage : nouveau format JSON, ou ancien libellé brut.
+  function readSelection() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (err) {}
+    if (!raw) return null;
+    try {
+      var obj = JSON.parse(raw);
+      return (obj && typeof obj === 'object') ? obj : { label: raw };
+    } catch (err) {
+      return { label: raw };
+    }
   }
 
   function closeModal() {
@@ -87,10 +109,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.remove('has-moto-selected');
   }
 
-  // Restore depuis localStorage (en attendant le plugin serveur)
-  var stored = null;
-  try { stored = localStorage.getItem(STORAGE_KEY); } catch (err) {}
-  if (stored) applyFilled(stored);
+  // Restore l'état "moto sélectionnée" (header + barre mobile) depuis le storage.
+  var storedSel = readSelection();
+  if (storedSel && storedSel.label) applyFilled(storedSel.label);
 
   // ── Tab Modèle : submit disabled tant que selects pas remplis ────
 
@@ -125,7 +146,18 @@ document.addEventListener('DOMContentLoaded', function () {
         .filter(Boolean).join(' ');
 
       applyFilled(label);
-      try { localStorage.setItem(STORAGE_KEY, label); } catch (err) {}
+      // On mémorise la sélection COMPLÈTE pour pouvoir rejouer la cascade à la
+      // réouverture de la modale (pas seulement le libellé d'affichage).
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          marque:      selectMarque.value,
+          annee:       selectAnnee.value,
+          type:        selectGamme.value,
+          modeleUrl:   selectModele.value,
+          modeleLabel: selectedText(selectModele),
+          label:       label
+        }));
+      } catch (err) {}
 
       // selectModele.value = URL de la page hub de la moto → on y navigue.
       var url = selectModele ? selectModele.value : '';
@@ -251,6 +283,28 @@ document.addEventListener('DOMContentLoaded', function () {
       select.appendChild(opt);
     });
     select.disabled = items.length === 0;
+  }
+
+  // Rejoue la cascade pour re-sélectionner marque → année → pratique → modèle
+  // depuis une sélection mémorisée (chaînage async car chaque niveau est AJAX).
+  function restoreSelection(sel) {
+    if (!sel || !sel.marque || !selectMarque) return;
+    selectMarque.value = sel.marque;
+    fetchStep({ marque: sel.marque }, function (years) {
+      fillSelect(selectAnnee, 'Année', years);
+      if (!sel.annee) { refreshModelSubmit(); return; }
+      selectAnnee.value = sel.annee;
+      fetchStep({ marque: sel.marque, annee: sel.annee }, function (types) {
+        fillSelect(selectGamme, 'Pratique', types);
+        if (!sel.type) { refreshModelSubmit(); return; }
+        selectGamme.value = sel.type;
+        fetchStep({ marque: sel.marque, annee: sel.annee, type: sel.type }, function (models) {
+          fillSelect(selectModele, 'Modèle', models);
+          if (sel.modeleUrl) selectModele.value = sel.modeleUrl;
+          refreshModelSubmit();
+        });
+      });
+    });
   }
 
   if (selectMarque) {

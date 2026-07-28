@@ -98,10 +98,12 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_moto'        => $this->motoToTemplate($this->moto),
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
-            // Phase 1 : Powerparts NON filtré moto (catégorie générique). Le
-            // filtrage par compatibilité moto = Phase 2 (ukooparts).
+            // Powerparts filtrés sur la compatibilité de CETTE moto (montabilité).
             'ms_powerparts_url' => $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID),
-            'ms_powerparts'  => $this->fetchPowerpartsProducts(4),
+            'ms_powerparts'  => $this->fetchPowerpartsProducts(4, $idMoto),
+            // Tous les produits affichés ici sont compatibles → badge « Compatible »
+            // (la miniature native l'affiche quand ms_show_moto_context est vrai).
+            'ms_show_moto_context' => true,
             'ms_latest'      => $this->fetchLatestMicrofiches($idMoto, 4),
             'ms_latest_more' => $partieLink('cycle'),
             'static_token'   => Tools::getToken(false), // requis par la miniature produit (form panier)
@@ -120,8 +122,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
      *
      * @return array<int,array<string,mixed>>
      */
-    protected function fetchPowerpartsProducts(int $limit): array
+    protected function fetchPowerpartsProducts(int $limit, int $idMoto): array
     {
+        $compatible = $this->compatibleProductIds($idMoto);
+        if (empty($compatible)) {
+            return []; // aucune pièce Powerparts compatible → section masquée
+        }
+        $inCompatible = implode(',', array_map('intval', $compatible));
+
         $idShop = (int) $this->context->shop->id;
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT cp.`id_product`
@@ -131,6 +139,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
              JOIN `' . _DB_PREFIX_ . 'product_shop` ps
                   ON ps.`id_product` = cp.`id_product` AND ps.`id_shop` = ' . $idShop . '
              WHERE c.`nleft` >= root.`nleft` AND c.`nright` <= root.`nright`
+               AND cp.`id_product` IN (' . $inCompatible . ')
                AND ps.`active` = 1 AND ps.`visibility` IN ("both", "catalog")
              ORDER BY ps.`date_add` DESC
              LIMIT ' . (int) $limit
@@ -139,6 +148,30 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         $ids = array_map(static function ($r) { return (int) $r['id_product']; }, $rows);
 
         return $this->presentProducts($ids);
+    }
+
+    /**
+     * IDs produits compatibles avec la moto, via le module montabilité s'il est
+     * présent (les deux modules restent découplés : chargement défensif).
+     *
+     * @return int[]
+     */
+    protected function compatibleProductIds(int $idMoto): array
+    {
+        if (!$idMoto) {
+            return [];
+        }
+        if (!class_exists('MsMountability')) {
+            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountability.php';
+            if (is_file($file)) {
+                require_once $file;
+            }
+        }
+        if (!class_exists('MsMountability')) {
+            return []; // module montabilité absent
+        }
+
+        return MsMountability::getCompatibleProducts($idMoto);
     }
 
     /**
