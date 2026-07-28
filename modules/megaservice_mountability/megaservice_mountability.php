@@ -109,11 +109,8 @@ class Megaservice_mountability extends Module
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Front : bloc « Motos compatibles » en bas de fiche produit
+    // Front : bloc « Compatible avec » en bas de fiche produit
     // ─────────────────────────────────────────────────────────────────────────
-
-    /** Au-delà de ce nombre, la liste des motos est repliée (« Voir plus »). */
-    const MOTOS_COLLAPSE_THRESHOLD = 20;
 
     public function hookDisplayFooterProduct($params)
     {
@@ -127,8 +124,8 @@ class Megaservice_mountability extends Module
             return '';
         }
 
-        $motos = MsMountability::getCompatibleMotos($reference);
-        if (empty($motos)) {
+        $groups = MsMountability::getCompatibleMotosGrouped($reference);
+        if (empty($groups)) {
             return ''; // masqué si aucune moto résolue
         }
 
@@ -137,17 +134,15 @@ class Megaservice_mountability extends Module
             'modules/' . $this->name . '/views/css/front-mountability.css',
             ['media' => 'all', 'priority' => 150]
         );
-        if (count($motos) > self::MOTOS_COLLAPSE_THRESHOLD) {
-            $this->context->controller->registerJavascript(
-                'ms-mountability-front',
-                'modules/' . $this->name . '/views/js/front-mountability.js',
-                ['position' => 'bottom', 'priority' => 150]
-            );
-        }
+        $this->context->controller->registerJavascript(
+            'ms-mountability-front',
+            'modules/' . $this->name . '/views/js/front-mountability.js',
+            ['position' => 'bottom', 'priority' => 150]
+        );
 
         $this->smarty->assign([
-            'ms_mount_motos'     => $motos,
-            'ms_mount_threshold' => self::MOTOS_COLLAPSE_THRESHOLD,
+            'ms_mount_groups' => $groups,
+            'ms_mount_count'  => count($groups),
         ]);
 
         return $this->display(__FILE__, 'views/templates/hook/product-motos.tpl');

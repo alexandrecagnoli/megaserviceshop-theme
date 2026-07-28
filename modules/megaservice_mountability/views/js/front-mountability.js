@@ -1,19 +1,47 @@
 /**
- * Repli / dépli de la liste des motos compatibles au-delà du seuil.
- * Chargé uniquement sur les fiches ayant des motos compatibles.
+ * Bloc « Compatible avec » : filtre client-side de la liste des modèles + zébrage
+ * recalculé sur les seules lignes visibles (le nth-child natif casserait dès
+ * qu'on masque des lignes).
  */
 (function () {
   'use strict';
 
-  function init() {
-    var btn = document.querySelector('.js-ms-mount-more');
-    var list = document.querySelector('.js-ms-mount-list');
-    if (!btn || !list) { return; }
+  function normalize(s) {
+    s = (s || '').toString().toLowerCase();
+    if (s.normalize) {
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    return s;
+  }
 
-    btn.addEventListener('click', function () {
-      var opened = list.classList.toggle('is-open');
-      btn.textContent = opened ? btn.getAttribute('data-less') : btn.getAttribute('data-more');
-    });
+  function init() {
+    var input = document.querySelector('.js-ms-mount-search');
+    var list  = document.querySelector('.js-ms-mount-list');
+    if (!input || !list) { return; }
+
+    var rows  = Array.prototype.slice.call(list.querySelectorAll('.ms-mount__row'));
+    var empty = list.querySelector('.js-ms-mount-empty');
+
+    function restripe(visible) {
+      for (var i = 0; i < visible.length; i++) {
+        visible[i].classList.toggle('is-alt', i % 2 === 1);
+      }
+    }
+
+    function apply() {
+      var q = normalize(input.value).trim();
+      var visible = [];
+      for (var i = 0; i < rows.length; i++) {
+        var match = q === '' || normalize(rows[i].getAttribute('data-search')).indexOf(q) !== -1;
+        rows[i].hidden = !match;
+        if (match) { visible.push(rows[i]); }
+      }
+      restripe(visible);
+      if (empty) { empty.hidden = visible.length !== 0; }
+    }
+
+    restripe(rows);
+    input.addEventListener('input', apply);
   }
 
   if (document.readyState === 'loading') {

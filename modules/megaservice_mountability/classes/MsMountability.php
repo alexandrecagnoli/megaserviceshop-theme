@@ -117,6 +117,80 @@ class MsMountability extends ObjectModel
         return $out;
     }
 
+    /**
+     * Motos compatibles GROUPÉES par modèle, pour l'affichage « Compatible avec ».
+     *
+     * La donnée reste année par année (chaque moto-année est distincte) ; c'est
+     * uniquement la présentation qui roll-up : une ligne = un modèle (marque +
+     * core_name + type), avec la liste triée de ses années — chaque année
+     * pointant vers sa page hub. Tri alphabétique des modèles.
+     *
+     * @return array<int,array{model:string,type:string,years:array<int,array{annee:int,url:string}>,search:string}>
+     */
+    public static function getCompatibleMotosGrouped($reference)
+    {
+        $reference = trim((string) $reference);
+        if ($reference === '') {
+            return [];
+        }
+
+        $refs = self::productFamilyReferences($reference);
+        $in   = implode(',', array_map(static function ($r) {
+            return '"' . pSQL($r) . '"';
+        }, $refs));
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT DISTINCT mo.`id_moto`, mo.`marque`, mo.`core_name`, mo.`nom_fr`, mo.`type`, mo.`annee`
+             FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+             INNER JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
+                     ON mo.`' . bqSQL(self::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+             WHERE c.`reference` IN (' . $in . ')
+               AND mo.`active` = 1'
+        ) ?: [];
+
+        $link   = Context::getContext()->link;
+        $groups = [];
+        foreach ($rows as $r) {
+            $model = trim($r['marque'] . ' ' . $r['core_name']);
+            $type  = (string) $r['type'];
+            $key   = $model . '|' . $type;
+            if (!isset($groups[$key])) {
+                $groups[$key] = ['model' => $model, 'type' => $type, 'years' => []];
+            }
+            $annee = (int) $r['annee'];
+            // Une seule entrée par année (les variantes couleur d'une même
+            // moto-année collapsent) ; on garde le premier hub rencontré.
+            if ($annee > 0 && !isset($groups[$key]['years'][$annee])) {
+                $label = $r['nom_fr'] !== '' ? $r['nom_fr'] : $r['core_name'];
+                $groups[$key]['years'][$annee] = $link->getModuleLink('megaservice_microfiches', 'moto', [
+                    'id_moto' => (int) $r['id_moto'],
+                    'slug'    => Tools::str2url($label),
+                ]);
+            }
+        }
+
+        $out = [];
+        foreach ($groups as $g) {
+            ksort($g['years']); // années croissantes
+            $years = [];
+            foreach ($g['years'] as $annee => $url) {
+                $years[] = ['annee' => $annee, 'url' => $url];
+            }
+            $out[] = [
+                'model'  => $g['model'],
+                'type'   => $g['type'],
+                'years'  => $years,
+                'search' => Tools::strtolower($g['model'] . ' ' . $g['type'] . ' ' . implode(' ', array_keys($g['years']))),
+            ];
+        }
+
+        usort($out, static function ($a, $b) {
+            return strcasecmp($a['model'], $b['model']);
+        });
+
+        return $out;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Service : moto → produits compatibles (consommé par le hub moto)
     // ─────────────────────────────────────────────────────────────────────────
