@@ -28,6 +28,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     /** @var MsMoto|null Moto courante hydratée */
     protected $moto;
 
+    /** SEO (Volet 1) : meta + canonical calculés en initContent, appliqués au rendu. */
+    protected $msMetaTitle = '';
+    protected $msMetaDescription = '';
+    protected $msCanonical = '';
+
     public function init()
     {
         $idMoto = (int) Tools::getValue('id_moto');
@@ -78,7 +83,35 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_total'       => count($microfiches),
         ]);
 
+        $label = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+        $partieLabel = $partie === 'cycle' ? 'partie cycle' : 'partie moteur';
+        $this->msMetaTitle       = 'Pièces d\'origine ' . $partieLabel . ' — ' . $label;
+        $this->msMetaDescription = 'Pièces détachées d\'origine ' . $partieLabel . ' pour ' . $label
+            . '. Mega Service Shop.';
+        $this->msCanonical       = $this->context->link->getModuleLink(
+            'megaservice_microfiches', 'moto',
+            ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug(), 'partie' => $partie]
+        );
+
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto.tpl');
+    }
+
+    /** Meta SEO (title/description) dédiés à la moto (Volet 1). */
+    public function getTemplateVarPage()
+    {
+        $page = parent::getTemplateVarPage();
+        if ($this->msMetaTitle !== '') {
+            $page['meta']['title']       = $this->msMetaTitle;
+            $page['meta']['description'] = $this->msMetaDescription;
+        }
+
+        return $page;
+    }
+
+    /** Canonical propre (hub = lui-même ; PLP partie = vue partie « nue »). */
+    public function getCanonicalURL()
+    {
+        return $this->msCanonical !== '' ? $this->msCanonical : parent::getCanonicalURL();
     }
 
     /**
@@ -115,6 +148,15 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_latest_more' => $partieLink('cycle'),
             'static_token'   => Tools::getToken(false), // requis par la miniature produit (form panier)
         ]);
+
+        $label = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+        $this->msMetaTitle       = 'Pièces d\'origine — ' . $label;
+        $this->msMetaDescription = 'Toutes les pièces détachées d\'origine pour ' . $label
+            . ' : partie cycle, partie moteur, accessoires Powerparts. Mega Service Shop.';
+        $this->msCanonical       = $this->context->link->getModuleLink(
+            'megaservice_microfiches', 'moto',
+            ['id_moto' => $idMoto, 'slug' => $this->moto->slug()]
+        );
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
     }

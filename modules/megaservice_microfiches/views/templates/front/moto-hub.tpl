@@ -14,7 +14,7 @@
   {* ── Hero noir + bannière modèle (chrome catégorie réutilisé) ── *}
   <div class="ms-catalog-hero ms-catalog-hero--with-context">
     <div class="ms-catalog-hero__inner">
-      <h1 class="ms-catalog-hero__title">{l s='Pièces détachées d\'origine' d='Modules.Megaservicemicrofiches.Shop'}</h1>
+      <h1 class="ms-catalog-hero__title">{l s='Pièces d\'origine' d='Modules.Megaservicemicrofiches.Shop'} — {$ms_moto.marque} {$ms_moto.core_name} {$ms_moto.annee}</h1>
     </div>
 
     <div class="ms-catalog-context">

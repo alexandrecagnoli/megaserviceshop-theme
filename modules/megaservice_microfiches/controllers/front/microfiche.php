@@ -28,6 +28,11 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
     /** @var MsMicroficheCategorie|null */
     protected $categorie;
 
+    /** SEO (Volet 1) : meta + canonical. */
+    protected $msMetaTitle = '';
+    protected $msMetaDescription = '';
+    protected $msCanonical = '';
+
     public function init()
     {
         $idMicrofiche = (int) Tools::getValue('id_microfiche');
@@ -63,7 +68,35 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'ms_cart_token' => Tools::getToken(false),
         ]);
 
+        $mfName = $this->microfiche->nom_fr ?: $this->microfiche->nom_constructeur;
+        $label  = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+        $this->msMetaTitle       = $mfName . ' — ' . $label;
+        $this->msMetaDescription = 'Vue éclatée et pièces d\'origine : ' . $mfName . ' pour ' . $label
+            . '. Mega Service Shop.';
+        $this->msCanonical       = $this->context->link->getModuleLink(
+            'megaservice_microfiches', 'microfiche',
+            ['id_microfiche' => (int) $this->microfiche->id, 'slug' => Tools::str2url($mfName)]
+        );
+
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/microfiche.tpl');
+    }
+
+    /** Meta SEO (title/description) dédiés (Volet 1). */
+    public function getTemplateVarPage()
+    {
+        $page = parent::getTemplateVarPage();
+        if ($this->msMetaTitle !== '') {
+            $page['meta']['title']       = $this->msMetaTitle;
+            $page['meta']['description'] = $this->msMetaDescription;
+        }
+
+        return $page;
+    }
+
+    /** Canonical propre de la microfiche (id-based, slug cosmétique). */
+    public function getCanonicalURL()
+    {
+        return $this->msCanonical !== '' ? $this->msCanonical : parent::getCanonicalURL();
     }
 
     /**
