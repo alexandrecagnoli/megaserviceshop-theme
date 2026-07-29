@@ -109,7 +109,7 @@ Générer, pour chaque moto active, l'URL Powerparts filtrée. Exposer via un **
 | D2 | Source de vérité : **URL** prioritaire, cookie secours | ✅ acté |
 | D3 | Granularité : démarrer **moto × catégorie racine 41 uniquement** (pas une page par sous-catégorie × moto — risque de dizaines de milliers d'URL ; à n'ouvrir que si les premières pages performent) | ✅ acté |
 | D4 | Combinaisons moto + facette : **noindex + canonical** vers moto seule | ✅ acté |
-| D5 | Sitemap : **aucun module sitemap dans le repo** (audit 2026-07-29). À confirmer en BO préprod ; à défaut → **contrôleur sitemap dédié au module** (reco, autonome, façon ukooparts) | ⚠️ à confirmer BO |
+| D5 | Sitemap : **gsitemap** installé (module PS par défaut) — ne couvre **pas** les routes `/motos/…` ni les URL `?moto=`. **Reco actée : sitemap dédié au module** (index multi-fichiers, façon ukooparts), gsitemap conservé pour le catalogue standard. Découvrabilité via robots.txt + Search Console. | ✅ acté (sitemap dédié) |
 | — | Meta/title **éditorialisables en BO** : **NON** en v1 (génération auto suffit) ; éditorialisation des motos à fort trafic en **v2** | ✅ acté |
 
 ---
