@@ -47,7 +47,8 @@ class Megaservice_mountability extends Module
             && $this->createTable()
             && $this->ensureCatalogIndexes()
             && $this->registerHook('displayFooterProduct')
-            && $this->registerHook('actionFrontControllerSetMedia');
+            && $this->registerHook('actionFrontControllerSetMedia')
+            && $this->registerHook('actionFacetedSearchFilters');
     }
 
     /**
@@ -162,6 +163,56 @@ class Megaservice_mountability extends Module
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Filtre catégorie : injection dans ps_facetedsearch (option B)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Racine dont le sous-arbre est filtrable par montabilité. */
+    const POWERPARTS_ROOT_CATEGORY = 41;
+
+    /**
+     * ps_facetedsearch tire ce hook en fin de construction de sa requête
+     * (Search::initSearch). Quand une moto est en garage et qu'on est dans le
+     * sous-arbre Powerparts, on injecte `id_product IN (compatibles)` dans SA
+     * requête → facettes, produits ET compteurs tous croisés avec la
+     * compatibilité, nativement (même mécanisme que le pool de recherche natif).
+     */
+    public function hookActionFacetedSearchFilters($params)
+    {
+        if (empty($params['search']) || empty($params['query'])) {
+            return;
+        }
+        $idMoto = (int) $this->context->cookie->ms_moto;
+        if (!$idMoto) {
+            return;
+        }
+        $idCategory = (int) $params['query']->getIdCategory();
+        if (!$idCategory || !$this->isPowerpartsSubtree($idCategory)) {
+            return;
+        }
+
+        $ids = MsMountability::getCompatibleProducts($idMoto);
+
+        // Vide → aucun produit compatible : on force un résultat vide (comme le
+        // fait le provider natif de facetedsearch pour un pool de recherche vide).
+        $params['search']->getSearchAdapter()->addFilter(
+            'id_product',
+            empty($ids) ? ['NULL'] : array_map('intval', $ids)
+        );
+    }
+
+    /** La catégorie appartient-elle au sous-arbre Powerparts (nested set) ? */
+    private function isPowerpartsSubtree($idCategory)
+    {
+        $root = new Category(self::POWERPARTS_ROOT_CATEGORY);
+        if (!$root->id) {
+            return false;
+        }
+        $cat = new Category((int) $idCategory);
+
+        return $cat->id && $cat->nleft >= $root->nleft && $cat->nright <= $root->nright;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Back-office : écran d'import
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -174,7 +225,7 @@ class Megaservice_mountability extends Module
         // passage sur cet écran raccroche les hooks manquants, sans réinstaller.
         // (Noms canoniques → isRegisteredInHook fiable.)
         $healed = [];
-        foreach (['displayFooterProduct', 'actionFrontControllerSetMedia'] as $h) {
+        foreach (['displayFooterProduct', 'actionFrontControllerSetMedia', 'actionFacetedSearchFilters'] as $h) {
             if (!$this->isRegisteredInHook($h)) {
                 $this->registerHook($h);
                 $healed[] = $h;

@@ -1,7 +1,5 @@
 <?php
 
-use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
-
 class CategoryController extends CategoryControllerCore
 {
     /**
@@ -10,8 +8,6 @@ class CategoryController extends CategoryControllerCore
      * Templates disponibles :
      *   'default' — 3 colonnes + sidebar filtres
      *   'full'    — 4 colonnes pleine largeur, sous-catégories en cards
-     *
-     * Pour ajouter une catégorie : ajouter son ID (visible dans l'URL PS, ex: /15-equipements → 15)
      */
     private static $CATEGORY_TEMPLATES = [
         14 => 'full', // Lifestyle (vêtements)
@@ -20,14 +16,15 @@ class CategoryController extends CategoryControllerCore
 
     /**
      * Catégories racines qui affichent le contexte "moto sélectionnée"
-     * (bandeau moto + badge "Compatible" + filtrage par montabilité).
-     * S'applique à la racine ET à toutes ses sous-catégories (test nested set).
+     * (bandeau moto + badge "Compatible"). Le FILTRAGE réel des produits/facettes
+     * se fait dans ps_facetedsearch via le hook actionFacetedSearchFilters du
+     * module megaservice_mountability — pas ici.
      */
     private static $MOTO_CONTEXT_ROOT_IDS = [
         41, // Accessoires Powerparts
     ];
 
-    /** @var int|null id_moto du "garage" (cookie), mémoïsé pour la requête. */
+    /** @var int|null id_moto du "garage" (cookie), mémoïsé. */
     private $motoFilterId;
 
     public function init()
@@ -56,98 +53,10 @@ class CategoryController extends CategoryControllerCore
         $this->context->smarty->assign([
             'ms_category_template'  => $template,
             'ms_is_full_width'      => $template === 'full',
-            // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF
-            // (tous les produits affichés sont alors réellement compatibles).
+            // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF.
             'ms_show_moto_context'  => (bool) $motoFilter,
             'ms_moto_filter'        => $motoFilter,
         ]);
-    }
-
-    /**
-     * Sur ton core, la résolution du provider passe par le hook `productSearchProvider`
-     * que facetedsearch gagne toujours — impossible de le court-circuiter par une
-     * simple méthode. On reproduit donc le flux natif de `getProductSearchVariables`
-     * (patron ukooparts) en forçant NOTRE provider, UNIQUEMENT quand le filtre garage
-     * est actif ; sinon on délègue au natif (facetedsearch intact).
-     */
-    protected function getProductSearchVariables()
-    {
-        if (!($this->getMotoFilterId() && $this->isInMotoContextSubtree())) {
-            return parent::getProductSearchVariables();
-        }
-
-        $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountabilityCategoryProductSearchProvider.php';
-        if (!is_file($file)) {
-            return parent::getProductSearchVariables();
-        }
-        require_once $file;
-        if (!class_exists('MsMountabilityCategoryProductSearchProvider')) {
-            return parent::getProductSearchVariables();
-        }
-
-        $context = $this->getProductSearchContext();
-        $query   = $this->getProductSearchQuery();
-
-        $provider = new MsMountabilityCategoryProductSearchProvider(
-            $this->context,
-            $this->getTranslator(),
-            (int) $this->category->id,
-            $this->getMotoFilterId()
-        );
-
-        $resultsPerPage = (int) Tools::getValue('resultsPerPage');
-        if ($resultsPerPage <= 0) {
-            $resultsPerPage = (int) Configuration::get('PS_PRODUCTS_PER_PAGE');
-        }
-        $query
-            ->setResultsPerPage($resultsPerPage)
-            ->setPage(max((int) Tools::getValue('page'), 1));
-
-        if ($encodedSortOrder = Tools::getValue('order')) {
-            $query->setSortOrder(SortOrder::newFromString($encodedSortOrder));
-        }
-        $query->setEncodedFacets(Tools::getValue('q'));
-
-        Hook::exec('actionProductSearchProviderRunQueryBefore', compact('query'));
-        $result = $provider->runQuery($context, $query);
-        Hook::exec('actionProductSearchProviderRunQueryAfter', compact('query', 'result'));
-
-        if (!$result->getCurrentSortOrder()) {
-            $result->setCurrentSortOrder($query->getSortOrder());
-        }
-
-        $products   = $this->prepareMultipleProductsForTemplate($result->getProducts());
-        $pagination = $this->getTemplateVarPagination($query, $result);
-
-        $sort_orders   = $this->getTemplateVarSortOrders(
-            $result->getAvailableSortOrders(),
-            $query->getSortOrder()->toString()
-        );
-        $sort_selected = false;
-        foreach ($sort_orders as $order) {
-            if (isset($order['current']) && $order['current'] === true) {
-                $sort_selected = $order['label'];
-                break;
-            }
-        }
-
-        $searchVariables = [
-            'result'                  => $result,
-            'label'                   => $this->getListingLabel(),
-            'products'                => $products,
-            'sort_orders'             => $sort_orders,
-            'sort_selected'           => $sort_selected,
-            'pagination'              => $pagination,
-            'rendered_facets'         => null, // facettes mises de côté quand le filtre moto est actif
-            'rendered_active_filters' => null,
-            'js_enabled'              => $this->ajax,
-            'current_url'             => $this->updateQueryString(['q' => $result->getEncodedFacets()]),
-        ];
-
-        Hook::exec('filterProductSearch', ['searchVariables' => &$searchVariables]);
-        Hook::exec('actionProductSearchAfter', $searchVariables);
-
-        return $searchVariables;
     }
 
     /** id_moto du garage (cookie), 0 si absent. */
@@ -162,8 +71,8 @@ class CategoryController extends CategoryControllerCore
 
     /**
      * Données du bandeau "Catalogue filtré sur X" (ou null si pas de filtre actif
-     * sur cette catégorie). Le lien "changer" rouvre la modale (js-model-trigger),
-     * le lien "retirer" efface le cookie.
+     * sur cette catégorie). "changer" rouvre la modale (js-model-trigger),
+     * "retirer" efface le cookie.
      *
      * @return array{label:string,clear_url:string}|null
      */
