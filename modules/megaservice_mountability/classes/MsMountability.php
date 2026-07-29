@@ -235,6 +235,60 @@ class MsMountability extends ObjectModel
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // SEO : moto active (URL source de vérité) + URL filtrée
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * id_moto du filtre actif. L'URL (`?moto=2587-slug`) est SOURCE DE VÉRITÉ ;
+     * le cookie « garage » n'est que le secours. Quand la moto vient de l'URL, on
+     * réarme le cookie (cohérence navigation). 0 si aucun filtre.
+     *
+     * Partagé par l'override CategoryController et le hook facetedsearch pour que
+     * lecture et priorité soient identiques des deux côtés.
+     */
+    public static function resolveActiveMoto()
+    {
+        $ctx = Context::getContext();
+
+        $raw = Tools::getValue('moto');
+        if ($raw !== false && $raw !== null && $raw !== '') {
+            $id = (int) $raw; // "2587-ktm-1290..." → 2587
+            if ($id > 0) {
+                if ((int) $ctx->cookie->ms_moto !== $id) {
+                    $ctx->cookie->ms_moto = $id; // réarme le garage
+                }
+                return $id;
+            }
+        }
+
+        return (int) $ctx->cookie->ms_moto;
+    }
+
+    /** Slug SEO d'une moto : « marque modèle année » (cosmétique, routing id-based). */
+    public static function motoSlug($idMoto)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT `marque`, `core_name`, `annee`
+             FROM `' . _DB_PREFIX_ . 'ms_moto` WHERE `id_moto` = ' . (int) $idMoto
+        );
+        if (!$row) {
+            return '';
+        }
+
+        return Tools::str2url(trim($row['marque'] . ' ' . $row['core_name'] . ' ' . $row['annee']));
+    }
+
+    /** URL catégorie filtrée sur une moto : `/{cat}?moto=id-slug`. */
+    public static function motoFilteredCategoryUrl($idCategory, $idMoto)
+    {
+        $base  = Context::getContext()->link->getCategoryLink((int) $idCategory);
+        $slug  = self::motoSlug((int) $idMoto);
+        $token = (int) $idMoto . ($slug !== '' ? '-' . $slug : '');
+
+        return $base . (strpos($base, '?') !== false ? '&' : '?') . 'moto=' . rawurlencode($token);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Toutes les références de la « famille » d'un produit : la fiche parente

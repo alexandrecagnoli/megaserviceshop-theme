@@ -59,14 +59,82 @@ class CategoryController extends CategoryControllerCore
         ]);
     }
 
-    /** id_moto du garage (cookie), 0 si absent. */
+    // ─────────────────────────────────────────────────────────────────────────
+    // SEO (Volet 2, étapes 1-2 + 5) : canonical, non-redirection, meta
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Canonical « moto seule » (sans facette q=) quand le filtre moto est actif. */
+    public function getCanonicalURL()
+    {
+        if ($this->getMotoFilterId() && $this->isInMotoContextSubtree() && class_exists('MsMountability')) {
+            return MsMountability::motoFilteredCategoryUrl((int) $this->category->id, $this->getMotoFilterId());
+        }
+
+        return parent::getCanonicalURL();
+    }
+
+    /**
+     * Filtre moto actif → on NE redirige PAS : sinon PS ferait un 301 vers le
+     * canonical « moto seule » et écraserait le param ?moto= et/ou les facettes.
+     * Le <link rel="canonical"> (getCanonicalURL) suffit pour concentrer le SEO.
+     */
+    protected function canonicalRedirection($canonicalURL = '')
+    {
+        if ($this->getMotoFilterId() && $this->isInMotoContextSubtree()) {
+            return;
+        }
+
+        parent::canonicalRedirection($canonicalURL);
+    }
+
+    /** Title / meta dédiés à la moto + noindex des combinaisons moto + facette. */
+    public function getTemplateVarPage()
+    {
+        $page = parent::getTemplateVarPage();
+
+        $banner = ($this->getMotoFilterId() && $this->isInMotoContextSubtree())
+            ? $this->motoFilterBanner()
+            : null;
+
+        if ($banner) {
+            $page['meta']['title']       = 'Accessoires Powerparts pour ' . $banner['seo_label'];
+            $page['meta']['description'] = 'Tous les accessoires Powerparts compatibles avec '
+                . $banner['seo_label'] . ' — Mega Service Shop.';
+
+            // Étape 5 (anti-duplication) : une facette EN PLUS de la moto → noindex.
+            // Le canonical pointe déjà sur la vue « moto seule ».
+            if (Tools::getValue('q')) {
+                $page['meta']['robots'] = 'noindex,follow';
+            }
+        }
+
+        return $page;
+    }
+
+    /** id_moto du filtre actif (URL prioritaire → cookie secours), 0 si absent. */
     private function getMotoFilterId()
     {
         if ($this->motoFilterId === null) {
-            $this->motoFilterId = (int) $this->context->cookie->ms_moto;
+            $this->motoFilterId = $this->resolveMoto();
         }
 
         return $this->motoFilterId;
+    }
+
+    /** Délègue au module montabilité (même logique URL/cookie que le hook facetedsearch). */
+    private function resolveMoto()
+    {
+        if (!class_exists('MsMountability')) {
+            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountability.php';
+            if (is_file($file)) {
+                require_once $file;
+            }
+        }
+        if (class_exists('MsMountability')) {
+            return (int) MsMountability::resolveActiveMoto();
+        }
+
+        return (int) $this->context->cookie->ms_moto;
     }
 
     /**
@@ -84,7 +152,7 @@ class CategoryController extends CategoryControllerCore
         }
 
         $row = Db::getInstance()->getRow(
-            'SELECT `annee`, `core_name`, `nom_fr`
+            'SELECT `marque`, `annee`, `core_name`, `nom_fr`
              FROM `' . _DB_PREFIX_ . 'ms_moto`
              WHERE `id_moto` = ' . (int) $idMoto . ' AND `active` = 1'
         );
@@ -97,7 +165,8 @@ class CategoryController extends CategoryControllerCore
         $clear = $base . (strpos($base, '?') !== false ? '&' : '?') . 'ms_clear_moto=1';
 
         return [
-            'label'     => trim($row['annee'] . ' ' . $name),
+            'label'     => trim($row['annee'] . ' ' . $name),                        // bandeau (affichage)
+            'seo_label' => trim($row['marque'] . ' ' . $name . ' ' . $row['annee']),  // title/meta
             'clear_url' => $clear,
         ];
     }

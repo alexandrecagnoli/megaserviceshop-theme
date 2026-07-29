@@ -181,7 +181,7 @@ class Megaservice_mountability extends Module
         if (empty($params['search']) || empty($params['query'])) {
             return;
         }
-        $idMoto = (int) $this->context->cookie->ms_moto;
+        $idMoto = (int) MsMountability::resolveActiveMoto(); // URL prioritaire, cookie secours
         if (!$idMoto) {
             return;
         }

@@ -104,7 +104,9 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
             // Powerparts filtrés sur la compatibilité de CETTE moto (montabilité).
-            'ms_powerparts_url' => $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID),
+            // Maillage SEO (Volet 2 étape 3) : lien vers la catégorie Powerparts
+            // FILTRÉE sur cette moto (?moto=id-slug), source de vérité du filtre.
+            'ms_powerparts_url' => $this->powerpartsUrl(),
             'ms_powerparts'  => $this->fetchPowerpartsProducts(4, $idMoto),
             // Tous les produits affichés ici sont compatibles → badge « Compatible »
             // (la miniature native l'affiche quand ms_show_moto_context est vrai).
@@ -153,6 +155,20 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         $ids = array_map(static function ($r) { return (int) $r['id_product']; }, $rows);
 
         return $this->presentProducts($ids);
+    }
+
+    /**
+     * URL de la catégorie Powerparts filtrée sur la moto courante (?moto=id-slug).
+     * Construite depuis $this->moto (pas de dépendance au module montabilité : seul
+     * l'id de tête compte pour la résolution, le slug est cosmétique).
+     */
+    protected function powerpartsUrl(): string
+    {
+        $base = $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID);
+        $slug = Tools::str2url(trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee));
+        $token = (int) $this->moto->id . ($slug !== '' ? '-' . $slug : '');
+
+        return $base . (strpos($base, '?') !== false ? '&' : '?') . 'moto=' . rawurlencode($token);
     }
 
     /**
