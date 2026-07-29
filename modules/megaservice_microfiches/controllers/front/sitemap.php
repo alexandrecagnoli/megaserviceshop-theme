@@ -29,6 +29,15 @@ class Megaservice_microfichesSitemapModuleFrontController extends ModuleFrontCon
 
     public function initContent()
     {
+        // Un sitemap DOIT être du XML pur, quel que soit l'environnement (une
+        // préprod reste légitimement en mode dev). On coupe l'affichage des
+        // erreurs et on jette tout output déjà bufferisé (warnings, BOM, espaces)
+        // avant d'émettre — sinon le moindre notice invaliderait le XML.
+        @ini_set('display_errors', '0');
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         header('Content-Type: application/xml; charset=utf-8');
 
         $type = (string) Tools::getValue('type');
