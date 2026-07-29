@@ -51,6 +51,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     {
         parent::initContent();
 
+        // Arme le « garage » : la moto courante devient le filtre de compatibilité
+        // actif du site (lu par l'override CategoryController pour filtrer la
+        // catégorie Powerparts). Cookie PS natif (chiffré), écrit en fin de requête.
+        $this->context->cookie->ms_moto = (int) $this->moto->id;
+
         $partie = (string) Tools::getValue('partie'); // '', 'cycle' ou 'moteur'
         if (!in_array($partie, MsMicroficheCategorie::PARTIES, true)) {
             $partie = '';
