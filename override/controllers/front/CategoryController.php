@@ -1,6 +1,6 @@
 <?php
 
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
+use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
 
 class CategoryController extends CategoryControllerCore
 {
@@ -64,28 +64,90 @@ class CategoryController extends CategoryControllerCore
     }
 
     /**
-     * Court-circuite ps_facetedsearch par notre provider "compatibles moto" quand
-     * une moto est en garage et qu'on est dans le sous-arbre Powerparts.
+     * Sur ton core, la résolution du provider passe par le hook `productSearchProvider`
+     * que facetedsearch gagne toujours — impossible de le court-circuiter par une
+     * simple méthode. On reproduit donc le flux natif de `getProductSearchVariables`
+     * (patron ukooparts) en forçant NOTRE provider, UNIQUEMENT quand le filtre garage
+     * est actif ; sinon on délègue au natif (facetedsearch intact).
      */
-    protected function getProductSearchProvider(ProductSearchQuery $query)
+    protected function getProductSearchVariables()
     {
-        $idMoto = $this->getMotoFilterId();
-        if ($idMoto && $this->isInMotoContextSubtree()) {
-            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountabilityCategoryProductSearchProvider.php';
-            if (is_file($file)) {
-                require_once $file;
-                if (class_exists('MsMountabilityCategoryProductSearchProvider')) {
-                    return new MsMountabilityCategoryProductSearchProvider(
-                        $this->context,
-                        $this->getTranslator(),
-                        (int) $this->category->id,
-                        $idMoto
-                    );
-                }
+        if (!($this->getMotoFilterId() && $this->isInMotoContextSubtree())) {
+            return parent::getProductSearchVariables();
+        }
+
+        $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountabilityCategoryProductSearchProvider.php';
+        if (!is_file($file)) {
+            return parent::getProductSearchVariables();
+        }
+        require_once $file;
+        if (!class_exists('MsMountabilityCategoryProductSearchProvider')) {
+            return parent::getProductSearchVariables();
+        }
+
+        $context = $this->getProductSearchContext();
+        $query   = $this->getProductSearchQuery();
+
+        $provider = new MsMountabilityCategoryProductSearchProvider(
+            $this->context,
+            $this->getTranslator(),
+            (int) $this->category->id,
+            $this->getMotoFilterId()
+        );
+
+        $resultsPerPage = (int) Tools::getValue('resultsPerPage');
+        if ($resultsPerPage <= 0) {
+            $resultsPerPage = (int) Configuration::get('PS_PRODUCTS_PER_PAGE');
+        }
+        $query
+            ->setResultsPerPage($resultsPerPage)
+            ->setPage(max((int) Tools::getValue('page'), 1));
+
+        if ($encodedSortOrder = Tools::getValue('order')) {
+            $query->setSortOrder(SortOrder::newFromString($encodedSortOrder));
+        }
+        $query->setEncodedFacets(Tools::getValue('q'));
+
+        Hook::exec('actionProductSearchProviderRunQueryBefore', compact('query'));
+        $result = $provider->runQuery($context, $query);
+        Hook::exec('actionProductSearchProviderRunQueryAfter', compact('query', 'result'));
+
+        if (!$result->getCurrentSortOrder()) {
+            $result->setCurrentSortOrder($query->getSortOrder());
+        }
+
+        $products   = $this->prepareMultipleProductsForTemplate($result->getProducts());
+        $pagination = $this->getTemplateVarPagination($query, $result);
+
+        $sort_orders   = $this->getTemplateVarSortOrders(
+            $result->getAvailableSortOrders(),
+            $query->getSortOrder()->toString()
+        );
+        $sort_selected = false;
+        foreach ($sort_orders as $order) {
+            if (isset($order['current']) && $order['current'] === true) {
+                $sort_selected = $order['label'];
+                break;
             }
         }
 
-        return parent::getProductSearchProvider($query);
+        $searchVariables = [
+            'result'                  => $result,
+            'label'                   => $this->getListingLabel(),
+            'products'                => $products,
+            'sort_orders'             => $sort_orders,
+            'sort_selected'           => $sort_selected,
+            'pagination'              => $pagination,
+            'rendered_facets'         => null, // facettes mises de côté quand le filtre moto est actif
+            'rendered_active_filters' => null,
+            'js_enabled'              => $this->ajax,
+            'current_url'             => $this->updateQueryString(['q' => $result->getEncodedFacets()]),
+        ];
+
+        Hook::exec('filterProductSearch', ['searchVariables' => &$searchVariables]);
+        Hook::exec('actionProductSearchAfter', $searchVariables);
+
+        return $searchVariables;
     }
 
     /** id_moto du garage (cookie), 0 si absent. */
