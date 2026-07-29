@@ -78,7 +78,7 @@ class CategoryController extends CategoryControllerCore
      * canonical « moto seule » et écraserait le param ?moto= et/ou les facettes.
      * Le <link rel="canonical"> (getCanonicalURL) suffit pour concentrer le SEO.
      */
-    protected function canonicalRedirection($canonicalURL = '')
+    public function canonicalRedirection($canonicalURL = '')
     {
         if ($this->getMotoFilterId() && $this->isInMotoContextSubtree()) {
             return;

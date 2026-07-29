@@ -68,23 +68,36 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'ms_cart_token' => Tools::getToken(false),
         ]);
 
-        $mfName = $this->microfiche->nom_fr ?: $this->microfiche->nom_constructeur;
-        $label  = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
-        $this->msMetaTitle       = $mfName . ' — ' . $label;
-        $this->msMetaDescription = 'Vue éclatée et pièces d\'origine : ' . $mfName . ' pour ' . $label
-            . '. Mega Service Shop.';
-        $this->msCanonical       = $this->context->link->getModuleLink(
-            'megaservice_microfiches', 'microfiche',
-            ['id_microfiche' => (int) $this->microfiche->id, 'slug' => Tools::str2url($mfName)]
-        );
-
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/microfiche.tpl');
     }
 
-    /** Meta SEO (title/description) dédiés (Volet 1). */
+    /**
+     * Calcule meta + canonical PARESSEUSEMENT (getTemplateVarPage est appelé
+     * pendant parent::initContent, avant la fin de notre initContent).
+     */
+    protected function ensureSeo()
+    {
+        if ($this->msMetaTitle !== ''
+            || !Validate::isLoadedObject($this->microfiche)
+            || !Validate::isLoadedObject($this->moto)) {
+            return;
+        }
+        $mfName = $this->microfiche->nom_fr ?: $this->microfiche->nom_constructeur;
+        $label  = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+
+        $this->msMetaTitle       = $mfName . ' — ' . $label;
+        $this->msMetaDescription = 'Vue éclatée et pièces d\'origine : ' . $mfName . ' pour ' . $label
+            . '. Mega Service Shop.';
+        $this->msCanonical = $this->context->link->getModuleLink(
+            'megaservice_microfiches', 'microfiche',
+            ['id_microfiche' => (int) $this->microfiche->id, 'slug' => Tools::str2url($mfName)]
+        );
+    }
+
     public function getTemplateVarPage()
     {
         $page = parent::getTemplateVarPage();
+        $this->ensureSeo();
         if ($this->msMetaTitle !== '') {
             $page['meta']['title']       = $this->msMetaTitle;
             $page['meta']['description'] = $this->msMetaDescription;
@@ -93,9 +106,10 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
         return $page;
     }
 
-    /** Canonical propre de la microfiche (id-based, slug cosmétique). */
     public function getCanonicalURL()
     {
+        $this->ensureSeo();
+
         return $this->msCanonical !== '' ? $this->msCanonical : parent::getCanonicalURL();
     }
 
