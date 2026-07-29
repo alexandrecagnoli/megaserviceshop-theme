@@ -90,7 +90,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     protected function initHub(): void
     {
         $idMoto = (int) $this->moto->id;
-        $slug   = Tools::str2url($this->moto->nom_fr);
+        $slug   = $this->moto->slug();
 
         $partieLink = function ($p) use ($idMoto, $slug) {
             return $this->context->link->getModuleLink(
@@ -165,7 +165,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     protected function powerpartsUrl(): string
     {
         $base = $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID);
-        $slug = Tools::str2url(trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee));
+        $slug = $this->moto->slug();
         $token = (int) $this->moto->id . ($slug !== '' ? '-' . $slug : '');
 
         return $base . (strpos($base, '?') !== false ? '&' : '?') . 'moto=' . rawurlencode($token);
@@ -386,7 +386,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'title' => $this->module->l('Pièces détachées d\'origine', 'moto'),
             'url'   => '#',
         ];
-        $motoSlug = Tools::str2url($this->moto->nom_fr);
+        $motoSlug = $this->moto->slug();
         $breadcrumb['links'][] = [
             'title' => $this->moto->nom_fr,
             'url'   => $this->context->link->getModuleLink(

@@ -68,4 +68,23 @@ class MsMoto extends ObjectModel
             'date_upd'            => ['type' => self::TYPE_DATE,   'validate' => 'isDate'],
         ],
     ];
+
+    /**
+     * Slug SEO enrichi et CANONIQUE d'une moto : marque + modèle + année + type.
+     * Ex. « ktm-250-exc-f-2024-enduro ».
+     *
+     * Le routing microfiches est id-based → le slug est purement cosmétique
+     * (un slug obsolète charge quand même la bonne page). On centralise ici pour
+     * que TOUS les getModuleLink produisent le même slug enrichi.
+     */
+    public function slug()
+    {
+        return self::buildSlug($this->marque, $this->core_name, $this->annee, $this->type);
+    }
+
+    /** Variante statique (quand on n'a pas d'objet MsMoto hydraté, ex. requête groupée). */
+    public static function buildSlug($marque, $coreName, $annee, $type)
+    {
+        return Tools::str2url(trim($marque . ' ' . $coreName . ' ' . $annee . ' ' . $type));
+    }
 }

@@ -114,7 +114,7 @@ class Megaservice_microfichesSelectordataModuleFrontController extends ModuleFro
             $out[] = [
                 'value' => $this->context->link->getModuleLink('megaservice_microfiches', 'moto', [
                     'id_moto' => $id,
-                    'slug'    => Tools::str2url($name),
+                    'slug'    => MsMoto::buildSlug($marque, $name, $annee, $type),
                 ]),
                 'label' => $name,
             ];

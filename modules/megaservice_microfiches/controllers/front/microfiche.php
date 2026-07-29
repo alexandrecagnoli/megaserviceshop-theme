@@ -227,7 +227,7 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'picture'   => $this->moto->picture_main,
             'url'       => $this->context->link->getModuleLink(
                 'megaservice_microfiches', 'moto',
-                ['id_moto' => (int) $this->moto->id, 'slug' => Tools::str2url($this->moto->nom_fr)]
+                ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug()]
             ),
         ];
     }
@@ -243,7 +243,7 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'title' => $this->module->l('Pièces détachées d\'origine', 'microfiche'),
             'url'   => '#',
         ];
-        $motoSlug = Tools::str2url($this->moto->nom_fr);
+        $motoSlug = $this->moto->slug();
         $breadcrumb['links'][] = [
             'title' => $this->moto->nom_fr,
             'url'   => $this->context->link->getModuleLink(
