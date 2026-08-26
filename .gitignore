@@ -23,3 +23,18 @@ var/logs/
 # Imports motos / microfiches : on ne versionne pas les gros CSV constructeur.
 # Les samples (~30 lignes/marque) sont dans modules/megaservice_microfiches/samples/.
 /data/imports/*.csv
+
+# Dumps SQL (191 Mo) : jamais dans git.
+/dumps/
+
+# CSV constructeur deposes a la racine de data/ (la regle /data/imports/
+# ci-dessus ne les couvrait pas).
+/data/*.csv
+
+# Docs volumineuses : archives fournisseur et leurs dossiers dezippes.
+/docs/*.zip
+/docs/ukooparts*/
+/docs/ps_facetedsearch/
+
+# Config locale Claude Code
+.claude/
