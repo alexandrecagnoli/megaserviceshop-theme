@@ -70,10 +70,11 @@ class MsMountabilityImporter
         $first  = true;
 
         while (($raw = fgetcsv($fh, 0, ';', '"', '')) !== false) {
-            // Saute une éventuelle ligne d'en-tête.
+            // Ligne 1 = en-tête (reference;id_moto;marque). Détection tolérante
+            // au BOM UTF-8 et à la casse → jamais importée comme donnée.
             if ($first) {
                 $first = false;
-                if (isset($raw[0]) && strtolower(trim((string) $raw[0])) === 'reference') {
+                if (self::looksLikeHeader($raw)) {
                     continue;
                 }
             }
@@ -124,7 +125,7 @@ class MsMountabilityImporter
             return null;
         }
 
-        $reference = isset($raw[0]) ? trim((string) $raw[0]) : '';
+        $reference = isset($raw[0]) ? self::stripBom(trim((string) $raw[0])) : '';
         $idMoto    = isset($raw[1]) ? trim((string) $raw[1]) : '';
         // La marque du fichier fait foi si présente, sinon celle du formulaire.
         $marque    = isset($raw[2]) && trim((string) $raw[2]) !== ''
@@ -135,11 +136,45 @@ class MsMountabilityImporter
             return null;
         }
 
+        // Garde-fou : une ligne d'en-tête qui aurait échappé au skip (fichier
+        // sans BOM standard, casse ou séparateur inattendu) ne doit JAMAIS
+        // entrer en base comme donnée. On rejette les valeurs littérales.
+        if (strcasecmp($reference, 'reference') === 0
+            || strcasecmp($idMoto, 'id_moto') === 0
+            || strcasecmp($idMoto, 'id_moto_constructeur') === 0) {
+            return null;
+        }
+
         return [
             'reference'            => $reference,
             'id_moto_constructeur' => $idMoto,
             'marque'               => $marque,
         ];
+    }
+
+    /**
+     * Détecte une ligne d'en-tête `reference;id_moto;marque`, tolérante au BOM
+     * UTF-8 et à la casse (compare aux noms de colonnes attendus).
+     *
+     * @param array<int,string|null> $raw
+     */
+    private static function looksLikeHeader($raw)
+    {
+        if (!is_array($raw)) {
+            return false;
+        }
+        $c0 = isset($raw[0]) ? strtolower(self::stripBom(trim((string) $raw[0]))) : '';
+        $c1 = isset($raw[1]) ? strtolower(trim((string) $raw[1])) : '';
+
+        return $c0 === 'reference'
+            || $c1 === 'id_moto'
+            || $c1 === 'id_moto_constructeur';
+    }
+
+    /** Retire un BOM UTF-8 en tête de chaîne s'il est présent. */
+    private static function stripBom($s)
+    {
+        return strncmp((string) $s, "\xEF\xBB\xBF", 3) === 0 ? substr((string) $s, 3) : (string) $s;
     }
 
     /** Insertion groupée (IGNORE : l'index UNIQUE absorbe les doublons intra-fichier). */
