@@ -38,3 +38,6 @@ var/logs/
 
 # Config locale Claude Code
 .claude/
+
+# Sources constructeur brutes (3,8 Go : XML PIM, PHO, microfiches, exports).
+/IMPORT_FILES/
