@@ -1,0 +1,5 @@
+ref_product_source,relation_type,ref_product_target,position,recommended_qty
+A60112964044,mandatory,A62612991010,1,1
+A60112964044,excluded,A46006922000,1,1
+A60112964044,recommended,A44005979002,1,1
+A60112964044,spare,A61309960000,1,2
