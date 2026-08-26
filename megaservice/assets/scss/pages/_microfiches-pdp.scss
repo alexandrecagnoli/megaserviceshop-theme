@@ -1,0 +1,296 @@
+// ============================================================================
+// PR7 — PDP microfiche : vue éclatée + hotspots overlay + liste pièces + panier.
+// Maquette : PDP_microfiche. Template : modules/megaservice_microfiches/
+// views/templates/front/microfiche.tpl
+// ============================================================================
+
+// Le titre + la bannière modèle vivent dans .ms-catalog-hero / .ms-catalog-context
+// (chrome catégorie natif, full-bleed), AVANT .ms-pdp. Cf. moto.tpl / microfiche.tpl.
+.ms-pdp {
+  @include container;
+  padding-top: $spacing-lg;
+  padding-bottom: $spacing-xxl;
+
+  // ---- Bandeau compatibilité ----
+  &__compat {
+    background: $color-success-light;
+    color: $color-success;
+    border: 1px solid $color-success;
+    border-radius: $border-radius;
+    padding: $spacing-sm $spacing-md;
+    margin-bottom: $spacing-lg;
+
+    &::before {
+      content: "\2713\00a0";
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  // ---- Corps : viewer + liste ----
+  &__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xl;
+    align-items: start;
+
+    @include media-lg {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ---- Vue éclatée ----
+  &__viewer {
+    position: sticky;
+    top: $spacing-md;
+
+    @include media-lg {
+      position: static;
+    }
+  }
+
+  // Conteneur collé à l'image, SANS padding : c'est l'ancêtre positionné des
+  // pastilles, il doit faire exactement la taille de l'image rendue pour que
+  // les % (left/bottom) tombent juste. Reproduit le BO
+  // (AdminMsMicrofichesController : .ms-microfiche-viewer).
+  &__image-wrap {
+    position: relative;
+    display: block;
+    line-height: 0;
+    border: 1px solid $color-border;
+    background: $color-gray-5;
+
+    &.is-broken {
+      display: block;
+      line-height: normal;
+    }
+    &.is-broken::after {
+      content: "\2014";
+      display: block;
+      text-align: center;
+      color: $color-gray-20;
+      font-size: 2rem;
+      padding: $spacing-xxl 0;
+    }
+  }
+
+  &__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  // Pastille CORNER-ANCHORED, identique au BO : position_x/position_y désignent
+  // le COIN du marqueur (pas son centre). Donc PAS de translate — juste
+  // left/bottom en % + margin -1px d'ajustement. Taille fixe 24px.
+  &__dot {
+    position: absolute;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin-left: -1px;
+    margin-bottom: -1px;
+    border-radius: 50%;
+    border: 2px solid $color-white;
+    background: $color-ktm;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 11px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    @include transition(transform);
+
+    &:hover,
+    &.is-active {
+      transform: scale(1.4);
+      z-index: 10;
+    }
+  }
+
+  &__download {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-top: $spacing-md;
+    color: $color-text;
+    font-size: $font-size-sm;
+    text-decoration: underline;
+
+    &::after {
+      content: "\2193";
+    }
+  }
+
+  // ---- Liste des pièces ----
+  &__parts-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid $color-border;
+    border-radius: $border-radius;
+    overflow: hidden;
+  }
+
+  &__part {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: $spacing-md;
+    align-items: center;
+    padding: $spacing-md;
+    border-left: 4px solid $color-ktm;
+
+    & + & {
+      border-top: 1px solid $color-gray-5;
+    }
+
+    &.is-active {
+      background: $color-ktm-light;
+    }
+  }
+
+  &__part-seq {
+    @include flex-center;
+    width: 32px;
+    height: 32px;
+    border-radius: $border-radius;
+    background: $color-ktm;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: $font-size-sm;
+  }
+
+  &__part-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__part-name {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $font-size-base;
+    line-height: $line-height-heading;
+  }
+
+  &__part-ref {
+    color: $color-text-light;
+    font-size: $font-size-sm;
+  }
+
+  &__part-stock {
+    font-size: $font-size-sm;
+
+    &.is-available { color: $color-success; }
+    &.is-unavailable { color: $color-warning; }
+    &.is-soon { color: $color-gray-50; font-style: italic; }
+  }
+
+  &__part-buy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: $spacing-xs;
+    text-align: right;
+  }
+
+  &__part-price {
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: $font-size-lg;
+    color: $color-ktm;
+  }
+
+  &__part-form {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__part-qty {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.7rem;
+    color: $color-text-light;
+    text-transform: uppercase;
+
+    select {
+      margin-top: 2px;
+      padding: 4px 6px;
+      border: 1px solid $color-border;
+      border-radius: $border-radius;
+    }
+  }
+
+  &__part-add {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: $color-black;
+    color: $color-white;
+    border: 0;
+    border-radius: $border-radius;
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    @include transition(background-color);
+
+    &:hover {
+      background: $color-ktm;
+    }
+  }
+
+  &__part-qty-reco {
+    font-size: $font-size-sm;
+    color: $color-gray-50;
+  }
+
+  // Pièce sans produit : ligne grisée à gauche.
+  &__part:not(.is-linked) {
+    border-left-color: $color-gray-20;
+
+    .ms-pdp__part-seq { background: $color-gray-35; }
+  }
+
+  &__empty {
+    padding: $spacing-xl;
+    text-align: center;
+    color: $color-text-light;
+  }
+
+  // ---- Microfiches liées ----
+  &__related {
+    margin-top: $spacing-xxl;
+  }
+
+  &__related-title {
+    font-family: $font-heading;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $font-size-h3;
+    margin: 0 0 $spacing-lg;
+  }
+
+  // Grille des microfiches liées : conteneur en grid, les cartes réutilisent
+  // .ms-product-card + .ms-plp-card (cf. _product-card.scss + _microfiches-plp).
+  &__related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-lg;
+
+    @include media-lg { grid-template-columns: repeat(3, 1fr); }
+    @include media-md { grid-template-columns: repeat(2, 1fr); }
+    @include media-sm { grid-template-columns: 1fr; }
+  }
+}
+
+// Pièce liée mais hors stock : pas de panier (parcours alternatif à venir).
+.ms-pdp__part-oncommand {
+  font-size: $font-size-sm;
+  color: $color-gray-50;
+  font-style: italic;
+}

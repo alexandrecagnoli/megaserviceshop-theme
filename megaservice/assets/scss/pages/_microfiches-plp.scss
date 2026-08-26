@@ -1,0 +1,325 @@
+// ============================================================================
+// PR6 — PLP moto. Réutilise le chrome de la page catégorie (_catalog.scss,
+// _product-card.scss) : ici on ne porte QUE les ajustements spécifiques.
+// Template : modules/megaservice_microfiches/views/templates/front/moto.tpl
+// ============================================================================
+
+// Les overrides full-bleed du catalogue sont scopés sur body#category — on les
+// réplique pour nos pages module (PLP + PDP) qui réutilisent le hero/contexte
+// catégorie : content-wrapper pleine largeur + breadcrumb noir fusionné au hero.
+body#module-megaservice_microfiches-moto,
+body#module-megaservice_microfiches-microfiche {
+  overflow-x: hidden;
+
+  #wrapper > .container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #content-wrapper {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  // Breadcrumb sur fond noir : se fond avec le hero (comme la page catégorie).
+  .ms-breadcrumb {
+    background: $color-black;
+    padding-top: 16px;
+    padding-bottom: 0;
+
+    .ms-breadcrumb__current { color: rgba($color-white, 0.5); }
+    .ms-breadcrumb__sep path { stroke: rgba($color-white, 0.5) !important; }
+  }
+}
+
+// NB : .ms-catalog-context (bloc modèle noir) est géré nativement par le thème
+// (display:none jusqu'à body.has-moto-selected, rempli par le sélecteur du
+// header). On ne le force PAS : il apparaît avec le bon design quand le modèle
+// est choisi dans le modal. PLP et PDP l'utilisent toutes deux dans leur hero.
+
+// .ms-product-card { display:flex } a une spécificité plus forte que le
+// [hidden] natif → sans ça, masquer une carte filtrée (card.hidden=true en JS)
+// n'a aucun effet visuel et le filtre catégorie semble cassé.
+.ms-plp-card[hidden] { display: none !important; }
+
+// ── Carte microfiche : la vue éclatée ne doit pas être rognée (miniature
+//    normalisée affichée en entier, ratio de base 250/171). ──
+.ms-plp-card {
+  .ms-product-card__media {
+    background: $color-gray-5;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    &.is-broken {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &::after {
+        content: "\2014";
+        color: $color-gray-20;
+        font-size: 2rem;
+      }
+    }
+  }
+}
+
+// Méta sous le nom : marque + nb pièces (remplace prix/dispo du card produit).
+.ms-plp-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.ms-plp-card__brand {
+  color: $color-text-light;
+  font-size: 13px;
+}
+
+.ms-plp-card__count {
+  color: $color-gray-50;
+  font-size: 13px;
+}
+
+// ── Facettes autonomes (style répliqué du #search_filters natif, mais sous nos
+//    propres classes pour éviter le hijack capture de ps_facetedsearch) ──
+.ms-plp-facets {
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-plp-facet {
+  border-bottom: 1px solid $color-gray-20;
+  padding: $spacing-md 0;
+}
+
+.ms-plp-facet-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: $font-heading;
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0 0 12px;
+}
+
+.ms-plp-facet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li { margin: 0; }
+}
+
+.ms-plp-facet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.ms-plp-facet-text {
+  flex: 1;
+  font-family: $font-main;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.ms-plp-facet-count {
+  color: $color-gray-35;
+  font-size: 13px;
+}
+
+.ms-plp-checkbox {
+  position: relative;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+
+  input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    z-index: 1;
+  }
+
+  input:checked + .ms-plp-checkbox-box {
+    background-color: $color-ktm;
+    border-color: $color-ktm;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
+.ms-plp-checkbox-box {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 1px solid $color-black;
+  background-color: $color-white;
+  background-repeat: no-repeat;
+  background-position: center;
+  @include transition(background-color, border-color);
+}
+
+// ── "Effacer" dans le titre de facette ──
+.ms-plp-clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: $color-text-light;
+  font-size: 13px;
+  font-family: $font-main;
+  font-weight: 400;
+  text-transform: none;
+  cursor: pointer;
+
+  &:hover { color: $color-ktm; }
+}
+
+// ── État vide ──
+.ms-plp-empty {
+  padding: $spacing-xl;
+  text-align: center;
+  color: $color-text-light;
+}
+
+// ============================================================================
+// Sidebar pixel-perfect (maquette PLP_CAT_SPAREPARTS) : carte Partie,
+// Voir plus, Disponibilité (radio), Réinitialiser.
+// ============================================================================
+
+// ── Carte "Partie" (cycle / moteur) — bandeau noir en haut de sidebar ──
+.ms-plp-partie-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  margin-bottom: $spacing-lg;
+  background: $color-black;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.ms-plp-partie-card__label {
+  position: relative;
+  z-index: 1;
+  color: $color-white;
+  font-family: $font-heading;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+
+// ── "Voir plus" / "Voir moins" ──
+.ms-plp-facet-extra[hidden] { display: none; }
+
+.ms-plp-seemore {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: $spacing-sm;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: $color-text;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  cursor: pointer;
+
+  svg { @include transition(transform); }
+  &.is-open svg { transform: rotate(180deg); }
+  &:hover { color: $color-ktm; }
+}
+
+// ── Disponibilité : radio custom (même gabarit que la checkbox) ──
+.ms-plp-radio {
+  position: relative;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+
+  input[type="radio"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  input:checked + .ms-plp-radio-dot::after {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.ms-plp-radio-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 1px solid $color-black;
+  border-radius: 50%;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: $color-ktm;
+    transform: translate(-50%, -50%) scale(0);
+    @include transition(transform);
+  }
+}
+
+// ── Bouton "Réinitialiser" (visible desktop, dans la sidebar) ──
+.ms-plp-reset {
+  width: 100%;
+  margin-top: $spacing-lg;
+  padding: $spacing-sm $spacing-md;
+  font-family: $font-heading;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: transparent;
+  color: $color-black;
+  border: 1px solid $color-black;
+  border-radius: $border-radius;
+  cursor: pointer;
+  @include transition(background-color, color);
+
+  &:hover { background: $color-black; color: $color-white; }
+}
+
+// Items de tri rendus en <button> (au lieu de <a>) : reset pour matcher
+// pixel-perfect le .select-list natif du dropdown de tri.
+.ms-plp-sort .select-list {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

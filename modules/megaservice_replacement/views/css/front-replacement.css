@@ -1,0 +1,181 @@
+/* Bloc « cette référence est remplacée » — fiche produit front.
+   Chargé uniquement sur les fiches effectivement remplacées. */
+
+.ms-repl-front {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid #ffd9a8;
+  border-left: 4px solid #FE6604;
+  border-radius: 4px;
+  background: #fff8f2;
+}
+
+.ms-repl-front__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ms-repl-front__icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  border-radius: 50%;
+  background: #FE6604;
+  color: #fff;
+  font-size: 18px;
+}
+
+.ms-repl-front__title {
+  margin: 0 0 2px;
+  font-weight: 700;
+  font-size: 17px;
+  text-transform: uppercase;
+}
+
+.ms-repl-front__sub {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+}
+
+/* ── Liste des références de remplacement ── */
+.ms-repl-front__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-repl-front__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid #f2e3d2;
+}
+
+.ms-repl-front__item.is-unavailable {
+  opacity: .55;
+}
+
+/* Repli des ensembles volumineux (jusqu'à 101 composants constatés) */
+.ms-repl-front__list--collapsed .ms-repl-front__item--extra {
+  display: none;
+}
+
+.ms-repl-front__list--collapsed.is-open .ms-repl-front__item--extra {
+  display: flex;
+}
+
+.ms-repl-front__thumb {
+  flex: 0 0 64px;
+}
+
+.ms-repl-front__thumb img {
+  width: 64px;
+  height: auto;
+  display: block;
+}
+
+.ms-repl-front__info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ms-repl-front__name {
+  font-weight: 700;
+  color: #0A0A0A;
+  text-decoration: none;
+}
+
+.ms-repl-front__name:hover {
+  color: #FE6604;
+}
+
+.ms-repl-front__ref,
+.ms-repl-front__qty {
+  font-size: 13px;
+  color: #777;
+}
+
+.ms-repl-front__qty {
+  font-weight: 700;
+  color: #FE6604;
+}
+
+.ms-repl-front__buy {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ms-repl-front__price {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.ms-repl-front__stock {
+  font-size: 12px;
+}
+
+.ms-repl-front__stock.is-available {
+  color: #4b9f3e;
+}
+
+.ms-repl-front__stock.is-unavailable {
+  color: #b32020;
+}
+
+/* ── Messages et actions ── */
+.ms-repl-front__msg {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.ms-repl-front__msg--warning {
+  color: #a35200;
+  font-weight: 600;
+}
+
+.ms-repl-front__cta {
+  display: inline-block;
+  margin-top: 12px;
+}
+
+.ms-repl-front__more {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #FE6604;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Bouton d'achat neutralisé sur la référence remplacée */
+.ms-repl-front__disabled {
+  opacity: .4;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+@media (max-width: 575px) {
+  .ms-repl-front__item {
+    flex-wrap: wrap;
+  }
+
+  .ms-repl-front__buy {
+    align-items: flex-start;
+    width: 100%;
+  }
+}

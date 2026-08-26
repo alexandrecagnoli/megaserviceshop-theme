@@ -1,0 +1,122 @@
+/* Bloc de contrôle « références remplacées / remplaçantes » — fiche produit BO.
+   Lecture seule : aucun champ de saisie, volontairement (la table est réécrite
+   à chaque import du fichier constructeur). */
+
+.ms-repl {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-left: 4px solid #f5a623;
+  background: #fffaf2;
+}
+
+.ms-repl__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ms-repl__head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.ms-repl__readonly {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #e6e6e6;
+  color: #555;
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: help;
+}
+
+.ms-repl__section + .ms-repl__section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0e0c8;
+}
+
+.ms-repl__title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: #444;
+}
+
+.ms-repl__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-repl__list--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ms-repl__item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.ms-repl__list--compact .ms-repl__item {
+  padding: 0;
+}
+
+.ms-repl__ref {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+a.ms-repl__ref:hover {
+  border-color: #f5a623;
+  text-decoration: none;
+}
+
+.ms-repl__qty {
+  font-weight: 700;
+  color: #f5a623;
+}
+
+.ms-repl__name {
+  color: #666;
+  font-size: 13px;
+}
+
+.ms-repl__name--empty {
+  color: #bbb;
+}
+
+.ms-repl__badge {
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: #e8e8e8;
+  color: #555;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ms-repl__badge--danger {
+  background: #fde2e2;
+  color: #b32020;
+  font-weight: 600;
+}
+
+.ms-repl__more {
+  margin: 8px 0 0;
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+}
