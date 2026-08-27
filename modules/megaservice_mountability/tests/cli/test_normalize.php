@@ -36,7 +36,8 @@ check('marque trimée+MAJ', $r['marque'], 'HQV');
 
 echo "\n3. Marque du formulaire si absente de la ligne\n";
 $r = MsMountabilityImporter::normalizeRow(['REF', 'MOTO', ''], 'gg');
-check('fallback marque', $r['marque'], 'GG');
+// Était 'GG' : la marque est désormais ramenée au référentiel ms_moto.
+check('fallback marque normalisé', $r['marque'], 'GASGAS');
 
 echo "\n4. La marque de la LIGNE prime sur le formulaire\n";
 $r = MsMountabilityImporter::normalizeRow(['REF', 'MOTO', 'KTM'], 'GG');
@@ -49,7 +50,23 @@ check('marque absente partout', MsMountabilityImporter::normalizeRow(['R', 'M'])
 check('moins de 2 colonnes',   MsMountabilityImporter::normalizeRow(['R']), null);
 check('pas un tableau',        MsMountabilityImporter::normalizeRow('R;M;KTM'), null);
 
-echo "\n6. En-tête non standard (régression : 1 ligne 'MARQUE' entrée en prod)\n";
+echo "\n6. Normalisation de la marque sur le référentiel ms_moto\n";
+$r = MsMountabilityImporter::normalizeRow(['R', 'M', 'HUSQVARNA']);
+check('HUSQVARNA → HQV',  $r['marque'], 'HQV');
+$r = MsMountabilityImporter::normalizeRow(['R', 'M', 'Gas Gas']);
+check('Gas Gas → GASGAS', $r['marque'], 'GASGAS');
+$r = MsMountabilityImporter::normalizeRow(['R', 'M', 'ktm']);
+check('ktm → KTM',        $r['marque'], 'KTM');
+check('normalizeMarque inconnue', MsMountabilityImporter::normalizeMarque('SUSPENSIONS WP'), '');
+
+echo "\n7. Fichier au mauvais format : la 3e colonne est une catégorie\n";
+// ~24 900 lignes étaient entrées en prod sous des « marques » comme
+// « PIÈCES DÉTACHÉES » ou « ACCESSOIRES POWE » (tronqué par VARCHAR(16)).
+check('PIÈCES DÉTACHÉES rejeté',  MsMountabilityImporter::normalizeRow(['R', 'M', 'PIÈCES DÉTACHÉES']), null);
+check('SUSPENSIONS WP rejeté',    MsMountabilityImporter::normalizeRow(['R', 'M', 'SUSPENSIONS WP']), null);
+check('MAIN CATEGORY rejeté',     MsMountabilityImporter::normalizeRow(['R', 'M', 'MAIN CATEGORY']), null);
+
+echo "\n8. En-tête non standard (régression : 1 ligne 'MARQUE' entrée en prod)\n";
 // Un fichier dont les 2 premières colonnes portent des libellés inattendus
 // passait les deux contrôles et son en-tête entrait en base comme donnée.
 // La 3e colonne 'MARQUE' est le discriminant : aucune marque réelle ne l'est.

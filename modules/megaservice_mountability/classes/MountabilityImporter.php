@@ -32,9 +32,48 @@ class MsMountabilityImporter
      * @param string $marque marque de rechargement (KTM / HQV / GG…)
      * @return array<string,mixed> rapport d'exécution
      */
+    /**
+     * Libellés rencontrés dans les fichiers constructeur → valeur du référentiel
+     * `ms_moto.marque` (ENUM KTM / HQV / GASGAS).
+     *
+     * Sans cette normalisation, les fichiers Husqvarna s'écrivaient en base sous
+     * « HUSQVARNA » alors que tout le reste du système dit « HQV ». Conséquences
+     * observées en prod : rapport d'import à 0 % (countUnresolved interroge la
+     * marque du formulaire), et purge de rechargement inopérante (le DELETE ne
+     * percutait aucune ligne). Le front, lui, n'a jamais été touché : il joint
+     * sur le serial et ignore la marque.
+     */
+    const MARQUE_ALIASES = [
+        'KTM'       => 'KTM',
+        'HQV'       => 'HQV',
+        'HUSQVARNA' => 'HQV',
+        'HUSKY'     => 'HQV',
+        'GASGAS'    => 'GASGAS',
+        'GAS GAS'   => 'GASGAS',
+        'GAS-GAS'   => 'GASGAS',
+        'GG'        => 'GASGAS',
+    ];
+
+    /**
+     * Ramène un libellé de marque au référentiel, ou '' s'il n'en est pas un.
+     *
+     * Le '' est ce qui protège la table : l'importer acceptait auparavant
+     * n'importe quelle chaîne, si bien que des fichiers au mauvais format (3e
+     * colonne = nom de catégorie) ont chargé ~24 900 lignes sous des « marques »
+     * telles que « PIÈCES DÉTACHÉES » ou « SUSPENSIONS WP », tronquées à 16
+     * caractères par la colonne. Une marque inconnue vaut désormais rejet.
+     */
+    public static function normalizeMarque($raw)
+    {
+        $key = strtoupper(trim((string) $raw));
+        $key = preg_replace('/\s+/', ' ', $key);
+
+        return isset(self::MARQUE_ALIASES[$key]) ? self::MARQUE_ALIASES[$key] : '';
+    }
+
     public static function import($path, $marque)
     {
-        $marque = strtoupper(trim((string) $marque));
+        $marque = self::normalizeMarque($marque);
         $report = [
             'marque'            => $marque,
             'lines_read'        => 0,
@@ -51,7 +90,7 @@ class MsMountabilityImporter
         ];
 
         if ($marque === '') {
-            $report['error'] = 'Marque manquante.';
+            $report['error'] = 'Marque manquante ou inconnue (attendu : KTM, HQV/Husqvarna, GASGAS).';
             return $report;
         }
         $fh = @fopen($path, 'r');
@@ -128,9 +167,12 @@ class MsMountabilityImporter
         $reference = isset($raw[0]) ? self::stripBom(trim((string) $raw[0])) : '';
         $idMoto    = isset($raw[1]) ? trim((string) $raw[1]) : '';
         // La marque du fichier fait foi si présente, sinon celle du formulaire.
+        // Elle est ramenée au référentiel ms_moto : une valeur hors référentiel
+        // (nom de catégorie d'un fichier au mauvais format, en-tête résiduel)
+        // rend la ligne invalide plutôt que de créer une pseudo-marque en base.
         $marque    = isset($raw[2]) && trim((string) $raw[2]) !== ''
-            ? strtoupper(trim((string) $raw[2]))
-            : strtoupper(trim((string) $marqueDefault));
+            ? self::normalizeMarque($raw[2])
+            : self::normalizeMarque($marqueDefault);
 
         if ($reference === '' || $idMoto === '' || $marque === '') {
             return null;
