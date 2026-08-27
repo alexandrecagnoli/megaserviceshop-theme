@@ -109,6 +109,37 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.remove('has-moto-selected');
   }
 
+  // Le filtre moto a deux supports : localStorage (affichage, ci-dessus) et le
+  // cookie PS `ms_moto` (filtrage réel des catégories, via ps_facetedsearch).
+  // Vider le seul localStorage laissait le back-end filtrer sur l'ancienne moto
+  // — interface « aucune moto » et catalogue toujours filtré. On purge donc les
+  // deux, le cookie via l'endpoint du module montabilité (joignable depuis
+  // n'importe quelle page, contrairement à ?ms_clear_moto=1 qui n'est traité
+  // que par l'override CategoryController).
+  var CLEAR_ENDPOINT = modal.getAttribute('data-clear-endpoint') || '';
+
+  function clearMotoFilter() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+    applyEmpty();
+
+    if (!CLEAR_ENDPOINT) return;
+
+    fetch(CLEAR_ENDPOINT, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        // Rechargement UNIQUEMENT si un filtre était réellement armé : le
+        // contenu affiché était alors filtré et ment désormais. Sinon on ne
+        // touche à rien, la modale reste ouverte pour choisir une autre moto.
+        if (data && data.cleared) {
+          window.location.reload();
+        }
+      })
+      .catch(function () { /* réseau HS : le localStorage est déjà purgé */ });
+  }
+
   // Restore l'état "moto sélectionnée" (header + barre mobile) depuis le storage.
   var storedSel = readSelection();
   if (storedSel && storedSel.label) applyFilled(storedSel.label);
@@ -177,8 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (s.name !== 'marque') s.disabled = true;
       });
       refreshModelSubmit();
-      applyEmpty();
-      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      clearMotoFilter();
     });
   }
 
@@ -246,8 +276,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (vinReset) {
     vinReset.addEventListener('click', function () {
       hideVinResult();
-      applyEmpty();
-      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      clearMotoFilter();
     });
   }
 

@@ -5,7 +5,8 @@
 
 {* Modal (desktop) / Bottomsheet (mobile) *}
 <div class="ms-model-modal js-model-modal" hidden role="dialog" aria-modal="true"
-     data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}">
+     data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
+     data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}">
 
   {* ── Col gauche : image + texte (desktop uniquement) ── *}
   <div class="ms-model-modal__visual">
