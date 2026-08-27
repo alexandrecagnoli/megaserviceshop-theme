@@ -141,7 +141,8 @@ class MsMountabilityImporter
         // entrer en base comme donnée. On rejette les valeurs littérales.
         if (strcasecmp($reference, 'reference') === 0
             || strcasecmp($idMoto, 'id_moto') === 0
-            || strcasecmp($idMoto, 'id_moto_constructeur') === 0) {
+            || strcasecmp($idMoto, 'id_moto_constructeur') === 0
+            || strcasecmp($marque, 'marque') === 0) {
             return null;
         }
 
@@ -165,10 +166,22 @@ class MsMountabilityImporter
         }
         $c0 = isset($raw[0]) ? strtolower(self::stripBom(trim((string) $raw[0]))) : '';
         $c1 = isset($raw[1]) ? strtolower(trim((string) $raw[1])) : '';
+        $c2 = isset($raw[2]) ? strtolower(trim((string) $raw[2])) : '';
 
+        // La 3e colonne compte aussi : un fichier dont les deux premières
+        // colonnes portent des libellés inattendus (« ref;modele;marque ») ne
+        // déclenchait aucun des tests ci-dessous et son en-tête entrait en base
+        // comme une ligne de données. Constaté en prod : 1 ligne parasite à
+        // `marque = 'MARQUE'` parmi 1,95 M — inoffensive, mais elle prouve que
+        // reconnaître l'en-tête sur deux colonnes ne suffit pas.
+        //
+        // On s'en tient à des libellés qu'aucune donnée réelle ne peut porter :
+        // élargir à « ref » / « modele » / « moto » ferait rejeter des valeurs
+        // légitimes, le gain ne vaut pas ce risque.
         return $c0 === 'reference'
             || $c1 === 'id_moto'
-            || $c1 === 'id_moto_constructeur';
+            || $c1 === 'id_moto_constructeur'
+            || $c2 === 'marque';
     }
 
     /** Retire un BOM UTF-8 en tête de chaîne s'il est présent. */

@@ -56,6 +56,11 @@ class CategoryController extends CategoryControllerCore
             // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF.
             'ms_show_moto_context'  => (bool) $motoFilter,
             'ms_moto_filter'        => $motoFilter,
+            // Listing vide FAUTE DE DONNÉES pour cette moto (≠ moto connue sans
+            // pièce dans cette catégorie). Sans ce flag, le template servait le
+            // générique "Aucun produit disponible pour le moment" — illisible
+            // face à une catégorie de 4 000 produits.
+            'ms_moto_no_data'       => $this->motoHasNoMountabilityData(),
         ]);
     }
 
@@ -169,6 +174,29 @@ class CategoryController extends CategoryControllerCore
             'seo_label' => trim($row['marque'] . ' ' . $name . ' ' . $row['annee']),  // title/meta
             'clear_url' => $clear,
         ];
+    }
+
+    /**
+     * Vrai quand un filtre moto est actif sur une catégorie Powerparts alors
+     * qu'AUCUNE donnée de montabilité n'existe pour cette moto.
+     *
+     * Le hook actionFacetedSearchFilters force alors un résultat vide (filtre
+     * `id_product IN (NULL)`), ce qui est le bon comportement — mais la page
+     * doit le dire, sinon 4 000 produits disparaissent derrière un message
+     * générique de catalogue vide. Cas courant tant que toutes les marques ne
+     * sont pas importées : au moment de l'écriture, seul KTM l'était.
+     */
+    private function motoHasNoMountabilityData()
+    {
+        $idMoto = $this->getMotoFilterId();
+        if (!$idMoto || !$this->isInMotoContextSubtree()) {
+            return false;
+        }
+        if (!class_exists('MsMountability')) {
+            return false;
+        }
+
+        return !MsMountability::hasMountabilityData($idMoto);
     }
 
     private function isInMotoContextSubtree()

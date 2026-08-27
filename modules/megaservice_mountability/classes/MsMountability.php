@@ -64,6 +64,37 @@ class MsMountability extends ObjectModel
      */
     const MOTO_JOIN_COLUMN = 'serial_constructeur';
 
+    /**
+     * Le fichier de montabilité couvre-t-il cette moto ?
+     *
+     * À distinguer de `getCompatibleProducts()` vide, qui recouvre DEUX cas très
+     * différents : « on n'a pas la donnée pour cette moto » et « on l'a, mais
+     * aucune pièce compatible ici ». Les deux vidaient la catégorie sans un mot.
+     * Seul le premier justifie de dire au client qu'on ne connaît pas encore sa
+     * moto — d'où ce test dédié, volontairement plus léger que la résolution
+     * complète : un EXISTS, pas la liste des id_product.
+     *
+     * Cas réel qui a motivé ce helper : seule la marque KTM a été importée, donc
+     * toute moto HQV ou GASGAS renvoyait une catégorie vide et inexpliquée.
+     */
+    public static function hasMountabilityData($idMoto)
+    {
+        $idMoto = (int) $idMoto;
+        if (!$idMoto) {
+            return false;
+        }
+
+        return (bool) Db::getInstance()->getValue(
+            'SELECT EXISTS (
+                 SELECT 1
+                 FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+                 INNER JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
+                         ON mo.`' . bqSQL(self::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+                 WHERE mo.`id_moto` = ' . $idMoto . '
+             )'
+        );
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Service : produit → motos compatibles
     // ─────────────────────────────────────────────────────────────────────────

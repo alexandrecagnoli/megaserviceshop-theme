@@ -49,5 +49,16 @@ check('marque absente partout', MsMountabilityImporter::normalizeRow(['R', 'M'])
 check('moins de 2 colonnes',   MsMountabilityImporter::normalizeRow(['R']), null);
 check('pas un tableau',        MsMountabilityImporter::normalizeRow('R;M;KTM'), null);
 
+echo "\n6. En-tête non standard (régression : 1 ligne 'MARQUE' entrée en prod)\n";
+// Un fichier dont les 2 premières colonnes portent des libellés inattendus
+// passait les deux contrôles et son en-tête entrait en base comme donnée.
+// La 3e colonne 'MARQUE' est le discriminant : aucune marque réelle ne l'est.
+check('en-tête ref;modele;MARQUE', MsMountabilityImporter::normalizeRow(['REF', 'MODELE', 'MARQUE']), null);
+check('en-tête en minuscules',     MsMountabilityImporter::normalizeRow(['ref', 'modele', 'marque']), null);
+// Contre-épreuve : ces valeurs restent des données valides tant que la marque
+// est une vraie marque — on n'a pas élargi le rejet aux libellés génériques.
+$r = MsMountabilityImporter::normalizeRow(['REF', 'MOTO', 'KTM'], 'GG');
+check('REF/MOTO reste une donnée', $r['id_moto_constructeur'], 'MOTO');
+
 printf("\n%s  %d/%d assertions OK\n\n", $fail === 0 ? '✅ SUCCÈS' : '❌ ÉCHEC', $total - $fail, $total);
 exit($fail === 0 ? 0 : 1);
