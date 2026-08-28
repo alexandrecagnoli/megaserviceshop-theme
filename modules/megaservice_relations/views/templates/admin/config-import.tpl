@@ -26,7 +26,7 @@
         <div class="radio">
           <label>
             <input type="radio" name="import_mode" value="replace_for_listed">
-            <strong>{l s='Replace pour produits listés' mod='megaservice_relations'}</strong> — {l s='Pour chaque (id_product_source, relation_type) du CSV, vide les relations existantes puis insère les nouvelles. Idéal pour resync depuis un export.' mod='megaservice_relations'}
+            <strong>{l s='Replace pour produits listés' mod='megaservice_relations'}</strong> — {l s='Pour chaque (ref_product_source, relation_type) du CSV, vide les relations existantes puis insère les nouvelles. Idéal pour resync depuis un export.' mod='megaservice_relations'}
           </label>
         </div>
         <div class="radio">
@@ -55,21 +55,21 @@
   </p>
 
   <ul>
-    <li><code>id_product_source</code> <span class="text-danger">{l s='(requis)' mod='megaservice_relations'}</span> — {l s='ID PrestaShop du produit qui possède la relation' mod='megaservice_relations'}</li>
+    <li><code>ref_product_source</code> <span class="text-danger">{l s='(requis)' mod='megaservice_relations'}</span> — {l s='Référence (ps_product.reference) du produit qui possède la relation' mod='megaservice_relations'}</li>
     <li><code>relation_type</code> <span class="text-danger">{l s='(requis)' mod='megaservice_relations'}</span> — {l s='Une des valeurs : mandatory, excluded, recommended, spare' mod='megaservice_relations'}</li>
-    <li><code>id_product_target</code> <span class="text-danger">{l s='(requis)' mod='megaservice_relations'}</span> — {l s='ID PrestaShop du produit lié' mod='megaservice_relations'}</li>
+    <li><code>ref_product_target</code> <span class="text-danger">{l s='(requis)' mod='megaservice_relations'}</span> — {l s='Référence (ps_product.reference) du produit lié' mod='megaservice_relations'}</li>
     <li><code>position</code> <span class="text-muted">{l s='(optionnel)' mod='megaservice_relations'}</span> — {l s='Position d\'affichage. Si vide, position auto-incrémentée.' mod='megaservice_relations'}</li>
     <li><code>recommended_qty</code> <span class="text-muted">{l s='(optionnel)' mod='megaservice_relations'}</span> — {l s='Quantité recommandée (utilisé pour les pièces de rechange). Défaut : 1.' mod='megaservice_relations'}</li>
   </ul>
 
   <p>{l s='Exemple :' mod='megaservice_relations'}</p>
 
-  <pre style="background:#f5f5f5;padding:12px;border:1px solid #ddd;font-size:12px;">id_product_source,relation_type,id_product_target,position,recommended_qty
-29,mandatory,30,1,1
-29,mandatory,37,2,1
-29,excluded,40,1,
-29,recommended,30,1,
-29,recommended,73,2,
-29,spare,37,1,4
-29,spare,73,2,2</pre>
+  <pre style="background:#f5f5f5;padding:12px;border:1px solid #ddd;font-size:12px;">ref_product_source,relation_type,ref_product_target,position,recommended_qty
+9E18087,mandatory,58030021100,1,1
+9E18087,mandatory,75030085100,2,1
+9E18087,excluded,0019050121S,1,
+9E18087,recommended,58030021100,1,
+9E18087,recommended,79230010000,2,
+9E18087,spare,75030085100,1,4
+9E18087,spare,79230010000,2,2</pre>
 </div>
