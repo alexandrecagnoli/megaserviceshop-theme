@@ -841,11 +841,40 @@ body#category {
       a.next {
         border: 1px solid $color-gray-20;
 
-        // Masque le texte "Précédent / Suivant", garde l'icône
+        // Masque le texte "Précédent / Suivant". L'icône PS est un glyphe
+        // Material Icons : la font n'est pas chargée par le thème et
+        // `.material-icons` est masqué globalement (pages/customer) — le <i>
+        // ne peut donc rien rendre. On injecte le chevron en SVG masqué,
+        // couleur héritée via currentColor, comme ailleurs dans le thème.
         font-size: 0;
-        i { font-size: 20px; }
+        i { display: none; }
+
+        &::before {
+          content: '';
+          display: block;
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+          background-color: currentColor;
+          -webkit-mask-repeat: no-repeat;
+                  mask-repeat: no-repeat;
+          -webkit-mask-position: center;
+                  mask-position: center;
+          -webkit-mask-size: contain;
+                  mask-size: contain;
+        }
 
         &:hover { border-color: $color-black; }
+      }
+
+      a.previous::before {
+        -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M10 3.5L5.5 8L10 12.5' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>");
+                mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M10 3.5L5.5 8L10 12.5' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>");
+      }
+
+      a.next::before {
+        -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6 3.5L10.5 8L6 12.5' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>");
+                mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6 3.5L10.5 8L6 12.5' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>");
       }
 
       span.spacer {
