@@ -799,7 +799,10 @@ body#category {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 40px;
+  // 64px et non 40 : le bloc « Afficher » est plus haut que la liste des
+  // pages et, centre verticalement, son libelle deborde vers le haut — il
+  // venait coller le bouton AJOUTER de la derniere carte produit.
+  padding-top: 64px;
 
   // Résumé textuel masqué (géré dans le topbar)
   > div:first-child { display: none; }
@@ -904,7 +907,7 @@ body#category {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 2px;
 
   @include media-md {
     position: static;
