@@ -529,3 +529,93 @@ Quick win : les front controllers + `getModuleLink` existent déjà, il ne reste
 **Test rapide** : ouvrir l'URL de l'image en direct (200 vs 403/404) + console navigateur sur la fiche véhicule (mixed-content / 403).
 
 **Statut** : 🔵 à investiguer avec EveryParts + hébergeur — pas urgent, consigné le 2026-06-25.
+
+---
+
+## 🔴 Preprod est une cible unique — le dernier déploiement gagne, tout push sur `main` recasse le sélecteur moto
+
+**Fichiers** : [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+
+**Contexte** : le sélecteur moto dynamique (cascade AJAX `selectordata`) vit sur `feat/product-mountability` (`059bde0`, `ef483f2` du 2026-07-28) et **n'a jamais été mergé dans `main`**. `main` porte encore la maquette d'avril 2026 avec marques/années/gammes en dur et un submit sans redirection.
+
+Or `deploy.yml` déploie vers **une seule cible** (`megaserviceshop.nuttyguru.com`) et se déclenche **automatiquement sur push `main`**, avec `rsync --delete` sur `megaservice/`. Un déploiement de `main` écrase donc intégralement le thème déployé depuis une branche.
+
+**Constaté le 2026-08-26** :
+
+```
+16:21  feat/product-mountability  dispatch  ✓  → sélecteur fonctionnel
+16:39  main (2 commits .gitignore) push     ✓  → thème écrasé par la maquette d'avril
+```
+
+Deux commits de `.gitignore`, sans le moindre rapport avec le front, ont suffi à casser le sélecteur sur preprod. Diagnostic coûteux : le symptôme (« données démo, valider ne fait rien ») ressemble à une feature jamais câblée, alors que le code était bon.
+
+**Impact** : tant que le sélecteur n'est pas dans `main`, **n'importe quel push sur `main` — doc, `.gitignore`, CI — recasse le sélecteur sur preprod**. Il faut alors redispatcher la branche à la main.
+
+**Fix proposé** (par ordre de préférence) :
+1. **Merger `feat/product-mountability` dans `main`** — supprime la divergence à la racine. Fait remonter le SEO + la montabilité en même temps : à valider avant.
+2. Séparer les cibles : une preprod par branche, ou un déploiement `main` → prod / branches → preprod.
+3. À défaut, garde-fou dans `deploy.yml` : refuser le déploiement auto de `main` tant que `main` est en retard sur la branche de travail.
+
+**Statut** : 🔴 actif — contourné le 2026-08-27 par un redispatch de la branche. La cause reste entière.
+
+---
+
+## 🟠 `deploy.sh` local ne déploie que le thème, contrairement à la CI
+
+**Fichiers** : [deploy.sh](deploy.sh) vs [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+
+**Contexte** : `deploy.sh` rsync **uniquement `megaservice/`**. `deploy.yml` fait quatre choses de plus : `override/`, `modules/`, et un vidage du cache PrestaShop.
+
+**Impact** : un `bash deploy.sh` sur une branche qui ajoute un front controller (cas de `selectordata.php`) pousse le thème **sans le module**. Sur une install qui ne l'a pas déjà, la cascade tombe en 404 — et l'absence de vidage de cache peut masquer un controller pourtant présent, PrestaShop mettant en cache la liste des modules et le routage.
+
+`CLAUDE.md` présente pourtant `bash deploy.sh` comme le déploiement complet, `deploy-css.sh` comme le partiel. C'est faux depuis que le repo embarque `modules/` et `override/`.
+
+**Fix proposé** : aligner `deploy.sh` sur `deploy.yml` (3 rsync + clear cache), ou le supprimer au profit d'un `gh workflow run deploy.yml --ref <branche>`, seul chemin qui garantit l'exhaustivité. Corriger `CLAUDE.md` dans la foulée.
+
+**Note** : la clé SSH de déploiement n'est pas présente sur le poste de dev (elle vit dans les secrets GitHub) — `deploy.sh` échoue donc en `Permission denied (publickey)`. La CI est de fait le seul chemin fonctionnel, ce qui renforce l'option « supprimer ».
+
+**Statut** : 🟠 à corriger, consigné le 2026-08-27.
+
+---
+
+## 🟡 Bundle `theme.js` versionné et désynchronisable de la source
+
+**Fichier** : [megaservice/assets/js/theme.js](megaservice/assets/js/theme.js)
+
+**Contexte** : le bundle webpack est committé dans le dépôt. Le sélecteur dynamique a été committé en source le 2026-07-28 sans que `npm run build` soit relancé : le bundle en dépôt est resté sur son état du 2026-06-25 (`1b0a0d0`) pendant un mois, servant la maquette d'avril alors que la source portait la cascade AJAX.
+
+Sans conséquence sur les déploiements — la CI lance `npm run build` avant de rsync, donc c'est toujours la source qui part. Mais un dépôt où l'artefact de build ment sur l'état de la source rend tout diagnostic trompeur : c'est exactement ce qui a envoyé le debug du sélecteur sur une fausse piste le 2026-08-27.
+
+**Fix proposé** : sortir `megaservice/assets/js/theme.js` et `assets/dist/` du dépôt (`.gitignore`), puisque la CI reconstruit systématiquement. Vérifier au préalable qu'aucun chemin de déploiement ne dépend de l'artefact versionné — `deploy.sh` lance `npm run build` lui aussi, donc a priori non.
+
+**Statut** : 🟡 rebuild ponctuel commité le 2026-08-27 (`1c71058`). Le fond n'est pas traité.
+
+---
+
+## 🟡 Onglet « Recherche par VIN » du sélecteur — résultat en dur
+
+**Fichier** : [megaservice/assets/js/model-selector.js:218](megaservice/assets/js/model-selector.js#L218)
+
+**Contexte** : l'onglet Modèle est câblé sur `selectordata` (cascade réelle sur `ms_moto`). L'onglet VIN, lui, est resté à la maquette : quel que soit le VIN saisi, `showVinResult('KTM 990 RC R Track', vin)` affiche toujours la même moto, puis « Afficher les pièces compatibles » persiste ce libellé faux.
+
+**Impact** : plus trompeur qu'un onglet désactivé — l'utilisateur obtient un résultat d'apparence valide qui ne correspond pas à sa moto.
+
+**Blocage** : le module n'a aucune source VIN. `ms_moto.serial_constructeur` est un serial constructeur, **pas** un VIN ; il n'existe ni table de correspondance VIN → `id_moto`, ni API constructeur branchée.
+
+**Fix proposé** : à court terme, masquer ou désactiver l'onglet VIN avec une mention explicite plutôt que de servir un faux résultat. À terme, statuer sur la source (table d'équivalence importée, ou API constructeur) — décision produit, pas technique.
+
+**Statut** : 🟡 à trancher, consigné le 2026-08-27.
+
+---
+
+## 🟡 Docs microfiches périmées — « périmètre EveryParts » sur un sélecteur développé en interne
+
+**Fichiers** : [docs/microfiches/STATUS.md:25](docs/microfiches/STATUS.md#L25), [docs/microfiches/STATUS.md:90](docs/microfiches/STATUS.md#L90), [docs/microfiches/RECAP_2026-06-26.md:95](docs/microfiches/RECAP_2026-06-26.md#L95), [modules/megaservice_microfiches/controllers/front/moto.php:8-10](modules/megaservice_microfiches/controllers/front/moto.php#L8-L10)
+
+**Contexte** : les docs de juin 2026 affirment que le garage / sélecteur de modèle est **construit par EveryParts** et « qu'on ne le câble pas ». Le commentaire d'en-tête de `moto.php` porte le même contrat. EveryParts a depuis été abandonné et le sélecteur développé en interne le 2026-07-28 — sans que docs ni commentaire soient mis à jour.
+
+**Impact** : trois sources concordantes affirment qu'une feature est hors périmètre alors qu'elle est livrée. Le debug du 2026-08-27 a conclu à tort « jamais câblé, c'est normal » sur la foi de ces docs. La memory `project_garage_everyparts` qu'elles citent n'existe plus, donc la décision d'origine n'est même plus vérifiable.
+
+**Fix proposé** : marquer la décision EveryParts comme abandonnée dans `STATUS.md` et `RECAP_2026-06-26.md`, réécrire le bloc de commentaire de `moto.php` pour décrire le vrai contrat (`selectordata` → URL hub), et purger les mentions EveryParts qui ne concernent plus que le sujet visuel moto.
+
+**Statut** : 🟡 à corriger, consigné le 2026-08-27.

@@ -4,7 +4,9 @@
 <div class="ms-model-overlay js-model-overlay" hidden aria-hidden="true"></div>
 
 {* Modal (desktop) / Bottomsheet (mobile) *}
-<div class="ms-model-modal js-model-modal" hidden role="dialog" aria-modal="true">
+<div class="ms-model-modal js-model-modal" hidden role="dialog" aria-modal="true"
+     data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
+     data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}">
 
   {* ── Col gauche : image + texte (desktop uniquement) ── *}
   <div class="ms-model-modal__visual">
@@ -60,7 +62,7 @@
         </div>
         <div class="ms-model-modal__field">
           <select class="ms-model-modal__select js-model-select" name="gamme" disabled>
-            <option value="" disabled selected>{l s='Gamme' d='Shop.Theme.Global'}</option>
+            <option value="" disabled selected>{l s='Pratique' d='Shop.Theme.Global'}</option>
           </select>
           <svg class="ms-model-modal__chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

@@ -14,7 +14,7 @@
   {* ── Hero noir + bannière modèle (chrome catégorie réutilisé) ── *}
   <div class="ms-catalog-hero ms-catalog-hero--with-context">
     <div class="ms-catalog-hero__inner">
-      <h1 class="ms-catalog-hero__title">{l s='Pièces détachées d\'origine' d='Modules.Megaservicemicrofiches.Shop'}</h1>
+      <h1 class="ms-catalog-hero__title">{l s='Pièces d\'origine' d='Modules.Megaservicemicrofiches.Shop'} — {$ms_moto.marque} {$ms_moto.core_name} {$ms_moto.annee}</h1>
     </div>
 
     <div class="ms-catalog-context">
@@ -22,7 +22,8 @@
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-          <strong class="ms-catalog-context__moto-name js-model-current-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+          {* Rendu serveur : ANNÉE + MODÈLE (pas de js-model-current-name, cf. moto.tpl). *}
+          <strong class="ms-catalog-context__moto-name">{$ms_moto.annee} {$ms_moto.core_name|escape:'html'}</strong>
         </div>
         <div class="ms-catalog-context__actions">
           <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
@@ -86,10 +87,10 @@
     {/if}
 
     {* ── Accessoires Powerparts ──
-       Phase 1 : produits NON filtrés moto (catégorie 41 générique). Le filtrage
-       par compatibilité moto = Phase 2 (ukooparts). On réutilise la miniature
-       produit NATIVE du thème → cartes prix + "Ajouter" panier identiques au
-       reste du site (et l'ajout AJAX sidebar marche déjà via app.js). *}
+       Produits Powerparts FILTRÉS sur la compatibilité de cette moto (module
+       montabilité). Miniature produit NATIVE du thème → cartes prix + "Ajouter"
+       panier identiques au reste du site. Badge « Compatible » actif via
+       ms_show_moto_context (tous les produits ici sont compatibles). *}
     {if $ms_powerparts}
       <section class="ms-hub__section">
         <header class="ms-hub__section-head">

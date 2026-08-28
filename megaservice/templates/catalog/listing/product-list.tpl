@@ -64,8 +64,23 @@
 
           <div id="js-product-list">
             {capture assign="errorContent"}
-              <h4>{l s='No products available yet' d='Shop.Theme.Catalog'}</h4>
-              <p>{l s='Stay tuned! More products will be shown here as they are added.' d='Shop.Theme.Catalog'}</p>
+              {* Listing vide parce qu'on n'a pas encore la montabilité de cette
+                 moto : on le dit, au lieu du générique "catalogue vide" qui
+                 laisse croire que la catégorie ne contient aucun produit. *}
+              {if isset($ms_moto_no_data) && $ms_moto_no_data}
+                <h4>{l s='Compatibilité pas encore disponible pour cette moto' d='Shop.Theme.Catalog'}</h4>
+                {if isset($ms_moto_filter.label) && $ms_moto_filter.label}
+                  <p>{l s='Nous n\'avons pas encore la liste des pièces compatibles avec votre %model%. Cette catégorie n\'est pas vide : c\'est le filtre de compatibilité qui n\'a rien à afficher.' d='Shop.Theme.Catalog' sprintf=['%model%' => $ms_moto_filter.label]}</p>
+                {else}
+                  <p>{l s='Nous n\'avons pas encore la liste des pièces compatibles avec cette moto. Cette catégorie n\'est pas vide : c\'est le filtre de compatibilité qui n\'a rien à afficher.' d='Shop.Theme.Catalog'}</p>
+                {/if}
+                {if isset($ms_moto_filter.clear_url) && $ms_moto_filter.clear_url}
+                  <p><a class="ms-catalog__clear-moto" href="{$ms_moto_filter.clear_url}">{l s='Voir tout le catalogue' d='Shop.Theme.Catalog'}</a></p>
+                {/if}
+              {else}
+                <h4>{l s='No products available yet' d='Shop.Theme.Catalog'}</h4>
+                <p>{l s='Stay tuned! More products will be shown here as they are added.' d='Shop.Theme.Catalog'}</p>
+              {/if}
             {/capture}
             {include file='errors/not-found.tpl' errorContent=$errorContent}
           </div>

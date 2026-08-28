@@ -26,8 +26,9 @@
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
-          {* Nom rempli nativement par le sélecteur du header (js-model-current-name). *}
-          <strong class="ms-catalog-context__moto-name js-model-current-name">{$ms_moto.nom_fr|escape:'html'}</strong>
+          {* Rendu serveur (la page connaît sa moto) : ANNÉE + MODÈLE. Pas de
+             js-model-current-name ici, sinon le localStorage du header l'écraserait. *}
+          <strong class="ms-catalog-context__moto-name">{$ms_moto.annee} {$ms_moto.core_name|escape:'html'}</strong>
         </div>
         <div class="ms-catalog-context__actions">
           <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>

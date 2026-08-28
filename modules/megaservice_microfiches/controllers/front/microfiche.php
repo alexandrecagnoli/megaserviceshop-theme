@@ -28,6 +28,11 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
     /** @var MsMicroficheCategorie|null */
     protected $categorie;
 
+    /** SEO (Volet 1) : meta + canonical. */
+    protected $msMetaTitle = '';
+    protected $msMetaDescription = '';
+    protected $msCanonical = '';
+
     public function init()
     {
         $idMicrofiche = (int) Tools::getValue('id_microfiche');
@@ -64,6 +69,48 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/microfiche.tpl');
+    }
+
+    /**
+     * Calcule meta + canonical PARESSEUSEMENT (getTemplateVarPage est appelé
+     * pendant parent::initContent, avant la fin de notre initContent).
+     */
+    protected function ensureSeo()
+    {
+        if ($this->msMetaTitle !== ''
+            || !Validate::isLoadedObject($this->microfiche)
+            || !Validate::isLoadedObject($this->moto)) {
+            return;
+        }
+        $mfName = $this->microfiche->nom_fr ?: $this->microfiche->nom_constructeur;
+        $label  = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+
+        $this->msMetaTitle       = $mfName . ' — ' . $label;
+        $this->msMetaDescription = 'Vue éclatée et pièces d\'origine : ' . $mfName . ' pour ' . $label
+            . '. Mega Service Shop.';
+        $this->msCanonical = $this->context->link->getModuleLink(
+            'megaservice_microfiches', 'microfiche',
+            ['id_microfiche' => (int) $this->microfiche->id, 'slug' => Tools::str2url($mfName)]
+        );
+    }
+
+    public function getTemplateVarPage()
+    {
+        $page = parent::getTemplateVarPage();
+        $this->ensureSeo();
+        if ($this->msMetaTitle !== '') {
+            $page['meta']['title']       = $this->msMetaTitle;
+            $page['meta']['description'] = $this->msMetaDescription;
+        }
+
+        return $page;
+    }
+
+    public function getCanonicalURL()
+    {
+        $this->ensureSeo();
+
+        return $this->msCanonical !== '' ? $this->msCanonical : parent::getCanonicalURL();
     }
 
     /**
@@ -227,7 +274,7 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'picture'   => $this->moto->picture_main,
             'url'       => $this->context->link->getModuleLink(
                 'megaservice_microfiches', 'moto',
-                ['id_moto' => (int) $this->moto->id, 'slug' => Tools::str2url($this->moto->nom_fr)]
+                ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug()]
             ),
         ];
     }
@@ -243,7 +290,7 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'title' => $this->module->l('Pièces détachées d\'origine', 'microfiche'),
             'url'   => '#',
         ];
-        $motoSlug = Tools::str2url($this->moto->nom_fr);
+        $motoSlug = $this->moto->slug();
         $breadcrumb['links'][] = [
             'title' => $this->moto->nom_fr,
             'url'   => $this->context->link->getModuleLink(

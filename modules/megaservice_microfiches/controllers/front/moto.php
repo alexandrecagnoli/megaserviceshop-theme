@@ -28,6 +28,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     /** @var MsMoto|null Moto courante hydratée */
     protected $moto;
 
+    /** SEO (Volet 1) : meta + canonical calculés en initContent, appliqués au rendu. */
+    protected $msMetaTitle = '';
+    protected $msMetaDescription = '';
+    protected $msCanonical = '';
+
     public function init()
     {
         $idMoto = (int) Tools::getValue('id_moto');
@@ -50,6 +55,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     public function initContent()
     {
         parent::initContent();
+
+        // Arme le « garage » : la moto courante devient le filtre de compatibilité
+        // actif du site (lu par l'override CategoryController pour filtrer la
+        // catégorie Powerparts). Cookie PS natif (chiffré), écrit en fin de requête.
+        $this->context->cookie->ms_moto = (int) $this->moto->id;
 
         $partie = (string) Tools::getValue('partie'); // '', 'cycle' ou 'moteur'
         if (!in_array($partie, MsMicroficheCategorie::PARTIES, true)) {
@@ -77,6 +87,62 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     }
 
     /**
+     * Calcule meta + canonical PARESSEUSEMENT. getTemplateVarPage/getCanonicalURL
+     * sont appelés PENDANT parent::initContent() (avant la fin de notre
+     * initContent), donc on ne peut pas se reposer sur des valeurs posées après.
+     * On calcule ici depuis $this->moto (chargé dès init()) + la partie de l'URL.
+     */
+    protected function ensureSeo()
+    {
+        if ($this->msMetaTitle !== '' || !Validate::isLoadedObject($this->moto)) {
+            return;
+        }
+        $label  = trim($this->moto->marque . ' ' . $this->moto->core_name . ' ' . $this->moto->annee);
+        $partie = (string) Tools::getValue('partie');
+        if (!in_array($partie, MsMicroficheCategorie::PARTIES, true)) {
+            $partie = '';
+        }
+
+        if ($partie === '') {
+            $this->msMetaTitle       = 'Pièces d\'origine — ' . $label;
+            $this->msMetaDescription = 'Toutes les pièces détachées d\'origine pour ' . $label
+                . ' : partie cycle, partie moteur, accessoires Powerparts. Mega Service Shop.';
+            $this->msCanonical = $this->context->link->getModuleLink(
+                'megaservice_microfiches', 'moto',
+                ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug()]
+            );
+        } else {
+            $partieLabel = $partie === 'cycle' ? 'partie cycle' : 'partie moteur';
+            $this->msMetaTitle       = 'Pièces d\'origine ' . $partieLabel . ' — ' . $label;
+            $this->msMetaDescription = 'Pièces détachées d\'origine ' . $partieLabel . ' pour ' . $label
+                . '. Mega Service Shop.';
+            $this->msCanonical = $this->context->link->getModuleLink(
+                'megaservice_microfiches', 'moto',
+                ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug(), 'partie' => $partie]
+            );
+        }
+    }
+
+    public function getTemplateVarPage()
+    {
+        $page = parent::getTemplateVarPage();
+        $this->ensureSeo();
+        if ($this->msMetaTitle !== '') {
+            $page['meta']['title']       = $this->msMetaTitle;
+            $page['meta']['description'] = $this->msMetaDescription;
+        }
+
+        return $page;
+    }
+
+    public function getCanonicalURL()
+    {
+        $this->ensureSeo();
+
+        return $this->msCanonical !== '' ? $this->msCanonical : parent::getCanonicalURL();
+    }
+
+    /**
      * Page "hub moto" (URL /motos/{id}-{slug} sans partie) — maquette composite :
      * hero + bannière modèle, 3 accès (Cycle / Moteur / Powerparts), bloc
      * "Dernières microfiches". Le bloc "Accessoires Powerparts" + la cible de la
@@ -85,7 +151,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     protected function initHub(): void
     {
         $idMoto = (int) $this->moto->id;
-        $slug   = Tools::str2url($this->moto->nom_fr);
+        $slug   = $this->moto->slug();
 
         $partieLink = function ($p) use ($idMoto, $slug) {
             return $this->context->link->getModuleLink(
@@ -98,10 +164,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_moto'        => $this->motoToTemplate($this->moto),
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
-            // Phase 1 : Powerparts NON filtré moto (catégorie générique). Le
-            // filtrage par compatibilité moto = Phase 2 (ukooparts).
-            'ms_powerparts_url' => $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID),
-            'ms_powerparts'  => $this->fetchPowerpartsProducts(4),
+            // Powerparts filtrés sur la compatibilité de CETTE moto (montabilité).
+            // Maillage SEO (Volet 2 étape 3) : lien vers la catégorie Powerparts
+            // FILTRÉE sur cette moto (?moto=id-slug), source de vérité du filtre.
+            'ms_powerparts_url' => $this->powerpartsUrl(),
+            'ms_powerparts'  => $this->fetchPowerpartsProducts(4, $idMoto),
+            // Tous les produits affichés ici sont compatibles → badge « Compatible »
+            // (la miniature native l'affiche quand ms_show_moto_context est vrai).
+            'ms_show_moto_context' => true,
             'ms_latest'      => $this->fetchLatestMicrofiches($idMoto, 4),
             'ms_latest_more' => $partieLink('cycle'),
             'static_token'   => Tools::getToken(false), // requis par la miniature produit (form panier)
@@ -120,8 +190,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
      *
      * @return array<int,array<string,mixed>>
      */
-    protected function fetchPowerpartsProducts(int $limit): array
+    protected function fetchPowerpartsProducts(int $limit, int $idMoto): array
     {
+        $compatible = $this->compatibleProductIds($idMoto);
+        if (empty($compatible)) {
+            return []; // aucune pièce Powerparts compatible → section masquée
+        }
+        $inCompatible = implode(',', array_map('intval', $compatible));
+
         $idShop = (int) $this->context->shop->id;
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT cp.`id_product`
@@ -131,6 +207,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
              JOIN `' . _DB_PREFIX_ . 'product_shop` ps
                   ON ps.`id_product` = cp.`id_product` AND ps.`id_shop` = ' . $idShop . '
              WHERE c.`nleft` >= root.`nleft` AND c.`nright` <= root.`nright`
+               AND cp.`id_product` IN (' . $inCompatible . ')
                AND ps.`active` = 1 AND ps.`visibility` IN ("both", "catalog")
              ORDER BY ps.`date_add` DESC
              LIMIT ' . (int) $limit
@@ -139,6 +216,44 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         $ids = array_map(static function ($r) { return (int) $r['id_product']; }, $rows);
 
         return $this->presentProducts($ids);
+    }
+
+    /**
+     * URL de la catégorie Powerparts filtrée sur la moto courante (?moto=id-slug).
+     * Construite depuis $this->moto (pas de dépendance au module montabilité : seul
+     * l'id de tête compte pour la résolution, le slug est cosmétique).
+     */
+    protected function powerpartsUrl(): string
+    {
+        $base = $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID);
+        $slug = $this->moto->slug();
+        $token = (int) $this->moto->id . ($slug !== '' ? '-' . $slug : '');
+
+        return $base . (strpos($base, '?') !== false ? '&' : '?') . 'moto=' . rawurlencode($token);
+    }
+
+    /**
+     * IDs produits compatibles avec la moto, via le module montabilité s'il est
+     * présent (les deux modules restent découplés : chargement défensif).
+     *
+     * @return int[]
+     */
+    protected function compatibleProductIds(int $idMoto): array
+    {
+        if (!$idMoto) {
+            return [];
+        }
+        if (!class_exists('MsMountability')) {
+            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountability.php';
+            if (is_file($file)) {
+                require_once $file;
+            }
+        }
+        if (!class_exists('MsMountability')) {
+            return []; // module montabilité absent
+        }
+
+        return MsMountability::getCompatibleProducts($idMoto);
     }
 
     /**
@@ -332,7 +447,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'title' => $this->module->l('Pièces détachées d\'origine', 'moto'),
             'url'   => '#',
         ];
-        $motoSlug = Tools::str2url($this->moto->nom_fr);
+        $motoSlug = $this->moto->slug();
         $breadcrumb['links'][] = [
             'title' => $this->moto->nom_fr,
             'url'   => $this->context->link->getModuleLink(

@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   var modal    = document.querySelector('.js-model-modal');
   var overlay  = document.querySelector('.js-model-overlay');
-  var triggers = document.querySelectorAll('.ms-header__model-btn, .js-model-trigger-mobile');
+  var triggers = document.querySelectorAll('.ms-header__model-btn, .js-model-trigger-mobile, .js-model-trigger');
 
   if (!modal) return;
 
@@ -15,10 +15,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Open / Close ─────────────────────────────
 
+  var restored = false;
+
   function openModal() {
     modal.removeAttribute('hidden');
     overlay.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    // Rejoue la sélection mémorisée une fois (DOM neuf après navigation) pour
+    // que « Afficher les pièces compatibles » soit ré-accessible directement.
+    if (!restored) {
+      restored = true;
+      var sel = readSelection();
+      if (sel) restoreSelection(sel);
+    }
+  }
+
+  // Lecture tolérante du localStorage : nouveau format JSON, ou ancien libellé brut.
+  function readSelection() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (err) {}
+    if (!raw) return null;
+    try {
+      var obj = JSON.parse(raw);
+      return (obj && typeof obj === 'object') ? obj : { label: raw };
+    } catch (err) {
+      return { label: raw };
+    }
   }
 
   function closeModal() {
@@ -87,10 +109,40 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.remove('has-moto-selected');
   }
 
-  // Restore depuis localStorage (en attendant le plugin serveur)
-  var stored = null;
-  try { stored = localStorage.getItem(STORAGE_KEY); } catch (err) {}
-  if (stored) applyFilled(stored);
+  // Le filtre moto a deux supports : localStorage (affichage, ci-dessus) et le
+  // cookie PS `ms_moto` (filtrage réel des catégories, via ps_facetedsearch).
+  // Vider le seul localStorage laissait le back-end filtrer sur l'ancienne moto
+  // — interface « aucune moto » et catalogue toujours filtré. On purge donc les
+  // deux, le cookie via l'endpoint du module montabilité (joignable depuis
+  // n'importe quelle page, contrairement à ?ms_clear_moto=1 qui n'est traité
+  // que par l'override CategoryController).
+  var CLEAR_ENDPOINT = modal.getAttribute('data-clear-endpoint') || '';
+
+  function clearMotoFilter() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+    applyEmpty();
+
+    if (!CLEAR_ENDPOINT) return;
+
+    fetch(CLEAR_ENDPOINT, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        // Rechargement UNIQUEMENT si un filtre était réellement armé : le
+        // contenu affiché était alors filtré et ment désormais. Sinon on ne
+        // touche à rien, la modale reste ouverte pour choisir une autre moto.
+        if (data && data.cleared) {
+          window.location.reload();
+        }
+      })
+      .catch(function () { /* réseau HS : le localStorage est déjà purgé */ });
+  }
+
+  // Restore l'état "moto sélectionnée" (header + barre mobile) depuis le storage.
+  var storedSel = readSelection();
+  if (storedSel && storedSel.label) applyFilled(storedSel.label);
 
   // ── Tab Modèle : submit disabled tant que selects pas remplis ────
 
@@ -125,8 +177,26 @@ document.addEventListener('DOMContentLoaded', function () {
         .filter(Boolean).join(' ');
 
       applyFilled(label);
-      try { localStorage.setItem(STORAGE_KEY, label); } catch (err) {}
-      closeModal();
+      // On mémorise la sélection COMPLÈTE pour pouvoir rejouer la cascade à la
+      // réouverture de la modale (pas seulement le libellé d'affichage).
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          marque:      selectMarque.value,
+          annee:       selectAnnee.value,
+          type:        selectGamme.value,
+          modeleUrl:   selectModele.value,
+          modeleLabel: selectedText(selectModele),
+          label:       label
+        }));
+      } catch (err) {}
+
+      // selectModele.value = URL de la page hub de la moto → on y navigue.
+      var url = selectModele ? selectModele.value : '';
+      if (url) {
+        window.location.href = url;
+      } else {
+        closeModal();
+      }
     });
   }
 
@@ -138,8 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (s.name !== 'marque') s.disabled = true;
       });
       refreshModelSubmit();
-      applyEmpty();
-      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      clearMotoFilter();
     });
   }
 
@@ -207,59 +276,99 @@ document.addEventListener('DOMContentLoaded', function () {
   if (vinReset) {
     vinReset.addEventListener('click', function () {
       hideVinResult();
-      applyEmpty();
-      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      clearMotoFilter();
     });
   }
 
-  // ── Cascade des selects (démo — à brancher sur l'API du plugin) ──
+  // ── Cascade AJAX (Marque → Année → Pratique → Modèle) ────────────
+
+  var ENDPOINT = modal.getAttribute('data-selector-endpoint') || '';
+
+  function fetchStep(params, cb) {
+    if (!ENDPOINT) { cb([]); return; }
+    var qs = Object.keys(params).map(function (k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    var url = ENDPOINT + (ENDPOINT.indexOf('?') === -1 ? '?' : '&') + qs;
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { cb((d && d.items) || []); })
+      .catch(function () { cb([]); });
+  }
+
+  // Remplit un select avec les items reçus (value/label) + placeholder en tête.
+  function fillSelect(select, placeholder, items) {
+    if (!select) return;
+    select.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = ''; ph.disabled = true; ph.selected = true;
+    ph.textContent = placeholder;
+    select.appendChild(ph);
+    items.forEach(function (it) {
+      var opt = document.createElement('option');
+      opt.value = it.value;
+      opt.textContent = it.label;
+      select.appendChild(opt);
+    });
+    select.disabled = items.length === 0;
+  }
+
+  // Rejoue la cascade pour re-sélectionner marque → année → pratique → modèle
+  // depuis une sélection mémorisée (chaînage async car chaque niveau est AJAX).
+  function restoreSelection(sel) {
+    if (!sel || !sel.marque || !selectMarque) return;
+    selectMarque.value = sel.marque;
+    fetchStep({ marque: sel.marque }, function (years) {
+      fillSelect(selectAnnee, 'Année', years);
+      if (!sel.annee) { refreshModelSubmit(); return; }
+      selectAnnee.value = sel.annee;
+      fetchStep({ marque: sel.marque, annee: sel.annee }, function (types) {
+        fillSelect(selectGamme, 'Pratique', types);
+        if (!sel.type) { refreshModelSubmit(); return; }
+        selectGamme.value = sel.type;
+        fetchStep({ marque: sel.marque, annee: sel.annee, type: sel.type }, function (models) {
+          fillSelect(selectModele, 'Modèle', models);
+          if (sel.modeleUrl) selectModele.value = sel.modeleUrl;
+          refreshModelSubmit();
+        });
+      });
+    });
+  }
 
   if (selectMarque) {
     selectMarque.addEventListener('change', function () {
-      if (selectAnnee) {
-        selectAnnee.disabled = false;
-        selectAnnee.innerHTML = '<option value="" disabled selected>Année</option>';
-        var currentYear = new Date().getFullYear();
-        for (var y = currentYear; y >= 2000; y--) {
-          var opt = document.createElement('option');
-          opt.value = y;
-          opt.textContent = y;
-          selectAnnee.appendChild(opt);
-        }
-      }
+      resetSelect(selectAnnee);
       resetSelect(selectGamme);
       resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectMarque.value) return;
+      fetchStep({ marque: selectMarque.value }, function (items) {
+        fillSelect(selectAnnee, 'Année', items);
+      });
     });
   }
 
   if (selectAnnee) {
     selectAnnee.addEventListener('change', function () {
-      if (selectGamme) {
-        selectGamme.disabled = false;
-        selectGamme.innerHTML = '<option value="" disabled selected>Gamme</option>'
-          + '<option value="motocross">Motocross</option>'
-          + '<option value="enduro">Enduro</option>'
-          + '<option value="supersport">Supersport</option>'
-          + '<option value="naked">Naked</option>'
-          + '<option value="adventure">Adventure</option>';
-      }
+      resetSelect(selectGamme);
       resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectAnnee.value) return;
+      fetchStep({ marque: selectMarque.value, annee: selectAnnee.value }, function (items) {
+        fillSelect(selectGamme, 'Pratique', items);
+      });
     });
   }
 
   if (selectGamme) {
     selectGamme.addEventListener('change', function () {
-      if (selectModele) {
-        selectModele.disabled = false;
-        selectModele.innerHTML = '<option value="" disabled selected>Modèle</option>'
-          + '<option value="ktm-450-sx-f-2026">KTM 450 SX-F</option>'
-          + '<option value="ktm-990-duke-r">KTM 990 DUKE R</option>'
-          + '<option value="ktm-990-rc-r-track">KTM 990 RC R Track</option>'
-          + '<option value="ktm-890-adventure">KTM 890 Adventure</option>';
-      }
+      resetSelect(selectModele);
       refreshModelSubmit();
+      if (!selectGamme.value) return;
+      fetchStep({ marque: selectMarque.value, annee: selectAnnee.value, type: selectGamme.value }, function (items) {
+        fillSelect(selectModele, 'Modèle', items);
+      });
     });
   }
 
@@ -273,6 +382,6 @@ document.addEventListener('DOMContentLoaded', function () {
     select.selectedIndex = 0;
     var placeholder = select.options[0];
     select.innerHTML = '';
-    select.appendChild(placeholder);
+    if (placeholder) select.appendChild(placeholder);
   }
 });

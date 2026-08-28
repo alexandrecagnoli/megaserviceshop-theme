@@ -1,0 +1,143 @@
+/* Bloc « Compatible avec » — bas de fiche produit. */
+
+.ms-mount {
+  margin: 32px auto;
+  padding: 24px 0;
+  border-top: 1px solid #eee;
+}
+
+.ms-mount__title {
+  color: #000;
+  font-family: "Blender Pro", sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: normal;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+}
+
+/* ── Barre de recherche ─────────────────────────────────────────────────── */
+.ms-mount__search {
+  display: flex;
+  padding: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+  background: #F1F1F1;
+}
+
+.ms-mount__search-field {
+  display: flex;
+  width: 100%;
+  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  background: #FFF;
+}
+
+.ms-mount__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #000;
+  font-family: "Trade Gothic", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.ms-mount__input::placeholder {
+  color: #484848;
+  opacity: 1;
+}
+
+.ms-mount__search-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-left: 10px;
+}
+
+/* ── Tableau ────────────────────────────────────────────────────────────── */
+.ms-mount__table {
+  margin-top: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.ms-mount__row {
+  display: grid;
+  /* Modèle 350px, type 250px, années = tout le reste. */
+  grid-template-columns: 350px 250px 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 20px;
+  background: #FFF;
+}
+
+/* Zébrage : posé/recalculé par le JS sur les lignes visibles. */
+.ms-mount__row.is-alt {
+  background: #F1F1F1;
+}
+
+/* La classe .ms-mount__row (display:grid) l'emporterait sur [hidden] de l'UA :
+   on force le masquage au filtrage. */
+.ms-mount__row[hidden] {
+  display: none;
+}
+
+.ms-mount__model {
+  color: #000;
+  font-family: "Blender Pro", sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: normal;
+  text-transform: uppercase;
+  white-space: nowrap; /* jamais sur 2 lignes */
+}
+
+.ms-mount__type,
+.ms-mount__years {
+  color: #000;
+  font-family: "Trade Gothic", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.ms-mount__type {
+  white-space: nowrap; /* jamais sur 2 lignes */
+}
+
+/* Les années (dernière colonne) peuvent, elles, passer sur plusieurs lignes. */
+.ms-mount__years {
+  line-height: 1.5;
+}
+
+.ms-mount__year {
+  color: #000;
+  text-decoration: none;
+}
+
+.ms-mount__year:hover {
+  color: #FE6604;
+  text-decoration: underline;
+}
+
+.ms-mount__empty {
+  padding: 16px 20px;
+  color: #484848;
+  font-family: "Trade Gothic", sans-serif;
+  font-size: 16px;
+}
+
+@media (max-width: 767px) {
+  .ms-mount__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    padding: 12px 16px;
+  }
+}
