@@ -619,3 +619,23 @@ Sans conséquence sur les déploiements — la CI lance `npm run build` avant de
 **Fix proposé** : marquer la décision EveryParts comme abandonnée dans `STATUS.md` et `RECAP_2026-06-26.md`, réécrire le bloc de commentaire de `moto.php` pour décrire le vrai contrat (`selectordata` → URL hub), et purger les mentions EveryParts qui ne concernent plus que le sujet visuel moto.
 
 **Statut** : 🟡 à corriger, consigné le 2026-08-27.
+
+---
+
+## 🔴 Caractéristiques produit — doublons recréés à chaque import, nettoyage manuel
+
+**Fichier** : [data/sql/2026-08-28_dedupe_feature_values.sql](data/sql/2026-08-28_dedupe_feature_values.sql)
+
+**Contexte** : constaté le 28/08/2026 sur la fiche produit — la caractéristique « Pratique / Cross » sortait jusqu'à 20 fois dans la fiche technique. Mesure sur la préprod : 8 873 couples produit/caractéristique en doublon, **10 212 affectations en trop sur 52 242**, soit 19,5 % du catalogue.
+
+**Cause racine** : l'import affecte les caractéristiques par leur libellé et non par leur `id_feature_value`. PrestaShop crée alors une nouvelle valeur à chaque passage au lieu de réutiliser l'existante, et empile une affectation de plus sur le produit. Le pire cas (20) correspond au nombre de relances d'import subies par le lot, pas à une défaillance aléatoire.
+
+**Périmètre** : les 2 seules caractéristiques importées à ce jour sont touchées — « Pratique » (41 913 produits, 10 173 lignes en trop) et « Nombre de dents » (117 produits, 39 lignes). Ce n'est donc pas un mapping isolé : le problème grandira mécaniquement à chaque caractéristique ajoutée au périmètre.
+
+**Fix appliqué** : script SQL de déduplication, exécuté une fois sur la préprod le 28/08 — vérification à 0 ligne restante. Il repointe les affectations sur la valeur la plus ancienne de chaque libellé puis supprime les doublons orphelins. Il est **idempotent**, donc rejouable après chaque import.
+
+**Ce qui reste à faire** : la cause n'est pas corrigée. Aucun de nos modules n'écrit de caractéristiques (vérifié par grep sur `modules/` et `override/`), le coupable est l'outil d'import du catalogue — **non identifié à ce jour**. Tant qu'il n'est pas corrigé, les doublons reviennent au prochain passage et il faut rejouer le script.
+
+Piste principale : la colonne d'import PrestaShop est de la forme `Nom:Valeur:position:personnalisé`. Un `1` sur le dernier drapeau force la création d'une valeur personnalisée à chaque import. À vérifier dès que l'outil sera identifié.
+
+**Statut** : 🔴 données nettoyées, cause ouverte. Rejouer le script après chaque import catalogue.
