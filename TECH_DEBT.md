@@ -634,8 +634,12 @@ Sans conséquence sur les déploiements — la CI lance `npm run build` avant de
 
 **Fix appliqué** : script SQL de déduplication, exécuté une fois sur la préprod le 28/08 — vérification à 0 ligne restante. Il repointe les affectations sur la valeur la plus ancienne de chaque libellé puis supprime les doublons orphelins. Il est **idempotent**, donc rejouable après chaque import.
 
-**Ce qui reste à faire** : la cause n'est pas corrigée. Aucun de nos modules n'écrit de caractéristiques (vérifié par grep sur `modules/` et `override/`), le coupable est l'outil d'import du catalogue — **non identifié à ce jour**. Tant qu'il n'est pas corrigé, les doublons reviennent au prochain passage et il faut rejouer le script.
+**Ce qui reste à faire** : la cause n'est pas corrigée. Aucun de nos modules n'écrit de caractéristiques (vérifié par grep sur `modules/` et `override/`) : le coupable est **`ba_importer` v1.1.33**, le module d'import du catalogue (absent du repo, présent uniquement sur le serveur).
 
-Piste principale : la colonne d'import PrestaShop est de la forme `Nom:Valeur:position:personnalisé`. Un `1` sur le dernier drapeau force la création d'une valeur personnalisée à chaque import. À vérifier dès que l'outil sera identifié.
+**Réglage en cause** : les 6 profils d'import stockés dans `ps_ba_importer_config` portent tous `"fea_exist":"0"`, alors que `"manu_exist"` et `"sup_exist"` sont à `"1"`. Ces drapeaux commandent la réutilisation de l'entité existante : fabricants et fournisseurs sont réutilisés, les caractéristiques non — donc recréées à chaque passage. Ça explique que seules les caractéristiques dupliquent, et jamais les fabricants.
+
+Sémantique déduite de la config et du comportement observé, pas du code du module (non lisible depuis le repo). À confirmer sur la case correspondante de l'étape 1 du module, puis à passer à `1` **sur les 6 profils**.
+
+Note : les mappings de colonnes sont écrasés en place à chaque édition (`date_up`), il est donc inutile de chercher quel profil a écrit « Pratique » — aucun ne la mappe encore aujourd'hui.
 
 **Statut** : 🔴 données nettoyées, cause ouverte. Rejouer le script après chaque import catalogue.
