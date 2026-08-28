@@ -61,4 +61,23 @@
     {/block}
   </div>
 
+  {block name='pagination_per_page'}
+    {* Nombre de produits par page. PrestaShop lit `resultsPerPage` dans l'URL ;
+       sans le param on retombe sur la taille de la page courante. *}
+    {assign var='msPerPageCurrent' value=$smarty.get.resultsPerPage|intval}
+    {if !$msPerPageCurrent}
+      {assign var='msPerPageCurrent' value=($pagination.items_shown_to - $pagination.items_shown_from + 1)}
+    {/if}
+    <div class="ms-pagination__perpage">
+      <label class="ms-pagination__perpage-label" for="ms-per-page">{l s='Afficher' d='Shop.Theme.Global'}</label>
+      <span class="ms-pagination__perpage-field">
+        <select id="ms-per-page" class="ms-pagination__perpage-select js-ms-per-page" autocomplete="off">
+          {foreach from=[20, 50, 100, 200, 500] item='msPerPage'}
+            <option value="{$msPerPage}"{if $msPerPage === $msPerPageCurrent} selected{/if}>{$msPerPage}</option>
+          {/foreach}
+        </select>
+      </span>
+    </div>
+  {/block}
+
 </nav>

@@ -885,6 +885,95 @@ body#category {
   }
 }
 
+// ── Sélecteur « Afficher N » de la pagination
+// Calé à droite de la ligne. Positionné en absolu pour que la liste des pages
+// reste centrée sur la largeur totale, quelle que soit la largeur du select.
+.ms-catalog__main .pagination {
+  position: relative;
+
+  @include media-md {
+    flex-wrap: wrap;
+  }
+}
+
+.ms-pagination__perpage {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  @include media-md {
+    position: static;
+    transform: none;
+    align-items: center;
+    width: 100%;
+    margin-top: 24px;
+  }
+}
+
+.ms-pagination__perpage-label {
+  font-family: $font-main;
+  font-size: 14px;
+  line-height: 1;
+  color: $color-black;
+}
+
+.ms-pagination__perpage-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  // Filet vertical + chevron, dessinés en CSS : la font Material Icons n'est
+  // pas chargée par le thème et le chevron natif du <select> est masqué.
+  &::before {
+    content: '';
+    position: absolute;
+    right: 34px;
+    width: 1px;
+    height: 20px;
+    background: $color-gray-20;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    background-color: $color-black;
+    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8L9.5 4.5' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>") no-repeat center / contain;
+            mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8L9.5 4.5' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>") no-repeat center / contain;
+  }
+}
+
+.ms-pagination__perpage-select {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  height: 44px;
+  min-width: 100px;
+  padding: 0 46px 0 14px;
+  font-family: $font-main;
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-black;
+  background: $color-white;
+  border: 1px solid $color-black;
+  border-radius: 0;
+  cursor: pointer;
+  @include transition(border-color);
+
+  &:hover { border-color: $color-ktm; }
+  &:focus-visible { @include focus-ring; }
+}
+
+
 // ============================================
 // MOTO SÉLECTIONNÉE — éléments visibles seulement avec body.has-moto-selected
 // ============================================

@@ -11,6 +11,7 @@ import './model-selector.js';
 import './product.js';
 import './wishlist.js';
 import './filters.js';
+import './per-page.js';
 import './checkout.js';
 import './microfiches-plp.js';
 import './microfiches-pdp.js';
