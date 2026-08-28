@@ -64,7 +64,14 @@
   {block name='pagination_per_page'}
     {* Nombre de produits par page. PrestaShop lit `resultsPerPage` dans l'URL ;
        sans le param on retombe sur la taille de la page courante. *}
-    {assign var='msPerPageCurrent' value=$smarty.get.resultsPerPage|intval}
+    {* isset() obligatoire : $smarty.get.x compile en $_GET['x'] et lit le
+       tableau avant d'appliquer le moindre modificateur — sans clé dans
+       l'URL, PHP 8 emet « Undefined array key ». *}
+    {if isset($smarty.get.resultsPerPage)}
+      {assign var='msPerPageCurrent' value=$smarty.get.resultsPerPage|intval}
+    {else}
+      {assign var='msPerPageCurrent' value=0}
+    {/if}
     {if !$msPerPageCurrent}
       {assign var='msPerPageCurrent' value=($pagination.items_shown_to - $pagination.items_shown_from + 1)}
     {/if}
