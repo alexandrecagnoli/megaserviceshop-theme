@@ -58,6 +58,15 @@ $context  = Context::getContext();
 $idLang   = (int) $context->language->id;
 $idShop   = (int) $context->shop->id;
 
+// En CLI, Context::getContext() pose deja un objet Currency par defaut MAIS
+// VIDE (id=0, precision=null) — un objet PHP reste "truthy" meme vide, donc
+// `if (!$context->currency)` ne le detecterait jamais. On ecrase sans
+// condition, comme le ferait FrontController::init() sur une vraie requete.
+$context->currency = new Currency((int) Configuration::get('PS_CURRENCY_DEFAULT'));
+$context->cart = new Cart();
+$context->cart->id_currency = $context->currency->id;
+$context->customer = new Customer();
+
 // ── 1. Config boutique ──────────────────────────────────────────────────
 section('1. Configuration boutique');
 printf("PS_ORDER_OUT_OF_STOCK = %s\n", var_export(Configuration::get('PS_ORDER_OUT_OF_STOCK'), true));
