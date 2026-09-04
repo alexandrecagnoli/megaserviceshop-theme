@@ -54,8 +54,17 @@ Le produit reste **toujours commandable** tant qu'il y a du stock quelque part (
 
 **Cas « Épuisé avec date connue »** : le produit doit-il rester commandable (précommande sur la date annoncée) ou bloqué jusqu'à ce que `StockAvailable` repasse au-dessus de 0 ?
 
-## 7. Points à lever avant implémentation (constats du 04/09/2026)
+## 7. Localisation des données (clarifié le 04/09/2026)
 
-- **`StockAvailable` (constructeur) et `hqETADate` sont absents de ce repo** — vérifié par recherche exhaustive sur `modules/`, `override/`, `megaservice/`, `docs/`. Le seul `StockAvailable` présent est la classe **native** PrestaShop (stock magasin, via `StockAvailable::getQuantityAvailableByProduct()` dans `megaservice_replacement` et `megaservice_microfiches`) — à ne pas confondre avec le champ constructeur du brief, qui porte le même nom.
-- Le « script de mise à jour existant » qui alimente ces deux champs constructeur n'a pas été localisé : ni module custom, ni override, ni référence dans `TECH_DEBT.md`. Soit il vit hors de ce repo (ERP, script serveur non versionné), soit il reste à écrire.
-- Avant de coder la règle d'affichage, il faut savoir **où lire** `StockAvailable` (constructeur) et `hqETADate` : nom de table/colonne, ou mécanisme d'accès si porté par un module tiers.
+`StockAvailable` et `hqETADate` sont **du natif PrestaShop** — confirmé. Ce sont les libellés affichés par le module d'import `ba_importer` (cf. [TECH_DEBT.md](../TECH_DEBT.md), déjà identifié comme responsable des doublons de caractéristiques) pour ses destinations de mapping :
+
+| Destination `ba_importer` | Colonne PrestaShop native | Vérifiée dans le dump |
+|---|---|---|
+| `StockAvailable` — « Disponible à la commande (0, N, No = Non ; 1, Y, Yes = Oui) » | `ps_product.available_for_order` (ou `out_of_stock`) | oui — colonne présente |
+| `hqETADate` — « Date de disponibilité (Y-m-d) » | `ps_product.available_date` | oui — colonne présente |
+
+Point important, qui corrige une lecture initiale trop rapide du brief : `StockAvailable` n'est **pas une quantité** mais un **booléen** (dispo constructeur oui/non). Les conditions `StockAvailable > 0` / `= 0` du §3 doivent se lire comme *vrai/faux*, pas comme un seuil numérique.
+
+⚠️ Non vérifié — la classe `StockAvailable` (native PS, stock **magasin**) est déjà utilisée dans `megaservice_replacement` et `megaservice_microfiches` via `StockAvailable::getQuantityAvailableByProduct()`. Le champ du brief porte le même nom mais désigne autre chose (une destination de mapping `ba_importer`, pas la classe). Rester vigilant sur cette homonymie en implémentation.
+
+Ni `StockAvailable` (destination) ni `hqETADate` n'apparaissent dans le mapping enregistré du dump du 25/08 (`ps_ba_importer_config.ba_step2`) — la config vue en capture le 04/09 est donc plus récente que ce dump, ou en cours de saisie. **Aucune nouvelle table ni classe à créer côté thème** : une fois le mapping actif et l'import (re)joué, `out_of_stock` / `available_for_order` / `available_date` sont pilotables tels quels depuis les templates via les variables natives PrestaShop du tableau produit.
