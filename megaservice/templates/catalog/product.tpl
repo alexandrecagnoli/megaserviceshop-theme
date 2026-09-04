@@ -93,9 +93,10 @@
           {elseif $msAvailability == 'last_remaining_items'}
             {l s='Derniers articles en stock' d='Shop.Theme.Catalog'}
           {elseif $msAvailability == 'backorder'}
-            {l s='En stock constructeur' d='Shop.Theme.Catalog'}
             {if $product.available_date && $product.available_date != '0000-00-00'}
-              — {l s='réassort le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+              {l s='Disponible le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+            {else}
+              {l s='En stock constructeur' d='Shop.Theme.Catalog'}
             {/if}
           {else}
             {l s='Épuisé' d='Shop.Theme.Catalog'}
