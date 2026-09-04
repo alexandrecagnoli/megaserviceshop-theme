@@ -7,7 +7,7 @@
 
 ## 1. Ce qui est fait et vérifié — ne pas retoucher
 
-Le cron du plugin **Advance Importing Pro** (⚠️ distinct de `ba_importer`, cf. [TECH_DEBT.md](../TECH_DEBT.md) — deux plugins d'import différents, ne pas confondre) écrit déjà, sur les produits **et** les déclinaisons, par référence :
+Le cron du plugin **Advance Importing Pro** — confirmé le 04/09 comme étant en réalité `ba_importer` v1.1.33 (cf. [TECH_DEBT.md](../TECH_DEBT.md)) : un seul module d'import trouvé en base, « Advance Importing Pro » en est le nom commercial affiché en back-office, pas un plugin distinct. Correction d'une erreur de ma part dans une version précédente de ce document. Écrit déjà, sur les produits **et** les déclinaisons, par référence :
 
 | Colonne CSV constructeur | Colonne PrestaShop native |
 |---|---|
@@ -142,3 +142,21 @@ Parmi les produits available_for_order = 1 (censés vendables) :
 2. `show_price = 0` est la valeur par défaut de tout produit créé par import, et seule une édition manuelle en BO le passe à 1 (cohérent avec le seul produit à `1`, modifié aujourd'hui).
 
 **Pas de correctif appliqué.** Passer `show_price = 1` en masse sur ~47 000 produits est une action à fort impact (rend le prix et l'achat visibles sur tout le catalogue d'un coup) — à valider avant exécution, pas une décision à prendre seul depuis ce diagnostic.
+
+---
+
+## 10. Origine du `show_price = 0` — tranchée par la config elle-même
+
+Vérifié en base (04/09) : le mapping (`ba_step2`) du profil d'import `MAJ_CONSTRUCTEUR` (id 11, modifié le 04/09 à 15:02 — très probablement celui de l'import KTM/HQV/GASGAS) **ne contient aucune destination `show_price`** :
+
+```json
+{"22":"available_for_order","23":"product_available_date", ...}
+```
+
+Vérifié aussi : aucun des 6 anciens profils ne le mappait non plus (§9). **`show_price` est disponible comme option dans le menu déroulant de destination, mais n'est mappé sur aucune colonne source dans la configuration actuellement enregistrée.**
+
+Conclusion : le `0` n'est pas écrit intentionnellement par un mapping — c'est la valeur par défaut que PrestaShop/`ba_importer` applique à tout produit nouvellement créé par cet import, faute de mapping explicite sur ce champ. Hypothèse 1 du §9 écartée, hypothèse 2 confirmée.
+
+**Correction structurelle** : mapper `show_price` dans le profil `MAJ_CONSTRUCTEUR` (valeur constante `1`, ou dérivée de `StockAvailable` si on veut masquer le prix des produits sans stock nulle part — à trancher selon la règle du §3). Sans ce mapping, tout réimport recréera le même problème sur les nouveaux produits.
+
+**Correction immédiate** (catalogue déjà importé, ~47 000 produits) : reste à valider avant exécution — voir proposition ci-dessous, non exécutée.
