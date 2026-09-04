@@ -205,3 +205,17 @@ Précisé par le client : « Dispo. le [date] » n'est commandable que si cette 
 **Implémenté** sur les 3 boutons concernés (card, bouton « Ajouter au panier » de la fiche produit) : nouvelle variable `msCommandable`, distincte du texte affiché — `$product.add_to_cart_url` natif ET la date annoncée n'est pas dans le futur (comparaison de chaînes `YYYY-MM-DD`, fiable car lexicographiquement ordonnée). Le texte « Dispo. le [date] » reste inchangé que la date soit future ou déjà passée ; seule la commandabilité du bouton en dépend désormais.
 
 Non touché : le bouton « Réserver un essai » (`.ms-product__btn-reserve`), hors périmètre de la demande.
+
+---
+
+## 14. Faux bug résolu (04/09/2026) — bouton "actif" sur la card = défaut CSS, pas de logique
+
+Signalé : sur la card, le bouton « AJOUTER » restait cliquable/actif visuellement pour un produit « Dispo. le [date future] », alors que la fiche produit le désactivait correctement.
+
+**Diagnostiqué via debug temporaire déployé en conditions réelles** (id_product 109777, référence `3PW270009600`, « TEAM SHADES ») : `msCommandable=[]` (false), `msDateFuture=[1]` (true) — **le calcul Smarty était déjà correct**. Ce n'était donc pas un bug de logique de disponibilité.
+
+La vraie cause : le lien de redirection affiché quand `msCommandable` est faux (déjà existant avant ce chantier, pour le cas « Épuisé ») partageait la même classe CSS que le vrai bouton d'ajout au panier — noir plein, identique visuellement, aucune distinction. Le clic redirigeait vers la fiche produit au lieu d'ajouter au panier, sans que rien ne le signale à l'œil.
+
+**Corrigé** : nouveau modificateur `.ms-product-card__add--disabled` (outline grise) et libellé « VOIR LE PRODUIT » au lieu de « AJOUTER » pour ce cas — couvre à la fois « Épuisé » et « Dispo. le [date future] ».
+
+**Méthode qui a permis de trancher vite** : plutôt que de deviner davantage après plusieurs tests CLI infructueux (données PHP identiques entre fiche et listing), un commentaire HTML de debug déposé temporairement sur le serveur (`<!-- MS_DEBUG ... -->`, jamais commité) a donné la valeur réelle calculée par Smarty au moment du rendu — la seule source qui manquait, le calcul CLI ne testant que du PHP, jamais l'exécution du template lui-même.
