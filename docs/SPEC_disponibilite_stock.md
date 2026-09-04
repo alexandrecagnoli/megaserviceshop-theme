@@ -114,3 +114,31 @@ Conséquence directe : mon `msAvailability` (commit `0e10fdb`) tombe sur `out_of
 4. Si les deux points ci-dessus sont conformes et que le bouton reste grisé quand même : le calcul natif PS du bouton dépend d'autre chose que je n'ai pas identifié sans le code du core — remonter le résultat de la requête ci-dessus pour investigation plus poussée.
 
 **Ne pas coder de correctif thème sur ce ticket tant que la cause réelle n'est pas isolée** — bypasser `add_to_cart_url` pour calculer nous-mêmes la commandabilité contournerait une logique de sécurité native de PrestaShop, risque à ne pas prendre sans certitude sur la cause.
+
+---
+
+## 9. Cause identifiée (04/09/2026) — `show_price = 0`, pas un problème de code
+
+Accès SSH diagnostic obtenu, script `scripts/cli/debug_product_availability.php` exécuté en conditions réelles sur la préprod (produit 94479, référence `0000070405800`).
+
+**Résultat mesuré, sans ambiguïté** :
+
+```
+ps_product.show_price sur tout le catalogue (47 916 produits) :
+  show_price = 0  →  47 915 produits
+  show_price = 1  →      1 produit  (id_product 96704, date_upd = 04/09 16:43 — édité pendant l'investigation, pas par l'import)
+
+Parmi les produits available_for_order = 1 (censés vendables) :
+  show_price = 0  →  46 679 produits
+  show_price = 1  →      1 produit
+```
+
+`show_price` n'est **pas** qu'un calcul dynamique du Presenter — c'est une **colonne persistante** de `ps_product`/`ps_product_shop` (back-office : onglet Prix de la fiche produit, case « Afficher le prix »). Native PrestaShop, quand elle est à 0 : **prix ET bouton d'achat masqués**, indépendamment de `available_for_order`, `out_of_stock` ou du stock. C'est la cause du bug §8, et elle explique le comportement observé sur la quasi-totalité du catalogue, pas un cas isolé.
+
+**Non confirmé techniquement** : le lien exact dans le code du Presenter (`ProductAssembler` + `ProductListingPresenter`) n'a pas pu être vérifié — l'appel plante en CLI sur un contexte de devise/panier incomplet (`ComputingPrecision::getPrecision()`, `ProductSearchContext.php:72-73`), non résolu malgré une tentative de fix du bootstrap. Le diagnostic s'appuie donc sur la mesure en base + la sémantique documentée du champ back-office, pas sur une trace directe du calcul interne.
+
+**Origine du `0` — à trancher, pas déductible du code** :
+1. Le cron Advance Importing Pro écrit aussi `show_price` (à 0), en plus des colonnes déjà documentées (§1) — non mentionné dans le brief initial.
+2. `show_price = 0` est la valeur par défaut de tout produit créé par import, et seule une édition manuelle en BO le passe à 1 (cohérent avec le seul produit à `1`, modifié aujourd'hui).
+
+**Pas de correctif appliqué.** Passer `show_price = 1` en masse sur ~47 000 produits est une action à fort impact (rend le prix et l'achat visibles sur tout le catalogue d'un coup) — à valider avant exécution, pas une décision à prendre seul depuis ce diagnostic.
