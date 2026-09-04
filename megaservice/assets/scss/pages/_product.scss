@@ -156,7 +156,13 @@
     color: $color-success-mid;
   }
 
-  &--unavailable {
+  // Rupture magasin mais commandable via le stock constructeur — état
+  // intermédiaire, ni vert (dispo immédiate) ni rouge (indisponible).
+  &--backorder {
+    color: $color-warning;
+  }
+
+  &--out_of_stock {
     color: $color-error-mid;
   }
 }

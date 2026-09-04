@@ -254,16 +254,19 @@
     line-height: normal;
     margin-bottom: 12px;
 
-    &--available {
-      color: #128C0C;
-    }
-
-    &--unavailable {
-      color: $color-error;
-    }
-
+    &--available,
     &--last_remaining_items {
       color: #128C0C;
+    }
+
+    // Rupture magasin mais commandable via le stock constructeur — état
+    // intermédiaire, ni vert (dispo immédiate) ni rouge (indisponible).
+    &--backorder {
+      color: $color-warning;
+    }
+
+    &--out_of_stock {
+      color: $color-error;
     }
   }
 

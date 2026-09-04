@@ -60,13 +60,33 @@
           <div class="ms-product__desc">{$product.description_short nofilter}</div>
         {/if}
 
-        <div class="ms-product__availability ms-product__availability--{$product.availability}">
-          {if $product.availability == 'available'}
+        {* État de disponibilité à 4 valeurs — cf. docs/SPEC_disponibilite_stock.md
+           et le même mécanisme sur la card (catalog/_partials/miniatures/product.tpl). *}
+        {if $product.availability == 'available'}
+          {assign var='msAvailability' value='available'}
+        {elseif $product.availability == 'last_remaining_items'}
+          {assign var='msAvailability' value='last_remaining_items'}
+        {elseif $product.add_to_cart_url}
+          {assign var='msAvailability' value='backorder'}
+        {else}
+          {assign var='msAvailability' value='out_of_stock'}
+        {/if}
+
+        <div class="ms-product__availability ms-product__availability--{$msAvailability}">
+          {if $msAvailability == 'available'}
             {l s='En stock - Livraison sous 48h' d='Shop.Theme.Catalog'}
-          {elseif $product.availability == 'last_remaining_items'}
+          {elseif $msAvailability == 'last_remaining_items'}
             {l s='Derniers articles en stock' d='Shop.Theme.Catalog'}
+          {elseif $msAvailability == 'backorder'}
+            {l s='En stock constructeur' d='Shop.Theme.Catalog'}
+            {if $product.available_date && $product.available_date != '0000-00-00'}
+              — {l s='réassort le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+            {/if}
           {else}
-            {$product.availability_message}
+            {l s='Épuisé' d='Shop.Theme.Catalog'}
+            {if $product.available_date && $product.available_date != '0000-00-00'}
+              — {l s='réassort prévu le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+            {/if}
           {/if}
         </div>
       </div>
