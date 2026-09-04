@@ -77,7 +77,7 @@
         {l s='Derniers articles en stock' d='Shop.Theme.Catalog'}
       {elseif $msAvailability == 'backorder'}
         {if $product.available_date && $product.available_date != '0000-00-00'}
-          {l s='Disponible le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+          {l s='Dispo. le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
         {else}
           {l s='En stock constructeur' d='Shop.Theme.Catalog'}
         {/if}
