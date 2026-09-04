@@ -86,3 +86,31 @@ Le code déployé (commit `0e10fdb`, card + fiche produit) est **déjà aligné*
 | 4 — épuisé, date connue, non commandable | `out_of_stock` | « Épuisé — réassort prévu le [date] » (informatif, ne rend pas commandable) |
 
 Voir `megaservice/templates/catalog/_partials/miniatures/product.tpl` et `megaservice/templates/catalog/product.tpl`.
+
+---
+
+## 8. Bug ouvert (04/09/2026) — bouton et texte ignorent `available_for_order`
+
+**Constat client** : produit `quantity=0`, `available_for_order=1` en base → bouton grisé, texte « Épuisé » quand même. Rapporté comme bloquant.
+
+**Investigation thème (faite)** : ni `override/controllers/front/ProductController.php`, ni `override/controllers/front/CategoryController.php`, ni aucun module custom, ni le JS (`product.js`) ne recalculent ou n'interfèrent avec `$product.add_to_cart_url`. Le template le lit tel quel, des deux côtés (card et fiche produit). **La piste « override thème » est écartée.**
+
+Conséquence directe : mon `msAvailability` (commit `0e10fdb`) tombe sur `out_of_stock` exactement quand `add_to_cart_url` est vide — le symptôme observé est cohérent avec un `add_to_cart_url` natif incorrect pour ce produit, pas avec un bug dans le branchement du template.
+
+**Non vérifiable depuis cet environnement** : je n'ai ni accès SSH/BO à la preprod, ni dump plus récent que le 25/08 (antérieur à l'import KTM et au passage de `PS_ORDER_OUT_OF_STOCK` à 1). Impossible de confirmer la cause exacte sans accès à l'état actuel.
+
+### Checklist à exécuter côté préprod pour isoler la cause
+
+1. **Confirmer la config actuelle** : `SELECT value FROM ps_configuration WHERE name = 'PS_ORDER_OUT_OF_STOCK'` doit renvoyer `1`.
+2. **Sur LE produit testé précisément**, en base :
+   ```sql
+   SELECT sa.out_of_stock, sa.quantity, p.available_for_order, p.available_date
+   FROM ps_stock_available sa
+   JOIN ps_product p ON p.id_product = sa.id_product
+   WHERE sa.id_product = <ID_DU_PRODUIT_B> AND sa.id_product_attribute = 0;
+   ```
+   Si `out_of_stock` vaut `0` explicitement (et non `2`) sur ce produit → résidu d'un import antérieur à la bascule stratégie (avant l'arrêt d'écriture sur `out_of_stock`), à corriger en masse plutôt qu'unitairement.
+3. **Vider le cache** (`var/cache`) après tout changement de config — un changement de `PS_ORDER_OUT_OF_STOCK` peut rester invisible si un cache de configuration persistant (Memcached/Redis/OPcache selon l'hébergement) n'a pas été purgé.
+4. Si les deux points ci-dessus sont conformes et que le bouton reste grisé quand même : le calcul natif PS du bouton dépend d'autre chose que je n'ai pas identifié sans le code du core — remonter le résultat de la requête ci-dessus pour investigation plus poussée.
+
+**Ne pas coder de correctif thème sur ce ticket tant que la cause réelle n'est pas isolée** — bypasser `add_to_cart_url` pour calculer nous-mêmes la commandabilité contournerait une logique de sécurité native de PrestaShop, risque à ne pas prendre sans certitude sur la cause.
