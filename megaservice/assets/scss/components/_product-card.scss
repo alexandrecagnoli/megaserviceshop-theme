@@ -185,17 +185,28 @@
   }
 
   // ── Nom ────────────────────────────────────
+  // 3 lignes fixes (60px) pour que toutes les cards d'une même rangée
+  // s'alignent quelle que soit la longueur du nom produit. line-height fixé
+  // en px (et non "normal", qui varie avec les metrics de la police) pour
+  // que 3 lignes tombent exactement sur 60px. Clamp WebKit/Blink (line-clamp
+  // standard désormais aussi supporté) : coupe proprement en fin de mot avec
+  // ellipsis, contrairement à un simple overflow:hidden qui tronquait au
+  // milieu d'un mot dès la fin de la 1re ligne.
   &__name {
     margin: 0;
-    height: 41.985px;
-    overflow: hidden;
 
     a {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      overflow: hidden;
+      height: 60px;
       color: $color-black;
       font-family: $font-main;
       font-size: 16px;
       font-weight: 700;
-      line-height: normal;
+      line-height: 20px;
       text-transform: uppercase;
       text-decoration: none !important;
 

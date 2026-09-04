@@ -36,7 +36,7 @@
   <div class="ms-product-card__body">
 
     <h2 class="ms-product-card__name">
-      <a href="{$product.url}">{$product.name|truncate:50:'...'}</a>
+      <a href="{$product.url}">{$product.name}</a>
     </h2>
 
     {if $product.show_price}
