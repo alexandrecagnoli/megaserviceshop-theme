@@ -102,7 +102,10 @@
         <button type="submit" class="ms-product-card__add">{l s='AJOUTER' d='Shop.Theme.Actions'}</button>
       </form>
     {else}
-      <a href="{$product.url}" class="ms-product-card__add">{l s='AJOUTER' d='Shop.Theme.Actions'}</a>
+      {* Non commandable (epuise, ou date de reassort pas encore atteinte) : lien vers
+         la fiche produit, PAS un ajout au panier — libelle et style doivent le dire,
+         sinon rien ne distingue visuellement ce cas d'un vrai bouton actif. *}
+      <a href="{$product.url}" class="ms-product-card__add ms-product-card__add--disabled">{l s='VOIR LE PRODUIT' d='Shop.Theme.Actions'}</a>
     {/if}
 
   </div>

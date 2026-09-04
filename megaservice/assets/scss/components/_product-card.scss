@@ -306,5 +306,25 @@
       background: $color-black;
       color: $color-white;
     }
+
+    // Non commandable (epuise, ou date de reassort pas encore atteinte) : outline
+    // grise plutot que noir plein, pour ne pas se faire passer pour un vrai bouton
+    // d'ajout au panier — c'est un lien vers la fiche produit.
+    &--disabled {
+      background: $color-white;
+      color: $color-gray-60;
+      border-color: $color-gray-20;
+
+      &:hover {
+        background: $color-white;
+        color: $color-gray-60;
+        border-color: $color-gray-20;
+      }
+
+      &:active {
+        background: $color-white;
+        color: $color-gray-60;
+      }
+    }
   }
 }
