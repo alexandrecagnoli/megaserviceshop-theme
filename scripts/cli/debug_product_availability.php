@@ -163,9 +163,24 @@ try {
     foreach (['add_to_cart_url', 'available_for_order', 'show_price', 'quantity', 'availability', 'availability_message', 'available_date', 'allow_oosp'] as $k) {
         printf("  %-24s = %s\n", $k, isset($presented[$k]) ? var_export($presented[$k], true) : '(absent du tableau présenté)');
     }
+
+    echo "\n-- Test isole : meme produit avec show_price force a 1 --\n";
+    $raw2 = $raw;
+    $raw2['show_price'] = 1;
+    $presented2 = $presenter->present($settings, $raw2, $context->language);
+    printf("  add_to_cart_url (show_price=1) = %s\n", isset($presented2['add_to_cart_url']) ? var_export($presented2['add_to_cart_url'], true) : '(absent)');
 } catch (\Throwable $e) {
     echo "ERREUR pendant la reconstruction : " . $e->getMessage() . "\n";
     echo $e->getTraceAsString() . "\n";
+}
+
+// ── 7. Répartition de show_price sur tout le catalogue ─────────────────
+section('7. Répartition ps_product.show_price sur tout le catalogue');
+$dist = Db::getInstance()->executeS(
+    'SELECT show_price, COUNT(*) AS n FROM `' . _DB_PREFIX_ . 'product` GROUP BY show_price'
+);
+foreach ($dist as $d) {
+    printf("  show_price = %-4s -> %s produits\n", $d['show_price'], $d['n']);
 }
 
 echo "\n\nFIN DU DIAGNOSTIC — coller la sortie complète telle quelle.\n";
