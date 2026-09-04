@@ -52,14 +52,18 @@
     {/if}
 
     {* État de disponibilité à 4 valeurs — cf. docs/SPEC_disponibilite_stock.md.
-       $product.availability (natif PS) ne distingue que available / last_remaining_items /
-       unavailable : 'unavailable' recouvre aussi bien "rupture magasin mais commandable
-       via le stock constructeur" (add_to_cart_url présent, out_of_stock=1) que "épuisé
-       partout" (add_to_cart_url absent). On les sépare nous-mêmes. *}
-    {if $product.availability == 'available'}
-      {assign var='msAvailability' value='available'}
-    {elseif $product.availability == 'last_remaining_items'}
-      {assign var='msAvailability' value='last_remaining_items'}
+       $product.availability (natif) confond deux cas sous 'available' — vu dans
+       ProductLazyArray::addQuantityInformation() : le cas 1 (stock magasin
+       reel, quantity suffisante) ET le cas 2 (quantity=0 mais allow_oosp,
+       donc commandable via stock constructeur) donnent TOUS LES DEUX
+       availability='available'. Seul $product.quantity (brut) les distingue
+       fiablement — on ne peut pas se fier au texte calcule pour ca. *}
+    {if $product.quantity > 0}
+      {if $product.availability == 'last_remaining_items'}
+        {assign var='msAvailability' value='last_remaining_items'}
+      {else}
+        {assign var='msAvailability' value='available'}
+      {/if}
     {elseif $product.add_to_cart_url}
       {assign var='msAvailability' value='backorder'}
     {else}

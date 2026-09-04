@@ -62,10 +62,18 @@
 
         {* État de disponibilité à 4 valeurs — cf. docs/SPEC_disponibilite_stock.md
            et le même mécanisme sur la card (catalog/_partials/miniatures/product.tpl). *}
-        {if $product.availability == 'available'}
-          {assign var='msAvailability' value='available'}
-        {elseif $product.availability == 'last_remaining_items'}
-          {assign var='msAvailability' value='last_remaining_items'}
+        {* $product.availability (natif) confond deux cas sous 'available' — vu dans
+           ProductLazyArray::addQuantityInformation() : le cas 1 (stock magasin
+           reel, quantity suffisante) ET le cas 2 (quantity=0 mais allow_oosp,
+           donc commandable via stock constructeur) donnent TOUS LES DEUX
+           availability='available'. Seul $product.quantity (brut) les distingue
+           fiablement — on ne peut pas se fier au texte calcule pour ca. *}
+        {if $product.quantity > 0}
+          {if $product.availability == 'last_remaining_items'}
+            {assign var='msAvailability' value='last_remaining_items'}
+          {else}
+            {assign var='msAvailability' value='available'}
+          {/if}
         {elseif $product.add_to_cart_url}
           {assign var='msAvailability' value='backorder'}
         {else}
@@ -74,7 +82,14 @@
 
         <div class="ms-product__availability ms-product__availability--{$msAvailability}">
           {if $msAvailability == 'available'}
-            {l s='En stock - Livraison sous 48h' d='Shop.Theme.Catalog'}
+            {* Comportement natif PrestaShop, ne pas personnaliser (docs/SPEC_disponibilite_stock.md §3
+               cas 1) : message configure en BO (PS_LABEL_IN_STOCK_PRODUCTS), pas de promesse de delai
+               en dur dans le theme — un delai chiffre ("48h") n'est pas garanti pour tout le catalogue. *}
+            {if $product.availability_message}
+              {$product.availability_message}
+            {else}
+              {l s='En stock' d='Shop.Theme.Catalog'}
+            {/if}
           {elseif $msAvailability == 'last_remaining_items'}
             {l s='Derniers articles en stock' d='Shop.Theme.Catalog'}
           {elseif $msAvailability == 'backorder'}

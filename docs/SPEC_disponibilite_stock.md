@@ -171,3 +171,27 @@ Le fichier CSV constructeur n'est pas modifiable (client) et le mapping ne perme
 **Solution retenue** : hook PrestaShop (`actionObjectProductAddAfter` / `actionObjectProductUpdateAfter`), qui s'exécute après l'écriture du plugin quel que soit son comportement interne, synchronisant `show_price = available_for_order` — cohérent avec la règle déjà en place (§3) : un produit commandable doit rester visible avec son prix, un produit non commandable peut légitimement le rester. En attente de validation avant implémentation.
 
 ---
+
+---
+
+## 12. Bug de branchement identifié et corrigé (04/09/2026) — `availability='available'` confond deux cas natifs
+
+Après installation du module `megaservice_availability` et resynchronisation (§11), le message « En stock - Livraison sous 48h » s'affichait sur des produits dont **toutes les déclinaisons ont `quantity=0`**.
+
+**Cause, lue directement dans le code source PrestaShop** (`src/Adapter/Presenter/Product/ProductLazyArray.php::addQuantityInformation()`) :
+
+```php
+// Case 1 - Product in stock
+if ($availableQuantity >= 0) {
+    $this->product['availability'] = 'available';   // stock magasin réel
+    ...
+// Case 2 - Product not in stock, available for order
+} elseif ($product['allow_oosp']) {
+    $this->product['availability'] = 'available';   // EXACTEMENT LA MÊME VALEUR
+```
+
+**PrestaShop natif ne distingue pas les deux cas dans `$product.availability` — les deux donnent `'available'`.** Ma logique de branchement (commit `0e10fdb`) testait `$product.availability == 'available'` en premier : elle absorbait donc aussi le cas 2 (stock constructeur via `allow_oosp`), qui aurait dû tomber en `backorder`. Le bug n'existait pas avant l'installation du module §11 parce qu'aucun produit n'atteignait jamais le cas 2 (`available_for_order` était à 0 partout) — il était latent, révélé seulement une fois la donnée corrigée.
+
+**Corrigé** : le branchement se fait désormais sur `$product.quantity > 0` (valeur brute, non ambiguë) plutôt que sur le texte `availability` calculé — sur la card et la fiche produit.
+
+**Au passage** : le texte « Livraison sous 48h » (hérité du thème d'origine, commit `ad2e04a`, jamais discuté dans ce brief) est remplacé par `$product.availability_message` — le message natif configuré en BO (`PS_LABEL_IN_STOCK_PRODUCTS`), conforme à la consigne §3 cas 1 (« comportement natif PrestaShop, ne pas toucher »). Fallback neutre « En stock » si ce libellé BO n'est pas configuré.
