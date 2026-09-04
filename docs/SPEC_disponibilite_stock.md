@@ -1,70 +1,88 @@
-# Règle d'affichage de la disponibilité — données PrestaShop uniquement
+# Règle d'affichage de la disponibilité et du délai de livraison
 
-**Statut** : Draft — bloqué sur 1 question ouverte + 1 point de localisation, voir §5 et §6.
-**Date** : 04/09/2026
+**Statut** : à jour au 04/09/2026 — cette version **remplace** la précédente. 1 point reste en attente d'arbitrage COPROJ (§5, cas 4).
+**Historique** : la version initiale (colonnes à identifier) est dans l'historique git de ce fichier si besoin d'audit.
 
 ---
 
-## 1. Les 3 données en jeu
+## 1. Ce qui est fait et vérifié — ne pas retoucher
 
-| Donnée | Origine | Alimentation |
+Le cron du plugin **Advance Importing Pro** (⚠️ distinct de `ba_importer`, cf. [TECH_DEBT.md](../TECH_DEBT.md) — deux plugins d'import différents, ne pas confondre) écrit déjà, sur les produits **et** les déclinaisons, par référence :
+
+| Colonne CSV constructeur | Colonne PrestaShop native |
+|---|---|
+| `SalesPrice` | prix HT |
+| `hqETADate` | `available_date` |
+| `StockAvailable` | `available_for_order` (1 si `StockAvailable > 0`, sinon 0) |
+
+Réglage boutique posé : **`PS_ORDER_OUT_OF_STOCK = 1`** (autorise les commandes hors stock magasin par défaut). C'est ce réglage + `available_for_order` qui pilotent la commandabilité — **`out_of_stock` n'est plus écrit**, il reste à sa valeur par défaut (2) et hérite du réglage boutique.
+
+### Vérifié en base sur l'import KTM (47 916 produits)
+
+- 2 815 produits avec `available_date` renseignée → tous `available_for_order = 1`
+- 1 236 produits sans stock constructeur / sans date → `available_for_order = 0`
+- `quantity` (stock magasin) non touchée par cet import — confirmé à 0 partout sauf 1 produit, cohérent avec l'absence d'intégration G8 à ce jour.
+
+---
+
+## 2. Le modèle simplifié — 3 champs PrestaShop, 2 sources
+
+| Source | Écrit | Jamais touché ici |
 |---|---|---|
-| `quantity` | stock magasin | **PrestaShop natif**, alimenté par **G8** |
-| `StockAvailable` | stock constructeur | CSV constructeur, déjà géré par le script de mise à jour existant |
-| `hqETADate` | date de réassort constructeur | CSV constructeur, déjà géré par le script de mise à jour existant |
+| G8 (stock magasin) | `quantity` | — (pas encore intégré) |
+| CSV constructeur (cron Advance Importing Pro) | `available_for_order`, `available_date`, prix | `quantity`, nom, description, catégories, images |
 
-Rien d'autre n'entre dans ce calcul. Pas de statut, pas de code constructeur.
+---
 
-## 2. Principe
+## 3. Les 4 cas cibles
 
-Le produit reste **toujours commandable** tant qu'il y a du stock quelque part (magasin OU constructeur). Le stock à 0 en magasin ne bloque jamais l'achat si le constructeur peut fournir — seul le délai annoncé change.
+### 1. `quantity` (magasin) > 0
+Commandable, peu importe le reste. **Prioritaire sur tout.**
+**Pas encore actif** : dépend de l'intégration G8. Point d'extension à prévoir dans le code, mais **aucune logique active à coder maintenant** — `quantity` vaut 0 partout tant que G8 n'est pas branché.
 
-## 3. Les affichages cibles
+### 2. `quantity = 0`, `StockAvailable` (constructeur) `> 0`
+`available_for_order = 1`, `available_date = hqETADate`. Commandable, délai affiché via `available_date`.
+**Déjà correctement géré par le cron du plugin existant.**
 
-### 1. « En stock »
-- Condition : `quantity > 0`
-- Variante **« Derniers articles en stock »** : `quantity > 0` ET `quantity <= seuil` (seuil à définir, ex. 3)
+### 3. `quantity = 0`, `StockAvailable = 0`, pas de `hqETADate`
+`available_for_order = 0`. Non commandable, aucune promesse de délai.
+**Déjà correctement géré par le cron du plugin existant.**
 
-### 2. « En stock constructeur »
-- Condition : `quantity = 0` ET `StockAvailable > 0`
-- Affiche le délai si `hqETADate` est renseignée (ex. « disponible sous X jours »)
-- Commandable normalement.
+### 4. `quantity = 0`, `StockAvailable = 0`, MAIS `hqETADate` renseignée
+Comportement actuel (par défaut du mapping) : `available_for_order = 0` → **non commandable**, mais la date peut être présente en base.
 
-### 3. « Épuisé »
-- Condition : `quantity = 0` ET `StockAvailable = 0`
-- Si `hqETADate` est présente malgré tout : afficher la date à titre indicatif (« épuisé — réassort prévu le [date] »)
-- Si `hqETADate` est vide : « épuisé » sans date, sans promesse.
-- **À trancher** : commandable quand même (précommande) ou blocage total tant que rien n'est en stock nulle part ? — voir §5.
+**À trancher au prochain COPROJ client** (déjà tracé) : ce produit doit-il rester non commandable comme aujourd'hui, ou passer commandable en précommande sur cette date ?
 
-## 4. Colonnes PrestaShop à poser selon le cas
+**Ne rien coder de plus sur ce cas avant l'arbitrage** — le comportement actuel (bloqué) est un choix par défaut sûr, pas un manque à corriger dans l'urgence.
 
-| Cas | `out_of_stock` | `available_date` | Libellé affiché |
-|---|---|---|---|
-| `quantity > 0` | — | — | En stock (natif PS) |
-| `quantity = 0`, `StockAvailable > 0` | 1 (autoriser) | `hqETADate` | En stock constructeur |
-| `quantity = 0`, `StockAvailable = 0` | 0 (refuser) | `hqETADate` si présente, vide sinon | Épuisé (+ date si dispo) |
+---
 
-`out_of_stock` et `available_date` sont les colonnes natives PrestaShop (`ps_stock_available.out_of_stock`, `ps_product[_shop].available_date`) — pas de nouvelle table à créer côté affichage, uniquement à piloter ces colonnes natives depuis `StockAvailable` et `hqETADate`.
+## 4. Hors scope de cette règle
 
-## 5. Ce que cette règle ne touche jamais
+- **Statut constructeur** (`ArticleStatus` 20/70/80 → actif/visibilité) — chantier séparé, pas encore développé. Ne pas mélanger à la disponibilité : la disponibilité dit *peut-on l'acheter*, le statut dit *le produit existe-t-il encore au catalogue constructeur*. Indépendants dans le code.
+- **Libellés client** (« Texte affiché lorsqu'en stock » / « Texte affiché lorsque la commande en attente est autorisée ») — réglage thème/boutique à vérifier séparément, hors de ce brief.
 
-`quantity` elle-même — alimentée exclusivement par G8, jamais réécrite par le script constructeur.
+## 5. Prochaine étape
 
-## 6. Question ouverte à trancher avant de coder
+Import identique en cours sur HQV et GASGAS (même mapping plugin). Même vérification à faire une fois terminé (répartition `available_for_order` vs `available_date`, `quantity` intacte).
 
-**Cas « Épuisé avec date connue »** : le produit doit-il rester commandable (précommande sur la date annoncée) ou bloqué jusqu'à ce que `StockAvailable` repasse au-dessus de 0 ?
+## 6. Ne pas faire
 
-## 7. Localisation des données (clarifié le 04/09/2026)
+- Ne pas écrire `out_of_stock`.
+- Ne pas coder la branche « stock magasin G8 » comme logique active.
+- Ne pas décider seul du cas 4 — arbitrage client en attente.
 
-`StockAvailable` et `hqETADate` sont **du natif PrestaShop** — confirmé. Ce sont les libellés affichés par le module d'import `ba_importer` (cf. [TECH_DEBT.md](../TECH_DEBT.md), déjà identifié comme responsable des doublons de caractéristiques) pour ses destinations de mapping :
+---
 
-| Destination `ba_importer` | Colonne PrestaShop native | Vérifiée dans le dump |
+## 7. État de l'implémentation thème (04/09/2026)
+
+Le code déployé (commit `0e10fdb`, card + fiche produit) est **déjà aligné** avec cette version — aucune modification requise. Il ne lit ni `out_of_stock` ni `available_for_order` directement : il s'appuie sur **`$product.add_to_cart_url`**, que PrestaShop calcule nativement en combinant `available_for_order`, le stock et `PS_ORDER_OUT_OF_STOCK`. Correspondance avec les 4 cas :
+
+| Cas du brief | État thème (`msAvailability`) | Comportement actuel |
 |---|---|---|
-| `StockAvailable` — « Disponible à la commande (0, N, No = Non ; 1, Y, Yes = Oui) » | `ps_product.available_for_order` (ou `out_of_stock`) | oui — colonne présente |
-| `hqETADate` — « Date de disponibilité (Y-m-d) » | `ps_product.available_date` | oui — colonne présente |
+| 1 — stock magasin | `available` (natif PS, rien codé côté thème) | correct, inactif tant que G8 n'est pas branché |
+| 2 — stock constructeur, commandable | `backorder` | « En stock constructeur — réassort le [date] » |
+| 3 — épuisé, pas de date | `out_of_stock` | « Épuisé » |
+| 4 — épuisé, date connue, non commandable | `out_of_stock` | « Épuisé — réassort prévu le [date] » (informatif, ne rend pas commandable) |
 
-Point important, qui corrige une lecture initiale trop rapide du brief : `StockAvailable` n'est **pas une quantité** mais un **booléen** (dispo constructeur oui/non). Les conditions `StockAvailable > 0` / `= 0` du §3 doivent se lire comme *vrai/faux*, pas comme un seuil numérique.
-
-⚠️ Non vérifié — la classe `StockAvailable` (native PS, stock **magasin**) est déjà utilisée dans `megaservice_replacement` et `megaservice_microfiches` via `StockAvailable::getQuantityAvailableByProduct()`. Le champ du brief porte le même nom mais désigne autre chose (une destination de mapping `ba_importer`, pas la classe). Rester vigilant sur cette homonymie en implémentation.
-
-Ni `StockAvailable` (destination) ni `hqETADate` n'apparaissent dans le mapping enregistré du dump du 25/08 (`ps_ba_importer_config.ba_step2`) — la config vue en capture le 04/09 est donc plus récente que ce dump, ou en cours de saisie. **Aucune nouvelle table ni classe à créer côté thème** : une fois le mapping actif et l'import (re)joué, `out_of_stock` / `available_for_order` / `available_date` sont pilotables tels quels depuis les templates via les variables natives PrestaShop du tableau produit.
+Voir `megaservice/templates/catalog/_partials/miniatures/product.tpl` et `megaservice/templates/catalog/product.tpl`.
