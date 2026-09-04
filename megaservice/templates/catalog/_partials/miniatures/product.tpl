@@ -39,7 +39,10 @@
       <a href="{$product.url}">{$product.name}</a>
     </h2>
 
-    {if $product.show_price}
+    {* show_price masque le prix quand PS refuse la commande (rupture + comportement
+       "deny"). $product.price reste calcule independamment de ce flag : on l'affiche
+       toujours, l'indisponibilite est deja signalee par le badge ci-dessous. *}
+    {if $product.price}
       <div class="ms-product-card__prices">
         <span class="ms-product-card__price">{$product.price}</span>
         {if $product.has_discount}
@@ -49,7 +52,13 @@
     {/if}
 
     <div class="ms-product-card__availability ms-product-card__availability--{$product.availability}">
-      {if $product.availability == 'available'}{l s='Disponible' d='Shop.Theme.Catalog'}{else}{$product.availability_message}{/if}
+      {if $product.availability == 'available'}
+        {l s='Disponible' d='Shop.Theme.Catalog'}
+      {elseif $product.availability == 'unavailable'}
+        {l s='Épuisé' d='Shop.Theme.Catalog'}
+      {else}
+        {$product.availability_message}
+      {/if}
     </div>
 
     {if $product.add_to_cart_url}
