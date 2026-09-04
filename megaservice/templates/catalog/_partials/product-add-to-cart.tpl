@@ -28,7 +28,7 @@
           class="ms-product__btn-cart"
           data-button-action="add-to-cart"
           type="submit"
-          {if !$product.add_to_cart_url}disabled{/if}
+          {if !$msCommandable}disabled{/if}
         >
           {l s='Ajouter au panier' d='Shop.Theme.Actions'}
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">

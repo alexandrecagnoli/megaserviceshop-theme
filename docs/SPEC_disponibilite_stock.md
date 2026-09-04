@@ -195,3 +195,13 @@ if ($availableQuantity >= 0) {
 **Corrigé** : le branchement se fait désormais sur `$product.quantity > 0` (valeur brute, non ambiguë) plutôt que sur le texte `availability` calculé — sur la card et la fiche produit.
 
 **Au passage** : le texte « Livraison sous 48h » (hérité du thème d'origine, commit `ad2e04a`, jamais discuté dans ce brief) est remplacé par `$product.availability_message` — le message natif configuré en BO (`PS_LABEL_IN_STOCK_PRODUCTS`), conforme à la consigne §3 cas 1 (« comportement natif PrestaShop, ne pas toucher »). Fallback neutre « En stock » si ce libellé BO n'est pas configuré.
+
+---
+
+## 13. Nuance ajoutée (04/09/2026) — bouton d'achat bloqué tant que la date annoncée n'est pas atteinte
+
+Précisé par le client : « Dispo. le [date] » n'est commandable que si cette date est **déjà atteinte** — une date future veut dire « pas encore en stock », pas une précommande. Le brief §3 cas 2 ne faisait pas cette distinction (« commandable normalement » sans condition de date).
+
+**Implémenté** sur les 3 boutons concernés (card, bouton « Ajouter au panier » de la fiche produit) : nouvelle variable `msCommandable`, distincte du texte affiché — `$product.add_to_cart_url` natif ET la date annoncée n'est pas dans le futur (comparaison de chaînes `YYYY-MM-DD`, fiable car lexicographiquement ordonnée). Le texte « Dispo. le [date] » reste inchangé que la date soit future ou déjà passée ; seule la commandabilité du bouton en dépend désormais.
+
+Non touché : le bouton « Réserver un essai » (`.ms-product__btn-reserve`), hors périmètre de la demande.

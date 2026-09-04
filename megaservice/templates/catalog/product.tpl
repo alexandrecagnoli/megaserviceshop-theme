@@ -80,6 +80,14 @@
           {assign var='msAvailability' value='out_of_stock'}
         {/if}
 
+        {* Commandabilite reelle, distincte du texte : une date de reassort ANNONCEE
+           mais pas encore ATTEINTE (future) veut dire "pas encore en stock" — pas de
+           precommande, bouton desactive malgre add_to_cart_url. Comparaison de chaines
+           fiable en YYYY-MM-DD (ordre lexicographique = ordre chronologique). *}
+        {assign var='msToday' value=$smarty.now|date_format:"%Y-%m-%d"}
+        {assign var='msDateFuture' value=($product.available_date && $product.available_date != '0000-00-00' && $product.available_date > $msToday)}
+        {assign var='msCommandable' value=($product.add_to_cart_url && !$msDateFuture)}
+
         <div class="ms-product__availability ms-product__availability--{$msAvailability}">
           {if $msAvailability == 'available'}
             {* Comportement natif PrestaShop, ne pas personnaliser (docs/SPEC_disponibilite_stock.md §3
@@ -178,7 +186,7 @@
             </div>
 
             {block name='product_add_to_cart'}
-              {include file='catalog/_partials/product-add-to-cart.tpl'}
+              {include file='catalog/_partials/product-add-to-cart.tpl' msCommandable=$msCommandable}
             {/block}
 
             {* Bloc « cette référence est remplacée » (module megaservice_replacement).

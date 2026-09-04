@@ -70,6 +70,11 @@
       {assign var='msAvailability' value='out_of_stock'}
     {/if}
 
+    {* Commandabilite reelle, distincte du texte — cf. catalog/product.tpl. *}
+    {assign var='msToday' value=$smarty.now|date_format:"%Y-%m-%d"}
+    {assign var='msDateFuture' value=($product.available_date && $product.available_date != '0000-00-00' && $product.available_date > $msToday)}
+    {assign var='msCommandable' value=($product.add_to_cart_url && !$msDateFuture)}
+
     <div class="ms-product-card__availability ms-product-card__availability--{$msAvailability}">
       {if $msAvailability == 'available'}
         {l s='Disponible' d='Shop.Theme.Catalog'}
@@ -89,7 +94,7 @@
       {/if}
     </div>
 
-    {if $product.add_to_cart_url}
+    {if $msCommandable}
       <form action="{$product.add_to_cart_url}" method="post" class="ms-product-card__add-form">
         <input type="hidden" name="token" value="{$static_token}">
         <input type="hidden" name="id_product" value="{$product.id_product}">
