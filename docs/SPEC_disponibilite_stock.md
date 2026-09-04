@@ -72,7 +72,6 @@ Import identique en cours sur HQV et GASGAS (même mapping plugin). Même vérif
 - Ne pas coder la branche « stock magasin G8 » comme logique active.
 - Ne pas décider seul du cas 4 — arbitrage client en attente.
 
----
 
 ## 7. État de l'implémentation thème (04/09/2026)
 
@@ -160,3 +159,15 @@ Conclusion : le `0` n'est pas écrit intentionnellement par un mapping — c'est
 **Correction structurelle** : mapper `show_price` dans le profil `MAJ_CONSTRUCTEUR` (valeur constante `1`, ou dérivée de `StockAvailable` si on veut masquer le prix des produits sans stock nulle part — à trancher selon la règle du §3). Sans ce mapping, tout réimport recréera le même problème sur les nouveaux produits.
 
 **Correction immédiate** (catalogue déjà importé, ~47 000 produits) : reste à valider avant exécution — voir proposition ci-dessous, non exécutée.
+
+---
+
+## 11. Piste "réglage PrestaShop" éliminée — DEFAULT SQL déjà correct
+
+Vérifié le 04/09 : `information_schema.COLUMNS` donne `COLUMN_DEFAULT = 1` pour `show_price` sur `ps_product` ET `ps_product_shop`. Si `ba_importer` omettait simplement ce champ à l'écriture, MySQL poserait `1` de lui-même. Le fait que 47 915 produits soient à `0` prouve que **le plugin écrit activement `0`**, par un mécanisme non visible dans son mapping (`ba_step2`) ni dans ses réglages généraux (`ba_step1`).
+
+Le fichier CSV constructeur n'est pas modifiable (client) et le mapping ne permet pas de double-cibler une même colonne source vers deux destinations (`StockAvailable` → `available_for_order` **et** `show_price` en une passe). Aucune correction côté import n'est donc possible sans le code source du plugin, qui n'est pas dans ce repo.
+
+**Solution retenue** : hook PrestaShop (`actionObjectProductAddAfter` / `actionObjectProductUpdateAfter`), qui s'exécute après l'écriture du plugin quel que soit son comportement interne, synchronisant `show_price = available_for_order` — cohérent avec la règle déjà en place (§3) : un produit commandable doit rester visible avec son prix, un produit non commandable peut légitimement le rester. En attente de validation avant implémentation.
+
+---
