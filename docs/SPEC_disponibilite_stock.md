@@ -219,3 +219,31 @@ La vraie cause : le lien de redirection affiché quand `msCommandable` est faux 
 **Corrigé** : nouveau modificateur `.ms-product-card__add--disabled` (outline grise) et libellé « VOIR LE PRODUIT » au lieu de « AJOUTER » pour ce cas — couvre à la fois « Épuisé » et « Dispo. le [date future] ».
 
 **Méthode qui a permis de trancher vite** : plutôt que de deviner davantage après plusieurs tests CLI infructueux (données PHP identiques entre fiche et listing), un commentaire HTML de debug déposé temporairement sur le serveur (`<!-- MS_DEBUG ... -->`, jamais commité) a donné la valeur réelle calculée par Smarty au moment du rendu — la seule source qui manquait, le calcul CLI ne testant que du PHP, jamais l'exécution du template lui-même.
+
+---
+
+## 15. Libellé corrigé (23/09/2026) — « Commandable à partir du [date] » quand la date est future
+
+**Signalé au COPROJ du 17/09** : « en stock constructeur mais non commandable ». Vérifié en
+base le 22/09 sur la référence `00010000348` (id 94496) — `available_date = 2026-09-18`,
+soit **le lendemain du COPROJ**. Le bouton était donc bloqué par la règle du §13, pendant
+que le bandeau annonçait « Dispo. le 18/09/2026 ».
+
+**Ce n'était pas un bug de règle.** Le blocage vient d'une demande explicite du client
+(§13). Le défaut était le libellé : promettre une disponibilité à côté d'un bouton mort,
+sans jamais expliquer le refus.
+
+**Correction appliquée** — `catalog/product.tpl` et `catalog/_partials/miniatures/product.tpl` :
+dans la branche `backorder`, quand `msDateFuture` est vrai, le texte devient
+**« Commandable à partir du [date] »**. Quand la date est passée (bouton actif), « Dispo. le
+[date] » est conservé tel quel.
+
+La **règle est inchangée** : `msCommandable` n'est pas touché, aucun produit ne devient
+commandable ni ne cesse de l'être. Seul le libellé bouge.
+
+**Volumétrie au 22/09** : 1 874 produits commandables ont une date future (bouton bloqué,
+libellé désormais explicite) contre 44 806 à date passée ou absente.
+
+**Non traité ici** : l'arbitrage « précommande » du §3 cas 4 reste ouvert. Si le client
+décide d'ouvrir la commande sur date future, c'est le §13 qu'il faudra défaire, pas ce
+libellé.

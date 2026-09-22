@@ -102,7 +102,16 @@
             {l s='Derniers articles en stock' d='Shop.Theme.Catalog'}
           {elseif $msAvailability == 'backorder'}
             {if $product.available_date && $product.available_date != '0000-00-00'}
-              {l s='Dispo. le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+              {* Date future = bouton bloque (SPEC_disponibilite_stock.md §13, demande
+                 client du 04/09). Annoncer « Dispo. le » a cote d'un bouton mort laissait
+                 le refus inexplique — signale au COPROJ du 17/09. On nomme desormais la
+                 condition d'achat au lieu de promettre une disponibilite. La REGLE est
+                 inchangee : seul le libelle bouge. *}
+              {if $msDateFuture}
+                {l s='Commandable à partir du' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+              {else}
+                {l s='Dispo. le' d='Shop.Theme.Catalog'} {$product.available_date|date_format:"%d/%m/%Y"}
+              {/if}
             {else}
               {l s='En stock constructeur' d='Shop.Theme.Catalog'}
             {/if}
