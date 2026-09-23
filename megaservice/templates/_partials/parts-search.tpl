@@ -1,4 +1,9 @@
-<section class="ms-parts-search">
+{* data-selector-endpoint : source de la cascade Marque → Année → Pratique →
+   Modèle (front controller selectordata du module microfiches). Sans cet
+   attribut, moto-cascade.js sort sans rien faire et les listes restent vides —
+   c'était l'état de cette section depuis avril 2026. *}
+<section class="ms-parts-search"
+         data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}">
   <div class="ms-parts-search__container">
 
     {* ── Col 2-5 : texte ── *}
