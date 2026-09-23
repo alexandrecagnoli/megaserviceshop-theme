@@ -49,9 +49,12 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             Tools::redirect('index.php?controller=404');
         }
 
-        $this->armGarageFromUrl();
-
         parent::init();
+
+        // APRÈS parent::init() : celui-ci (re)construit le contexte et le cookie.
+        // Armer avant revenait à écrire dans un cookie que PrestaShop remplaçait
+        // ensuite — la moto n'était jamais retenue.
+        $this->armGarageFromUrl();
     }
 
     public function initContent()
@@ -213,8 +216,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             }
             require_once $file;
         }
-        // resolveActiveMoto() lit `moto=`, valide l'id et écrit le cookie.
-        MsMountability::resolveActiveMoto();
+        // resolveActiveMoto() lit `moto=`, valide l'id et POSITIONNE le cookie —
+        // mais ne le persiste pas : elle ne fait pas de write(). Sur les pages
+        // catégorie, PrestaShop l'écrit en fin de requête ; ici on ne peut pas
+        // s'y fier, d'où l'écriture explicite.
+        $id = (int) MsMountability::resolveActiveMoto();
+        if ($id > 0) {
+            $this->context->cookie->write();
+        }
     }
 
     /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */
