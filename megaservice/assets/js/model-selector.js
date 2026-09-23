@@ -153,7 +153,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // contenu affiché était alors filtré et ment désormais. Sinon on ne
         // touche à rien, la modale reste ouverte pour choisir une autre moto.
         if (data && data.cleared) {
-          window.location.reload();
+          // PAS reload() : l'URL courante peut porter ?moto=…, que le serveur
+          // relit pour ARMER le garage. On vidait donc le cookie, puis on le
+          // réarmait dans la foulée — le filtre « se désactivait un instant et
+          // revenait ». On recharge sur l'URL débarrassée des paramètres qui
+          // réarment.
+          var u = new URL(window.location.href);
+          u.searchParams.delete('moto');
+          u.searchParams.delete('ms_clear_moto');
+          window.location.href = u.pathname + (u.search === '?' ? '' : u.search) + u.hash;
         }
       })
       .catch(function () { /* réseau HS : le localStorage est déjà purgé */ });

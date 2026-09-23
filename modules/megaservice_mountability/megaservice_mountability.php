@@ -218,10 +218,24 @@ class Megaservice_mountability extends Module
 
         // Vide → aucun produit compatible : on force un résultat vide (comme le
         // fait le provider natif de facetedsearch pour un pool de recherche vide).
-        $params['search']->getSearchAdapter()->addFilter(
-            'id_product',
-            empty($ids) ? ['NULL'] : array_map('intval', $ids)
-        );
+        $values  = empty($ids) ? ['NULL'] : array_map('intval', $ids);
+        $adapter = $params['search']->getSearchAdapter();
+
+        $adapter->addFilter('id_product', $values);
+
+        // ET sur la « population initiale ». C'est elle que clone
+        // getFilteredSearchAdapter() (cf. Adapter/MySQL.php) pour construire les
+        // adaptateurs dérivés. Un filtre posé sur le seul adaptateur courant ne
+        // survit donc pas à ces dérivations : dès qu'une facette CATÉGORIE était
+        // sélectionnée, la compatibilité moto disparaissait du résultat et le
+        // client se voyait proposer des pièces incompatibles, badge « Compatible »
+        // à l'appui. Les facettes Marque, Prix et Disponibilité, elles, passaient
+        // par un autre chemin et restaient correctes — d'où un bug qui ne se
+        // manifestait que sur une facette.
+        $initial = method_exists($adapter, 'getInitialPopulation') ? $adapter->getInitialPopulation() : null;
+        if ($initial !== null && $initial !== $adapter) {
+            $initial->addFilter('id_product', $values);
+        }
     }
 
     /**
