@@ -649,3 +649,31 @@ Sémantique déduite de la config et du comportement observé, pas du code du mo
 Note : les mappings de colonnes sont écrasés en place à chaque édition (`date_up`), il est donc inutile de chercher quel profil a écrit « Pratique » — aucun ne la mappe encore aujourd'hui.
 
 **Statut** : 🔴 données nettoyées, cause ouverte. Rejouer le script après chaque import catalogue.
+
+---
+
+## 🟠 ps_facetedsearch 4.0.2 — un fichier du module tiers est patché dans le dépôt
+
+**Fichier** : [modules/ps_facetedsearch/src/Product/Search.php](modules/ps_facetedsearch/src/Product/Search.php)
+
+**Contexte** : `addControllerSpecificFilters()` se terminait par le `Hook::exec('actionFacetedSearchFilters')` qui permet aux modules tiers d'ajouter leurs filtres. Mais son premier bloc contenait :
+
+```php
+if ($this->query->getQueryType() == 'category') {
+    if (!empty($this->getSearchAdapter()->getFilter('id_category'))) {
+        return;          // sort de TOUTE la méthode
+    }
+```
+
+Ce `return` ne devait sauter que la pose du filtre catégorie de la page. Il sortait de la méthode et sautait le `Hook::exec` final. Conséquence : **dès qu'une facette Catégories était cochée, aucun module tiers ne pouvait plus filtrer**.
+
+**Impact constaté** : sur `/41-accessoires-powerparts?moto=…&q=Catégories-Bagagerie`, la compatibilité moto disparaissait — 100 pièces listées au lieu de 3, toutes badgées « Compatible ». Les facettes Marque, Prix et Disponibilité n'étaient pas touchées : elles ne posent pas de filtre `id_category`.
+
+**Fix appliqué** : la condition est fusionnée dans le `if` englobant, on ne saute plus que le bloc concerné. Le fichier est versionné dans le dépôt et la CI l'écrase sur le serveur (`rsync modules/` sans `--delete`).
+
+**Dette** : on épingle un fichier d'un module natif PrestaShop.
+- Une mise à jour de ps_facetedsearch depuis le back-office sera **réécrasée par notre copie 4.0.2 au déploiement suivant**.
+- À faire avant toute montée de version : vérifier si le `return` est corrigé en amont, et supprimer `modules/ps_facetedsearch/` du dépôt si oui.
+- À remonter à PrestaShop : le bug casse le hook documenté pour tous les modules tiers.
+
+**Statut** : 🟠 actif — à réévaluer à chaque mise à jour de ps_facetedsearch.
