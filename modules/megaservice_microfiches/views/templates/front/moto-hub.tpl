@@ -28,6 +28,12 @@
         <div class="ms-catalog-context__actions">
           <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Modules.Megaservicemicrofiches.Shop'}</a>
           <a href="#" class="ms-catalog-context__link">{l s='Ajouter à mon garage' d='Modules.Megaservicemicrofiches.Shop'}</a>
+          {* Le lien manquait sur cette page : le filtre moto restait actif sur tout le
+             reste du site sans moyen de le retirer depuis ici. js-model-clear purge
+             localStorage ET le cookie serveur (cf. model-selector.js).
+             Pas de href de repli : ?ms_clear_moto=1 n'est traité que par l'override
+             CategoryController, donc sans effet sur cette page. *}
+          <a href="#" class="ms-catalog-context__link js-model-clear">{l s='Retirer le filtre' d='Modules.Megaservicemicrofiches.Shop'}</a>
         </div>
       </div>
     </div>

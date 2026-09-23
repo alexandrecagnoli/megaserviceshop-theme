@@ -56,6 +56,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // « Retirer le filtre » des bandeaux de contexte moto.
+  //
+  // Ces liens pointaient vers ?ms_clear_moto=1, qui ne vide QUE le cookie
+  // serveur : le sélecteur du header, lui, se restaure depuis localStorage et
+  // continuait d'afficher la moto comme active. Symétrique exact du bug inverse
+  // corrigé le 23/09, où le reset de la modale ne vidait que localStorage.
+  //
+  // On passe donc par clearMotoFilter(), qui purge LES DEUX sources. En
+  // délégation : les bandeaux sont rendus côté serveur sur des pages variées
+  // (catégorie, hub moto, microfiche) et remplacés par le JS des facettes.
+  //
+  // Le href reste en place et sert de repli sans JS sur les pages catégorie.
+  document.addEventListener('click', function (e) {
+    var clear = e.target.closest('.js-model-clear');
+    if (!clear) return;
+    e.preventDefault();
+    clearMotoFilter();
+  });
+
   if (mobileBarEl) {
     mobileBarEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {

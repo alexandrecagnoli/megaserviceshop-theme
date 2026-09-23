@@ -22,7 +22,10 @@
 
       <div class="ms-catalog-context__actions">
         <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Shop.Theme.Catalog'}</a>
-        {if isset($ms_moto_filter) && $ms_moto_filter}<a href="{$ms_moto_filter.clear_url|escape:'html'}" class="ms-catalog-context__link">{l s='Retirer le filtre' d='Shop.Theme.Catalog'}</a>{/if}
+        {* js-model-clear : purge localStorage ET le cookie serveur (cf. model-selector.js).
+           Sans cette classe, seul le cookie partait et le sélecteur du header continuait
+           d'afficher la moto. Le href reste le repli sans JS. *}
+        {if isset($ms_moto_filter) && $ms_moto_filter}<a href="{$ms_moto_filter.clear_url|escape:'html'}" class="ms-catalog-context__link js-model-clear">{l s='Retirer le filtre' d='Shop.Theme.Catalog'}</a>{/if}
       </div>
 
     </div>
