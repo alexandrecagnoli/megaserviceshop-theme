@@ -35,9 +35,10 @@
     {* Colonne droite — infos *}
     <div class="ms-product__info">
 
-      {* Bandeau "Compatible avec [moto]" — visible uniquement sur Powerparts
-         quand une moto est sélectionnée (body.has-moto-selected via model-selector.js) *}
-      {if isset($ms_show_powerparts_tabs) && $ms_show_powerparts_tabs}
+      {* Bandeau "Compatible avec [moto]" — seulement si la montabilité le confirme
+         ($ms_moto_compatible, cf. ProductController). Affichage final gated par
+         body.has-moto-selected (model-selector.js). *}
+      {if isset($ms_show_powerparts_tabs) && $ms_show_powerparts_tabs && isset($ms_moto_compatible) && $ms_moto_compatible}
       <div class="ms-product__compat-banner">
         <span>
           {l s='Compatible avec' d='Shop.Theme.Catalog'}

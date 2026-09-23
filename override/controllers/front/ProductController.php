@@ -78,6 +78,7 @@ class ProductController extends ProductControllerCore
                 'ms_excluded_products'    => [],
                 'ms_recommended_products' => [],
                 'ms_spare_products'       => [],
+                'ms_moto_compatible'      => false,
             ]);
             return;
         }
@@ -119,6 +120,7 @@ class ProductController extends ProductControllerCore
             'ms_excluded_products'    => $excluded,
             'ms_recommended_products' => $recommended,
             'ms_spare_products'       => $spare,
+            'ms_moto_compatible'      => $this->isCompatibleWithGarage(),
         ]);
     }
 
@@ -256,5 +258,39 @@ class ProductController extends ProductControllerCore
             ];
         }
         return $rows;
+    }
+
+    /**
+     * Ce produit est-il réellement monté sur la moto du garage ?
+     *
+     * Le bandeau « Compatible avec [moto] » s'affichait pour tout produit
+     * Powerparts dès qu'une moto était sélectionnée, sans jamais consulter la
+     * montabilité : il a affirmé du faux (réf. 116907 annoncée compatible
+     * EC 300 2024 alors qu'elle ne figure pas dans la liste).
+     *
+     * @return bool
+     */
+    private function isCompatibleWithGarage()
+    {
+        if (!class_exists('MsMountability')) {
+            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountability.php';
+            if (file_exists($file)) {
+                require_once $file;
+            }
+        }
+        if (!class_exists('MsMountability')) {
+            return false;
+        }
+
+        $idMoto = (int) MsMountability::resolveActiveMoto();
+        if (!$idMoto || empty($this->product->id)) {
+            return false;
+        }
+
+        return in_array(
+            (int) $this->product->id,
+            array_map('intval', MsMountability::getCompatibleProducts($idMoto)),
+            true
+        );
     }
 }
