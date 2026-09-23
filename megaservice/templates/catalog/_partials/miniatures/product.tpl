@@ -21,8 +21,10 @@
       <span class="ms-product-card__badge">{$product.discount_percentage}</span>
     {/if}
 
-    {* Badge "Compatible" — uniquement sur les catégories Accessoires Powerparts (cf. CategoryController) *}
-    {if isset($ms_show_moto_context) && $ms_show_moto_context}
+    {* Badge "Compatible" — affiché seulement si CE produit est dans la liste de
+       montabilité de la moto filtrée ($ms_compatible_ids, cf. CategoryController).
+       Ne jamais se contenter du contexte : une liste peut perdre le filtre. *}
+    {if isset($ms_show_moto_context) && $ms_show_moto_context && isset($ms_compatible_ids[$product.id_product])}
     <span class="ms-product-card__compat" aria-hidden="true">
       {l s='Compatible' d='Shop.Theme.Catalog'}
       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">

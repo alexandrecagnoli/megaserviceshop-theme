@@ -84,6 +84,9 @@ class CategoryController extends CategoryControllerCore
             'ms_show_moto_finder'   => $this->showMotoFinder(),
             // Racine de branche pour le bloc « parent catégorie » de la sidebar.
             'ms_moto_context_root'  => $this->motoContextRoot(),
+            // Produits réellement compatibles : le badge « Compatible » de la
+            // carte doit vérifier, pas supposer (cf. compatibleProductIds).
+            'ms_compatible_ids'     => $this->compatibleProductIds(),
         ]);
     }
 
@@ -385,5 +388,28 @@ class CategoryController extends CategoryControllerCore
         }
 
         return true;
+    }
+
+    /**
+     * Identifiants des produits réellement compatibles avec la moto filtrée,
+     * indexés en clés pour un test O(1) côté template.
+     *
+     * Le badge « Compatible » de la carte était affiché dès qu'un contexte moto
+     * existait, sans jamais regarder le produit : sur une liste dont le filtre
+     * de montabilité a sauté (facette Catégories), il affirmait donc du faux.
+     * On lui donne de quoi vérifier.
+     *
+     * @return array<int, bool>
+     */
+    private function compatibleProductIds()
+    {
+        $idMoto = $this->getMotoFilterId();
+        if (!$idMoto || !class_exists('MsMountability')) {
+            return [];
+        }
+
+        $ids = MsMountability::getCompatibleProducts($idMoto);
+
+        return $ids ? array_fill_keys(array_map('intval', $ids), true) : [];
     }
 }
