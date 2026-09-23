@@ -41,3 +41,10 @@ var/logs/
 
 # Sources constructeur brutes (3,8 Go : XML PIM, PHO, microfiches, exports).
 /IMPORT_FILES/
+
+# Visuels constructeur bruts deposes dans le theme (noms d'origine, avec espaces
+# et references produit). Le theme ne consomme que les versions optimisees —
+# cf. mosaic.tpl qui pointe img/mosaique/optimized/*.jpg. Ces sources ont ete
+# commitees deux fois par megarde via un `git add` trop large : on les exclut.
+megaservice/assets/img/*_MY*.jpg
+megaservice/assets/img/mosaique/[0-9]*_*.jpg
