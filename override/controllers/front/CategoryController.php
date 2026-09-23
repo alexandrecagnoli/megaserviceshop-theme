@@ -60,8 +60,21 @@ class CategoryController extends CategoryControllerCore
 
     public function initContent()
     {
-        parent::initContent();
+        // AVANT parent::initContent() : sur un clic de facette, ps_facetedsearch
+        // ne redemande que la liste (ajax=1&action=productlist) et le parent rend
+        // puis interrompt la requête. Posées après, ces variables n'existaient pas
+        // dans ce rendu — le badge « Compatible » disparaissait jusqu'au prochain
+        // chargement complet de la page (d'où sa réapparition au retour navigateur).
+        $this->assignMotoContext();
 
+        parent::initContent();
+    }
+
+    /**
+     * Variables de contexte moto pour les templates de listing et les miniatures.
+     */
+    private function assignMotoContext()
+    {
         $category_id = (int) $this->category->id;
         $template = isset(self::$CATEGORY_TEMPLATES[$category_id])
             ? self::$CATEGORY_TEMPLATES[$category_id]
