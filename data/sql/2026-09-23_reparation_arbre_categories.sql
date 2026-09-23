@@ -73,3 +73,44 @@ SELECT
   (SELECT COUNT(*) FROM ps_category c JOIN ps_category p ON p.id_category=c.id_parent
     WHERE c.level_depth <> p.level_depth + 1
       AND c.id_category <> c.id_parent)                                     AS level_depth_ko;
+
+-- ============================================================================
+-- SUITE — 23/09/2026 : la facette PRIX ne s'affichait pas non plus.
+--
+-- SYMPTÔME : `price` était configurée comme facette sur les 3 catégories
+-- Powerparts (41, 332, 369) mais n'apparaissait sur AUCUNE page.
+--
+-- CAUSE : l'index de prix du module était vide à 99,99 %.
+--     produits actifs                  47 916
+--     produits dans l'index                 1
+--     lignes ps_layered_price_index       409  (pour 228 produits)
+-- Sans cet index, le module ne peut calculer aucune borne, donc il n'affiche
+-- pas la facette du tout. Le drapeau PS_LAYERED_INDEXED valait pourtant 1 :
+-- rien ne signalait que l'indexation n'avait jamais abouti. Bug silencieux.
+--
+-- CORRECTIF : reconstruction via ps_facetedsearch::fullPricesIndexProcess(),
+-- bouclée sur son curseur. ~12 minutes pour 47 916 produits.
+--     APRÈS : 95 804 lignes, 47 902 produits indexés
+-- Les 14 produits restants portent visibility='search' (invisibles en
+-- catalogue) : exclus à juste titre par l'indexeur, ce n'est pas un échec.
+--
+-- Vérifié après coup : la facette Prix s'affiche (slider 0 à 14 581 €) et
+-- filtre — 19 918 produits entre 0 et 50 €, 8 927 entre 100 et 500 €.
+--
+-- ATTENTION : la boucle sur le curseur ne se termine pas d'elle-même sur les
+-- derniers lots. Prévoir un garde-fou sur le nombre de passes, ou s'arrêter
+-- quand le compteur de produits indexés cesse de progresser.
+--
+-- RESTE À COMPRENDRE : pourquoi l'indexation n'a jamais tourné. Sans réponse,
+-- l'index se redégradera au prochain import catalogue. Le module expose une
+-- URL de cron (action=indexPrices&full=1) — vérifier qu'elle est planifiée.
+-- ============================================================================
+
+-- Contrôle de l'index de prix — doit être proche du nombre de produits actifs
+SELECT
+  (SELECT COUNT(*) FROM ps_product_shop WHERE id_shop=1 AND active=1)        AS produits_actifs,
+  (SELECT COUNT(DISTINCT id_product) FROM ps_layered_price_index)            AS produits_indexes,
+  (SELECT COUNT(*) FROM ps_layered_price_index)                              AS lignes_index;
+
+-- Après toute réindexation, vider le cache de blocs des facettes :
+-- TRUNCATE `ps_layered_filter_block`;
