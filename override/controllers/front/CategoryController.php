@@ -366,6 +366,24 @@ class CategoryController extends CategoryControllerCore
      */
     private function showMotoFinder()
     {
-        return !$this->getMotoFilterId() && $this->isInSubtreeOf(self::$MOTO_FINDER_ROOT_IDS);
+        if (!$this->isInSubtreeOf(self::$MOTO_FINDER_ROOT_IDS)) {
+            return false;
+        }
+
+        // On ne masque le sélecteur QUE là où le bandeau de contexte le remplace
+        // réellement, c'est-à-dire dans les branches où le filtre moto s'applique
+        // aux produits (41, 488).
+        //
+        // Ailleurs — pièces détachées (12, 39, 40) — aucun filtrage n'a lieu : la
+        // compatibilité y passe par les microfiches, pas par la montabilité. Le
+        // sélecteur n'y est donc pas un filtre mais une PORTE D'ENTRÉE : on choisit
+        // sa moto et on part sur sa page. Il doit rester visible même avec une moto
+        // en garage, sinon ces pages n'affichent plus rien de moto — ni sélecteur
+        // (masqué par le filtre) ni bandeau (hors périmètre de contexte).
+        if ($this->getMotoFilterId() && $this->isInMotoContextSubtree()) {
+            return false;
+        }
+
+        return true;
     }
 }
