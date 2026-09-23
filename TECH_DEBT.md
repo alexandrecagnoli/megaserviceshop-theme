@@ -532,7 +532,7 @@ Quick win : les front controllers + `getModuleLink` existent déjà, il ne reste
 
 ---
 
-## 🔴 Preprod est une cible unique — le dernier déploiement gagne, tout push sur `main` recasse le sélecteur moto
+## 🔴→🟢 Preprod est une cible unique — le dernier déploiement gagne (RÉSOLU le 2026-08-28)
 
 **Fichiers** : [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
 
@@ -556,7 +556,13 @@ Deux commits de `.gitignore`, sans le moindre rapport avec le front, ont suffi �
 2. Séparer les cibles : une preprod par branche, ou un déploiement `main` → prod / branches → preprod.
 3. À défaut, garde-fou dans `deploy.yml` : refuser le déploiement auto de `main` tant que `main` est en retard sur la branche de travail.
 
-**Statut** : 🔴 actif — contourné le 2026-08-27 par un redispatch de la branche. La cause reste entière.
+**Statut** : 🟢 **résolu le 2026-08-28** — les quatre branches (`feat/product-mountability`,
+`feat/powerparts-relations`, `feat/microfiches-skeleton`, `feat/replacement-refs`) ont été
+fusionnées dans `main`. Il n'existe plus de version concurrente susceptible d'être écrasée par
+un déploiement de `main`, donc le piège ne peut plus se déclencher.
+
+La vigilance reste valable pour l'avenir : **toute nouvelle branche longue recrée le risque**
+tant que la préprod est une cible de déploiement unique. La cible unique, elle, n'a pas changé.
 
 ---
 

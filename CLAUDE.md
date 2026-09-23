@@ -108,14 +108,22 @@ Ces SVGs sont fournis par le client. Toujours utiliser exactement ces codes.
 | JS carousel | `megaservice/assets/js/carousel.js` |
 | JS menu | `megaservice/assets/js/menu.js` |
 | Build output | `megaservice/assets/dist/` |
-| Deploy | `bash deploy.sh` (full) ou `bash deploy-css.sh` (CSS only) |
+| Deploy | `bash deploy.sh` — délègue à la CI (thème + overrides + modules + cache) |
 
 ## Build & Deploy — règle absolue
 
 **TOUJOURS dans cet ordre :**
 1. `npm run build`
 2. `git add` + `git commit`
-3. `bash deploy.sh`
+3. `git push`
+4. `bash deploy.sh`
 
 **Ne jamais déployer sans commit préalable.** Si le build ou le commit échoue, ne pas déployer.
 Ne jamais proposer un deploy si les changements ne sont pas commités.
+
+**Le push est devenu obligatoire** : `deploy.sh` délègue au workflow GitHub Actions, qui
+déploie ce qui est sur le **distant**, pas ce qui est sur le poste. Le script refuse de
+partir si local et distant diffèrent, plutôt que de déployer silencieusement autre chose.
+
+Un push sur `main` déclenche **aussi** le déploiement automatiquement — inutile de lancer
+`deploy.sh` après, il ferait un second déploiement identique.
