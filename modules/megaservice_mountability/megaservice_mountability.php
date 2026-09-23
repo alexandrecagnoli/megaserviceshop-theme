@@ -166,8 +166,19 @@ class Megaservice_mountability extends Module
     // Filtre catégorie : injection dans ps_facetedsearch (option B)
     // ─────────────────────────────────────────────────────────────────────────
 
-    /** Racine dont le sous-arbre est filtrable par montabilité. */
-    const POWERPARTS_ROOT_CATEGORY = 41;
+    /**
+     * Racines dont le sous-arbre est filtrable par montabilité.
+     *
+     *   41  Accessoires Powerparts
+     *   488 Kits de pièces d'origine — les kits ne figurent sur aucune vue
+     *       éclatée, la compatibilité moto est leur seul filtre d'accès.
+     *
+     * À tenir synchronisé avec `$MOTO_CONTEXT_ROOT_IDS` de l'override
+     * CategoryController, qui pilote le bandeau et le fil d'Ariane : une racine
+     * déclarée ici mais pas là-bas filtrerait les produits sans que le client
+     * voie sur quelle moto — et l'inverse afficherait un bandeau mensonger.
+     */
+    const MOUNTABILITY_ROOT_CATEGORIES = [41, 488];
 
     /**
      * ps_facetedsearch tire ce hook en fin de construction de sa requête
@@ -186,7 +197,7 @@ class Megaservice_mountability extends Module
             return;
         }
         $idCategory = (int) $params['query']->getIdCategory();
-        if (!$idCategory || !$this->isPowerpartsSubtree($idCategory)) {
+        if (!$idCategory || !$this->isMountabilitySubtree($idCategory)) {
             return;
         }
 
@@ -200,16 +211,25 @@ class Megaservice_mountability extends Module
         );
     }
 
-    /** La catégorie appartient-elle au sous-arbre Powerparts (nested set) ? */
-    private function isPowerpartsSubtree($idCategory)
+    /** La catégorie appartient-elle à l'un des sous-arbres filtrables (nested set) ? */
+    private function isMountabilitySubtree($idCategory)
     {
-        $root = new Category(self::POWERPARTS_ROOT_CATEGORY);
-        if (!$root->id) {
+        $cat = new Category((int) $idCategory);
+        if (!$cat->id) {
             return false;
         }
-        $cat = new Category((int) $idCategory);
 
-        return $cat->id && $cat->nleft >= $root->nleft && $cat->nright <= $root->nright;
+        foreach (self::MOUNTABILITY_ROOT_CATEGORIES as $idRoot) {
+            $root = new Category((int) $idRoot);
+            if (!$root->id) {
+                continue; // racine supprimée ou pas encore créée : on ignore
+            }
+            if ($cat->nleft >= $root->nleft && $cat->nright <= $root->nright) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

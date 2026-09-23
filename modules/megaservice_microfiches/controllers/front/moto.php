@@ -192,11 +192,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
      * AUCUNE vue éclatée : la navigation par microfiches ne les atteint donc
      * jamais. D'où cet accès dédié sur la page moto, filtré par compatibilité.
      *
-     * 0 = catégorie pas encore créée (catalogue en cours de constitution). Tant
-     * qu'elle vaut 0, ou que la catégorie est absente/inactive, la carte n'est
-     * pas rendue — rien ne casse en attendant.
+     * « Kits de pièces d'origine », enfant de « Pièces détachées d'origine » (12).
+     * 0 désactive proprement la carte (la garde de kitsUrl() reste en place si la
+     * catégorie venait à être supprimée ou désactivée).
      */
-    const KITS_CATEGORY_ID = 0;
+    const KITS_CATEGORY_ID = 488;
 
     /**
      * Produits Powerparts (catégorie 41 + sous-arbre), présentés au format natif

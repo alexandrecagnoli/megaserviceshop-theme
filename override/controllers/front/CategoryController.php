@@ -21,7 +21,9 @@ class CategoryController extends CategoryControllerCore
      * module megaservice_mountability — pas ici.
      */
     private static $MOTO_CONTEXT_ROOT_IDS = [
-        41, // Accessoires Powerparts
+        41,  // Accessoires Powerparts
+        488, // Kits de pièces d'origine — les kits ne figurent sur aucune vue
+             // éclatée, la compatibilité moto est leur seul filtre d'accès.
     ];
 
     /** @var int|null id_moto du "garage" (cookie), mémoïsé. */
