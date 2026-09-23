@@ -247,3 +247,45 @@ libellé désormais explicite) contre 44 806 à date passée ou absente.
 **Non traité ici** : l'arbitrage « précommande » du §3 cas 4 reste ouvert. Si le client
 décide d'ouvrir la commande sur date future, c'est le §13 qu'il faudra défaire, pas ce
 libellé.
+
+---
+
+## 16. Trou découvert (23/09/2026) — la règle du §13 est inopérante sur les produits à déclinaisons
+
+**Découvert en testant le §15** sur le produit `106496` / `U6951716` (Jeu de donut pour poignée).
+Le parent porte `available_date = 2026-09-24`, mais la fiche affichait « En stock constructeur »
+sans date, **bouton actif**.
+
+**Cause** : PrestaShop présente la **déclinaison sélectionnée**, pas le parent. Le thème reçoit
+donc `$product.available_date` depuis `ps_product_attribute`, où la date est vide. `msDateFuture`
+vaut faux, et le blocage du §13 ne s'applique jamais.
+
+**Mesuré en base le 23/09** :
+
+| | |
+|---|---|
+| Produits à déclinaisons avec une date parent **future** | **135** |
+| … dont **toutes** les déclinaisons ont une date vide | **135 / 135** |
+| Déclinaisons au total dans le catalogue | 5 090 |
+| … portant une `available_date` renseignée | **0** |
+
+L'import ne renseigne la date que sur le parent. **Aucune** déclinaison du catalogue n'en porte.
+
+**Conséquence** : un client peut commander un article à déclinaisons dont le réassort est annoncé
+pour une date future — exactement ce que la demande client du §13 visait à empêcher. La règle
+n'est effective que sur les produits simples.
+
+**Ce n'est pas une régression du §15** : le trou préexistait, le nouveau libellé l'a seulement
+rendu visible. Le §15 reste valide et n'est pas à défaire.
+
+### Deux corrections possibles, à arbitrer
+
+**A — Repli sur la date du parent dans le thème.** Quand la déclinaison n'a pas de date, utiliser
+celle du parent pour calculer `msDateFuture`. Rapide, de notre côté, mais suppose que la date du
+parent vaut pour toutes les déclinaisons.
+
+**B — Renseigner la date sur les déclinaisons à l'import.** Plus juste sur le fond — chaque
+déclinaison peut avoir son propre délai — mais dépend du fichier constructeur et de `ba_importer`.
+
+**Ne rien coder avant l'arbitrage** : le choix engage la sémantique de la donnée, pas seulement
+l'affichage.
