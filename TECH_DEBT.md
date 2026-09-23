@@ -654,7 +654,7 @@ Note : les mappings de colonnes sont écrasés en place à chaque édition (`dat
 
 ## 🟠 ps_facetedsearch 4.0.2 — un fichier du module tiers est patché dans le dépôt
 
-**Fichier** : [modules/ps_facetedsearch/src/Product/Search.php](modules/ps_facetedsearch/src/Product/Search.php)
+**Fichiers** : [modules/ps_facetedsearch/src/Product/Search.php](modules/ps_facetedsearch/src/Product/Search.php), [modules/ps_facetedsearch/src/Product/SearchProvider.php](modules/ps_facetedsearch/src/Product/SearchProvider.php)
 
 **Contexte** : `addControllerSpecificFilters()` se terminait par le `Hook::exec('actionFacetedSearchFilters')` qui permet aux modules tiers d'ajouter leurs filtres. Mais son premier bloc contenait :
 
@@ -675,5 +675,9 @@ Ce `return` ne devait sauter que la pose du filtre catégorie de la page. Il sor
 - Une mise à jour de ps_facetedsearch depuis le back-office sera **réécrasée par notre copie 4.0.2 au déploiement suivant**.
 - À faire avant toute montée de version : vérifier si le `return` est corrigé en amont, et supprimer `modules/ps_facetedsearch/` du dépôt si oui.
 - À remonter à PrestaShop : le bug casse le hook documenté pour tous les modules tiers.
+
+**Second patch, même module — compteurs des facettes** : `SearchProvider::generateCacheKeyForQuery()` construit le hash du cache de bloc à partir de la boutique, la devise, la langue, le pays, le contrôleur et les facettes cochées. Rien n'y représente une restriction posée par un module tiers. Deux pages dont la population diffère partageaient donc le même bloc en cache : la colonne de gauche affichait « Bagagerie (100) » sur une page filtrée moto où la catégorie ne contient rien — clic → « Aucun produit ».
+
+Ajouter la moto au hash aurait multiplié les entrées par le nombre de motos (405). On désactive plutôt le cache de bloc quand la population initiale porte un filtre `id_product` posé par un tiers : seules ces pages recalculent leur bloc.
 
 **Statut** : 🟠 actif — à réévaluer à chaque mise à jour de ps_facetedsearch.
