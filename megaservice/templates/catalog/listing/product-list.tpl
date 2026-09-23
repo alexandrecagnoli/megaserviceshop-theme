@@ -110,11 +110,15 @@
             </button>
           </header>
 
-          {* Bloc parent catégorie — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
+          {* Bloc parent catégorie — sur les branches à contexte moto (cf. CategoryController).
+             Le libellé était écrit en dur (« Accessoires powerparts ») du temps où 41 était
+             la seule branche concernée ; depuis l'ajout des Kits (488) il annonçait la
+             mauvaise catégorie. On affiche désormais la RACINE de la branche courante :
+             sur 41 > Freinage le bloc annonce bien la branche, pas la sous-catégorie. *}
           {if isset($ms_show_moto_context) && $ms_show_moto_context}
           <div class="ms-catalog__cat-card">
             <img src="{$urls.theme_assets}img/akrapovic-exhaust.png" alt="" class="ms-catalog__cat-card-bg" loading="lazy">
-            <span class="ms-catalog__cat-card-label">{l s='Accessoires powerparts' d='Shop.Theme.Catalog'}</span>
+            <span class="ms-catalog__cat-card-label">{if isset($ms_moto_context_root) && $ms_moto_context_root}{$ms_moto_context_root.name|escape:'html'}{else}{$category.name}{/if}</span>
           </div>
           {/if}
 

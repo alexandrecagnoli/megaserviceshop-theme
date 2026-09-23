@@ -30,6 +30,16 @@
   {else}
     {include file='catalog/_partials/category-header.tpl' listing=$listing category=$category}
   {/if}
+
+  {* Grand sélecteur moto — même section que la home, entre le hero et le
+     catalogue. Uniquement dans les branches « pièces » ET sans filtre actif
+     (cf. CategoryController::showMotoFinder) : naviguer sans moto y revient à
+     parcourir des dizaines de milliers de références indifférenciées.
+     Dès qu'une moto est choisie, le bandeau de contexte prend le relais et
+     cette section disparaît — les deux ne coexistent jamais. *}
+  {if isset($ms_show_moto_finder) && $ms_show_moto_finder}
+    {include file='_partials/parts-search.tpl'}
+  {/if}
 {/block}
 
 {block name='product_list_footer'}

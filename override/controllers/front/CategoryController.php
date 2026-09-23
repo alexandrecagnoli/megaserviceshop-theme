@@ -26,6 +26,23 @@ class CategoryController extends CategoryControllerCore
              // éclatée, la compatibilité moto est leur seul filtre d'accès.
     ];
 
+    /**
+     * Racines dont le sous-arbre propose le grand sélecteur moto (celui de la
+     * home) quand AUCUN filtre n'est actif.
+     *
+     *   12  Pièces détachées d'origine — couvre partie cycle (39), partie
+     *       moteur (40) et les kits (488), qui en sont les enfants
+     *   41  Accessoires Powerparts
+     *
+     * Sur ces pages, naviguer sans moto n'a guère de sens : le client tombe sur
+     * des dizaines de milliers de références indifférenciées. On lui propose
+     * donc de choisir sa moto avant de parcourir, plutôt qu'après.
+     *
+     * Volontairement plus large que $MOTO_CONTEXT_ROOT_IDS : le sélecteur est
+     * une invitation, le bandeau de contexte une conséquence du filtre actif.
+     */
+    private static $MOTO_FINDER_ROOT_IDS = [12, 41];
+
     /** @var int|null id_moto du "garage" (cookie), mémoïsé. */
     private $motoFilterId;
 
@@ -63,6 +80,10 @@ class CategoryController extends CategoryControllerCore
             // générique "Aucun produit disponible pour le moment" — illisible
             // face à une catégorie de 4 000 produits.
             'ms_moto_no_data'       => $this->motoHasNoMountabilityData(),
+            // Grand sélecteur moto (section de la home) quand aucun filtre n'est actif.
+            'ms_show_moto_finder'   => $this->showMotoFinder(),
+            // Racine de branche pour le bloc « parent catégorie » de la sidebar.
+            'ms_moto_context_root'  => $this->motoContextRoot(),
         ]);
     }
 
@@ -271,14 +292,62 @@ class CategoryController extends CategoryControllerCore
 
     private function isInMotoContextSubtree()
     {
-        if (empty(self::$MOTO_CONTEXT_ROOT_IDS) || !$this->category->id) {
-            return false;
+        return $this->isInSubtreeOf(self::$MOTO_CONTEXT_ROOT_IDS);
+    }
+
+    /**
+     * Racine de la branche à contexte moto dont dépend la catégorie courante.
+     *
+     * Alimente le bloc « parent catégorie » de la sidebar, dont le libellé était
+     * écrit en dur (« Accessoires powerparts ») du temps où la branche 41 était
+     * seule concernée. Depuis l'ajout des Kits (488), il annonçait la mauvaise
+     * catégorie.
+     *
+     * On renvoie la RACINE et non la catégorie courante : sur 41 > Freinage, le
+     * bloc doit annoncer la branche (« Accessoires powerparts »), pas la
+     * sous-catégorie où l'on se trouve.
+     *
+     * @return array{id:int,name:string}|null
+     */
+    private function motoContextRoot()
+    {
+        if (!$this->category->id) {
+            return null;
         }
 
         foreach (self::$MOTO_CONTEXT_ROOT_IDS as $root_id) {
-            $root = new Category((int) $root_id);
+            $root = new Category((int) $root_id, (int) $this->context->language->id);
             if (!$root->id) {
                 continue;
+            }
+            if ($this->category->nleft >= $root->nleft && $this->category->nright <= $root->nright) {
+                return ['id' => (int) $root->id, 'name' => $root->name];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * La catégorie courante est-elle dans le sous-arbre de l'une des racines ?
+     *
+     * S'appuie sur le nested set (nleft/nright). Attention : il doit être
+     * cohérent — une corruption de l'arbre fausse silencieusement ce test, ce
+     * qui s'est produit et a bloqué les facettes catégorie (cf.
+     * data/sql/2026-09-23_reparation_arbre_categories.sql).
+     *
+     * @param int[] $rootIds
+     */
+    private function isInSubtreeOf(array $rootIds)
+    {
+        if (empty($rootIds) || !$this->category->id) {
+            return false;
+        }
+
+        foreach ($rootIds as $root_id) {
+            $root = new Category((int) $root_id);
+            if (!$root->id) {
+                continue; // racine supprimée ou pas encore créée
             }
             if ($this->category->nleft >= $root->nleft && $this->category->nright <= $root->nright) {
                 return true;
@@ -286,5 +355,17 @@ class CategoryController extends CategoryControllerCore
         }
 
         return false;
+    }
+
+    /**
+     * Faut-il proposer le grand sélecteur moto (section de la home) ?
+     *
+     * Oui quand on est dans une branche « pièces » ET qu'aucun filtre moto n'est
+     * actif. Dès qu'une moto est choisie, le bandeau de contexte prend le relais
+     * et le sélecteur n'a plus lieu d'être — les deux ne coexistent jamais.
+     */
+    private function showMotoFinder()
+    {
+        return !$this->getMotoFilterId() && $this->isInSubtreeOf(self::$MOTO_FINDER_ROOT_IDS);
     }
 }
