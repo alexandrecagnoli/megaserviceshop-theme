@@ -244,6 +244,15 @@ commandable ni ne cesse de l'être. Seul le libellé bouge.
 **Volumétrie au 22/09** : 1 874 produits commandables ont une date future (bouton bloqué,
 libellé désormais explicite) contre 44 806 à date passée ou absente.
 
+**✅ Validé en préprod le 23/09** sur les trois surfaces :
+
+| Surface | Cas | Résultat |
+|---|---|---|
+| Fiche produit | `54833311000`, date 24/09 | « Commandable à partir du 24/09/2026 », bouton grisé |
+| Fiche produit | `0100010060123`, date = aujourd'hui | « Dispo. le 23/09/2026 », bouton actif — cas limite de la comparaison stricte correct |
+| Carte de listing | catégorie Lunettes (366) | TEAM SHADES avec libellé + « VOIR LE PRODUIT » ; produit témoin sans date inchangé |
+| Carte de listing | catégorie Bonnets (55) | 8 produits datés sur 12 affichent le libellé, 3 dates distinctes rendues correctement |
+
 **Non traité ici** : l'arbitrage « précommande » du §3 cas 4 reste ouvert. Si le client
 décide d'ouvrir la commande sur date future, c'est le §13 qu'il faudra défaire, pas ce
 libellé.
