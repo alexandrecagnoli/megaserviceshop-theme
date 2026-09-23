@@ -159,9 +159,37 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(function () { /* réseau HS : le localStorage est déjà purgé */ });
   }
 
-  // Restore l'état "moto sélectionnée" (header + barre mobile) depuis le storage.
-  var storedSel = readSelection();
-  if (storedSel && storedSel.label) applyFilled(storedSel.label);
+  // État « moto sélectionnée » du header et de la barre mobile.
+  //
+  // LE SERVEUR FAIT FOI. Il connaît le garage (cookie ms_moto) quelle que soit la
+  // voie d'entrée : modale, section « Recherche de pièces », lien ?moto=, ou
+  // simple retour du client sur le site. localStorage, lui, n'était écrit que par
+  // cette modale — d'où un header affichant « Sélectionnez votre modèle » alors
+  // qu'une moto était bien active, et l'inverse après expiration du cookie.
+  //
+  // localStorage n'est plus qu'un cache : on le resynchronise sur le serveur.
+  var serverHasMoto = modal.getAttribute('data-garage') === '1';
+  var serverLabel   = modal.getAttribute('data-garage-label') || '';
+  var storedSel     = readSelection();
+
+  if (serverHasMoto && serverLabel) {
+    applyFilled(serverLabel);
+    if (!storedSel || storedSel.label !== serverLabel) {
+      // Entrée par une autre voie que la modale : on complète le cache. La
+      // sélection détaillée (marque/année/…) reste inconnue, mais le libellé
+      // suffit à l'affichage, et la modale se recharge depuis le serveur.
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ label: serverLabel }));
+      } catch (err) {}
+    }
+  } else {
+    // Garage vide côté serveur : un reliquat de localStorage ne doit pas faire
+    // croire à un filtre actif.
+    applyEmpty();
+    if (storedSel) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+    }
+  }
 
   // ── Tab Modèle : submit disabled tant que selects pas remplis ────
 

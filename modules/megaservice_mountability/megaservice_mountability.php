@@ -122,6 +122,19 @@ class Megaservice_mountability extends Module
      */
     public function hookActionFrontControllerSetMedia($params)
     {
+        // Sur TOUTES les pages : expose la moto du garage au thème.
+        //
+        // Le sélecteur du header affichait son état depuis localStorage, écrit
+        // par le seul model-selector.js. Toute autre voie d'entrée — la section
+        // « Recherche de pièces », un lien ?moto=, un cookie encore valide à la
+        // visite suivante — armait le garage côté serveur sans que le header le
+        // sache : il continuait d'afficher « Sélectionnez votre modèle ».
+        //
+        // Deux sources de vérité qui divergent, c'est le même défaut que le reset
+        // de la modale et que le lien « Retirer le filtre ». On le tarit ici : le
+        // SERVEUR fait foi, localStorage n'est plus qu'un cache d'affichage.
+        $this->context->smarty->assign('ms_garage', $this->garageForTemplate());
+
         if ($this->context->controller->php_self !== 'product') {
             return;
         }
@@ -209,6 +222,34 @@ class Megaservice_mountability extends Module
             'id_product',
             empty($ids) ? ['NULL'] : array_map('intval', $ids)
         );
+    }
+
+    /**
+     * Moto du garage, telle que le thème doit l'afficher.
+     *
+     * @return array{id:int,label:string}|null  null = garage vide
+     */
+    protected function garageForTemplate()
+    {
+        $idMoto = (int) MsMountability::resolveActiveMoto();
+        if (!$idMoto) {
+            return null;
+        }
+
+        $row = Db::getInstance()->getRow(
+            'SELECT `annee`, `core_name`, `nom_fr`
+             FROM `' . _DB_PREFIX_ . 'ms_moto`
+             WHERE `id_moto` = ' . $idMoto . ' AND `active` = 1'
+        );
+        if (!$row) {
+            return null; // moto supprimée ou désactivée : garage réputé vide
+        }
+
+        $name = $row['core_name'] !== '' ? $row['core_name'] : $row['nom_fr'];
+
+        // Même libellé que le bandeau de contexte (ANNÉE + MODÈLE), pour que le
+        // header et la page racontent la même chose.
+        return ['id' => $idMoto, 'label' => trim($row['annee'] . ' ' . $name)];
     }
 
     /** La catégorie appartient-elle à l'un des sous-arbres filtrables (nested set) ? */

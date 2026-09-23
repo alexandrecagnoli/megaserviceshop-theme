@@ -6,7 +6,13 @@
 {* Modal (desktop) / Bottomsheet (mobile) *}
 <div class="ms-model-modal js-model-modal" hidden role="dialog" aria-modal="true"
      data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
-     data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}">
+     data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}"
+     {* État du garage rendu par le SERVEUR (module montabilité, hook SetMedia).
+        Le header se fiait à localStorage, que seule la modale écrivait : toute
+        autre voie d'entrée armait le garage sans qu'il le sache. Le serveur fait
+        désormais foi, localStorage n'est plus qu'un cache d'affichage. *}
+     data-garage="{if isset($ms_garage) && $ms_garage}1{else}0{/if}"
+     data-garage-label="{if isset($ms_garage) && $ms_garage}{$ms_garage.label|escape:'html'}{/if}">
 
   {* ── Col gauche : image + texte (desktop uniquement) ── *}
   <div class="ms-model-modal__visual">
