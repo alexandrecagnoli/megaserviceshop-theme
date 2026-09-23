@@ -49,6 +49,8 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             Tools::redirect('index.php?controller=404');
         }
 
+        $this->armGarageFromUrl();
+
         parent::init();
     }
 
@@ -180,6 +182,39 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
+    }
+
+    /**
+     * Arme le garage (cookie ms_moto) quand l'URL porte `moto=`.
+     *
+     * Le sélecteur renvoie vers cette page ; sans cet appel, choisir une moto
+     * menait bien à sa fiche mais n'activait AUCUN filtre — le client devait
+     * ensuite cliquer un accès depuis le hub pour que le garage se remplisse,
+     * ce que rien n'indiquait.
+     *
+     * L'armement est délibérément conditionné à `moto=`, et non au simple fait
+     * d'être sur une page moto : arriver ici depuis un moteur de recherche ou un
+     * lien partagé ne doit pas remplacer silencieusement la moto du client.
+     *
+     * Sans le module montabilité (garage non installé), on ne fait rien.
+     */
+    protected function armGarageFromUrl(): void
+    {
+        if (Tools::getValue('moto') === false) {
+            return;
+        }
+        // La classe n'est chargée que si un autre point d'entrée l'a déjà requise
+        // (hook facetedsearch, override CategoryController) : sur cette page,
+        // aucun ne s'exécute. Même garde défensive que l'override.
+        if (!class_exists('MsMountability')) {
+            $file = _PS_MODULE_DIR_ . 'megaservice_mountability/classes/MsMountability.php';
+            if (!is_file($file)) {
+                return; // module garage non installé
+            }
+            require_once $file;
+        }
+        // resolveActiveMoto() lit `moto=`, valide l'id et écrit le cookie.
+        MsMountability::resolveActiveMoto();
     }
 
     /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */

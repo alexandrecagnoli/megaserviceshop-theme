@@ -111,10 +111,18 @@ class Megaservice_microfichesSelectordataModuleFrontController extends ModuleFro
         foreach ($rows as $r) {
             $id   = (int) $r['id_moto'];
             $name = (string) $r['core_name'];
+            $slug = MsMoto::buildSlug($marque, $name, $annee, $type);
             $out[] = [
+                // `moto=` EN PLUS de id_moto : c'est ce paramètre — et lui seul —
+                // que MsMountability::resolveActiveMoto() lit pour ARMER le garage
+                // (cookie ms_moto). Sans lui, choisir une moto dans le sélecteur
+                // menait bien à sa page mais n'activait aucun filtre : le client
+                // devait ensuite cliquer un accès depuis le hub pour que le garage
+                // se remplisse, ce que rien n'indiquait.
                 'value' => $this->context->link->getModuleLink('megaservice_microfiches', 'moto', [
                     'id_moto' => $id,
-                    'slug'    => MsMoto::buildSlug($marque, $name, $annee, $type),
+                    'slug'    => $slug,
+                    'moto'    => $id . ($slug !== '' ? '-' . $slug : ''),
                 ]),
                 'label' => $name,
             ];
