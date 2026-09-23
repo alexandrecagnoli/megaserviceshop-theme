@@ -168,6 +168,8 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             // Maillage SEO (Volet 2 étape 3) : lien vers la catégorie Powerparts
             // FILTRÉE sur cette moto (?moto=id-slug), source de vérité du filtre.
             'ms_powerparts_url' => $this->powerpartsUrl(),
+            // Accès « Kits » — vide tant que la catégorie n'existe pas (KITS_CATEGORY_ID).
+            'ms_kits_url'    => $this->kitsUrl(),
             'ms_powerparts'  => $this->fetchPowerpartsProducts(4, $idMoto),
             // Tous les produits affichés ici sont compatibles → badge « Compatible »
             // (la miniature native l'affiche quand ms_show_moto_context est vrai).
@@ -182,6 +184,19 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
 
     /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */
     const POWERPARTS_CATEGORY_ID = 41;
+
+    /**
+     * Catégorie "Kits de pièces détachées".
+     *
+     * Les kits sont des pièces détachées à part entière, mais ils ne figurent sur
+     * AUCUNE vue éclatée : la navigation par microfiches ne les atteint donc
+     * jamais. D'où cet accès dédié sur la page moto, filtré par compatibilité.
+     *
+     * 0 = catégorie pas encore créée (catalogue en cours de constitution). Tant
+     * qu'elle vaut 0, ou que la catégorie est absente/inactive, la carte n'est
+     * pas rendue — rien ne casse en attendant.
+     */
+    const KITS_CATEGORY_ID = 0;
 
     /**
      * Produits Powerparts (catégorie 41 + sous-arbre), présentés au format natif
@@ -225,8 +240,38 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
      */
     protected function powerpartsUrl(): string
     {
-        $base = $this->context->link->getCategoryLink(self::POWERPARTS_CATEGORY_ID);
-        $slug = $this->moto->slug();
+        return $this->motoFilteredCategoryUrl(self::POWERPARTS_CATEGORY_ID);
+    }
+
+    /**
+     * URL de la catégorie "Kits de pièces détachées" filtrée sur la moto courante.
+     *
+     * Chaîne vide tant que la catégorie n'existe pas ou n'est pas active : le
+     * template n'affiche alors pas la carte. Évite un lien mort pendant que le
+     * catalogue de kits se constitue.
+     */
+    protected function kitsUrl(): string
+    {
+        if (self::KITS_CATEGORY_ID <= 0) {
+            return '';
+        }
+        $cat = new Category(self::KITS_CATEGORY_ID);
+        if (!Validate::isLoadedObject($cat) || !$cat->active) {
+            return '';
+        }
+
+        return $this->motoFilteredCategoryUrl(self::KITS_CATEGORY_ID);
+    }
+
+    /**
+     * Lien d'une catégorie filtrée sur la moto courante (?moto=id-slug).
+     * Factorisé entre Powerparts et Kits : seul l'id de tête compte pour la
+     * résolution du filtre, le slug est cosmétique.
+     */
+    protected function motoFilteredCategoryUrl(int $idCategory): string
+    {
+        $base  = $this->context->link->getCategoryLink($idCategory);
+        $slug  = $this->moto->slug();
         $token = (int) $this->moto->id . ($slug !== '' ? '-' . $slug : '');
 
         return $base . (strpos($base, '?') !== false ? '&' : '?') . 'moto=' . rawurlencode($token);

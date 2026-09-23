@@ -14,7 +14,10 @@
 // ── 3 cartes d'accès (Cycle / Moteur / Powerparts) ──
 .ms-hub__access {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // auto-fit plutôt qu'un nombre de colonnes figé : la carte « Kits » n'apparaît
+  // que si la catégorie existe, donc la grille doit tenir à 3 comme à 4 cartes.
+  // Large : tout sur une ligne. Intermédiaire : 2x2. Mobile : une colonne.
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $spacing-lg;
 
   @include media-md { grid-template-columns: 1fr; }

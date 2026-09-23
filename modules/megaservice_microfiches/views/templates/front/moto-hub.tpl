@@ -41,7 +41,7 @@
 
   <div class="ms-hub">
 
-    {* ── 3 accès : Cycle / Moteur / Powerparts ── *}
+    {* ── Accès : Cycle / Moteur / Powerparts / Kits ── *}
     <div class="ms-hub__access">
       <a href="{$ms_cycle_url}" class="ms-hub__card ms-hub__card--cycle">
         <span class="ms-hub__card-label">{l s='Partie cycle' d='Modules.Megaservicemicrofiches.Shop'}</span>
@@ -52,6 +52,14 @@
       <a href="{$ms_powerparts_url}" class="ms-hub__card ms-hub__card--powerparts">
         <span class="ms-hub__card-label">{l s='Powerparts' d='Modules.Megaservicemicrofiches.Shop'}</span>
       </a>
+      {* Les kits ne figurent sur aucune vue éclatée : sans cet accès, ils sont
+         inatteignables depuis la page moto. Rendu seulement quand la catégorie
+         existe — elle est en cours de constitution (cf. KITS_CATEGORY_ID). *}
+      {if isset($ms_kits_url) && $ms_kits_url}
+        <a href="{$ms_kits_url}" class="ms-hub__card ms-hub__card--kits">
+          <span class="ms-hub__card-label">{l s='Kits' d='Modules.Megaservicemicrofiches.Shop'}</span>
+        </a>
+      {/if}
     </div>
 
     {* ── Dernières microfiches ── *}
