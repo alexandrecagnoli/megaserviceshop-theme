@@ -172,8 +172,76 @@ class CategoryController extends CategoryControllerCore
         return [
             'label'     => trim($row['annee'] . ' ' . $name),                        // bandeau (affichage)
             'seo_label' => trim($row['marque'] . ' ' . $name . ' ' . $row['annee']),  // title/meta
+            // Fil d'Ariane : modèle PUIS année (« EC 300 2024 »), l'inverse du
+            // bandeau. Le fil se lit comme un chemin, on y nomme d'abord la moto.
+            'crumb'     => trim($name . ' ' . $row['annee']),
+            'hub_url'   => $this->motoHubUrl((int) $idMoto),
             'clear_url' => $clear,
         ];
+    }
+
+    /**
+     * Page « hub » de la moto (module microfiches). Chaîne vide si le module est
+     * absent : l'override ne doit jamais dépendre de sa présence pour fonctionner.
+     */
+    private function motoHubUrl($idMoto)
+    {
+        if (!Module::isInstalled('megaservice_microfiches')) {
+            return '';
+        }
+        $params = ['id_moto' => (int) $idMoto];
+        if (class_exists('MsMountability')) {
+            $slug = MsMountability::motoSlug($idMoto);
+            if ($slug !== '') {
+                $params['slug'] = $slug;
+            }
+        }
+
+        return $this->context->link->getModuleLink('megaservice_microfiches', 'moto', $params);
+    }
+
+    /**
+     * Fil d'Ariane sous filtre moto : on remplace le chemin de catégories par le
+     * chemin de NAVIGATION réellement emprunté par le client.
+     *
+     *   Accueil > Pièces détachées d'origine > EC 300 2024 > Accessoires powerparts
+     *
+     * Sans ça, le fil affichait l'arborescence catalogue seule et le client
+     * perdait la trace de la moto sur laquelle il filtre, sans moyen d'y revenir.
+     * La structure reprend celle du fil du module microfiches (moto.php) pour que
+     * les deux parcours se ressemblent.
+     */
+    public function getBreadcrumbLinks()
+    {
+        $breadcrumb = parent::getBreadcrumbLinks();
+
+        $moto = $this->motoFilterBanner();
+        if (!$moto || empty($breadcrumb['links'])) {
+            return $breadcrumb;
+        }
+
+        // On ne garde que l'Accueil du fil natif, puis on reconstruit.
+        $home = $breadcrumb['links'][0];
+        $breadcrumb['links'] = [$home];
+
+        // Même libellé et même url ('#') que le fil du module microfiches : ce
+        // niveau est un intitulé de parcours, pas une catégorie navigable.
+        $breadcrumb['links'][] = [
+            'title' => 'Pièces détachées d\'origine',
+            'url'   => '#',
+        ];
+
+        $breadcrumb['links'][] = [
+            'title' => $moto['crumb'],
+            'url'   => $moto['hub_url'] !== '' ? $moto['hub_url'] : '#',
+        ];
+
+        $breadcrumb['links'][] = [
+            'title' => $this->category->name,
+            'url'   => $this->context->link->getCategoryLink((int) $this->category->id),
+        ];
+
+        return $breadcrumb;
     }
 
     /**
