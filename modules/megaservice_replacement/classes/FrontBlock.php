@@ -62,6 +62,10 @@ class MsReplacementFrontBlock
                 'quantity'     => (int) $t['quantity'],
                 'product'      => $product,
                 'available'    => $isAvailable,
+                // Cochable pour l'ajout groupé : commandable ET sans déclinaisons —
+                // sur un produit à déclinaisons, ajouter la déclinaison par défaut
+                // serait deviner le choix du client (cf. SPEC dispo §16).
+                'selectable'   => $isAvailable && (int) $product['id_product_attribute'] === 0,
                 'chain_status' => $t['chain_status'],
             ];
         }
@@ -88,6 +92,10 @@ class MsReplacementFrontBlock
             // Un ensemble peut être très gros (jusqu'à 101 composants constatés) :
             // le template replie la liste au-delà de ce seuil.
             'is_large_set'    => $total > 8,
+            // Ajout groupé des composants (JS pur, cf. front-replacement.js)
+            'cart_url'        => $context->link->getPageLink('cart'),
+            'token'           => Tools::getToken(false),
+            'currency'        => $context->currency->iso_code,
         ];
     }
 
@@ -155,6 +163,7 @@ class MsReplacementFrontBlock
             'url'                  => $context->link->getProductLink($product),
             'image'                => $imageUrl,
             'price'                => Tools::displayPrice(Product::getPriceStatic($idProduct, true)),
+            'price_raw'            => (float) Product::getPriceStatic($idProduct, true),
             'quantity'             => $quantity,
             // Même règle que la fiche produit, et NON celle de la PDP microfiche.
             //
