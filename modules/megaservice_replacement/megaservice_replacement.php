@@ -106,7 +106,7 @@ class Megaservice_replacement extends Module
      *
      * @return array<string,mixed>|null
      */
-    private function currentFrontBlock($reference = null)
+    private function currentFrontBlock($reference = null, $idProduct = 0)
     {
         if ($this->frontBlockCache !== false) {
             return $this->frontBlockCache;
@@ -125,6 +125,18 @@ class Megaservice_replacement extends Module
         }
 
         if ((string) $reference === '') {
+            return $this->frontBlockCache = null;
+        }
+
+        // Une référence remplacée mais encore achetable (en stock G8, ou réassort
+        // autorisé) se vend normalement : ni bloc, ni neutralisation du bouton.
+        // Seule l'indisponibilité de la référence elle-même déclenche le message
+        // de remplacement (COPROJ 17/09, confirmé le 24/09 sur un 1:N dont le
+        // bouton marchait en liste mais était désactivé sur la fiche).
+        if (!$idProduct) {
+            $idProduct = (int) Tools::getValue('id_product');
+        }
+        if ($idProduct && MsReplacementFrontBlock::isReplacedProductOrderable($idProduct)) {
             return $this->frontBlockCache = null;
         }
 
@@ -167,13 +179,16 @@ class Megaservice_replacement extends Module
     public function hookDisplayProductAdditionalInfo($params)
     {
         $reference = '';
+        $idProduct = 0;
         if (isset($params['product']['reference'])) {
             $reference = (string) $params['product']['reference'];
+            $idProduct = (int) ($params['product']['id_product'] ?? 0);
         } elseif (isset($params['product']) && is_object($params['product'])) {
             $reference = (string) $params['product']->reference;
+            $idProduct = (int) $params['product']->id;
         }
 
-        $block = $this->currentFrontBlock($reference !== '' ? $reference : null);
+        $block = $this->currentFrontBlock($reference !== '' ? $reference : null, $idProduct);
         if ($block === null) {
             return '';
         }

@@ -92,6 +92,41 @@ class MsReplacementFrontBlock
     }
 
     /**
+     * Ce produit peut-il être commandé tel quel ? Même règle que la fiche produit :
+     * commandable, avec du stock OU un réassort autorisé (« en stock constructeur »).
+     *
+     * Sert aux deux sens : disponibilité d'un composant cible, et décision de
+     * neutraliser ou non l'achat de la référence REMPLACÉE elle-même.
+     */
+    public static function isOrderable(Product $product, $quantity)
+    {
+        return (bool) $product->available_for_order
+            && ($quantity > 0 || (bool) Product::isAvailableWhenOutOfStock((int) $product->out_of_stock));
+    }
+
+    /**
+     * La référence remplacée est-elle elle-même achetable ? Si oui, le
+     * remplacement ne doit rien changer à la fiche (COPROJ du 17/09).
+     */
+    public static function isReplacedProductOrderable($idProduct)
+    {
+        $idProduct = (int) $idProduct;
+        if ($idProduct <= 0) {
+            return false;
+        }
+        $product = new Product($idProduct);
+        if (!Validate::isLoadedObject($product) || !$product->active) {
+            return false;
+        }
+        $quantity = (int) StockAvailable::getQuantityAvailableByProduct(
+            $idProduct,
+            (int) Product::getDefaultAttribute($idProduct)
+        );
+
+        return self::isOrderable($product, $quantity);
+    }
+
+    /**
      * Données commerciales d'un produit cible, lues à la volée.
      *
      * @return array<string,mixed>|null
@@ -131,8 +166,7 @@ class MsReplacementFrontBlock
             // La microfiche, elle, exige bien du stock physique — c'est une
             // décision client assumée (cf. controllers/front/microfiche.php),
             // pas un oubli : ne pas réaligner l'une sur l'autre sans arbitrage.
-            'available'            => (bool) $product->available_for_order
-                && ($quantity > 0 || (bool) Product::isAvailableWhenOutOfStock((int) $product->out_of_stock)),
+            'available'            => self::isOrderable($product, $quantity),
         ];
     }
 }
