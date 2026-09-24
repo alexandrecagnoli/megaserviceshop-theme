@@ -138,36 +138,112 @@ class Megaservice_microfichesVinlookupModuleFrontController extends ModuleFrontC
     }
 
     /**
-     * Rapproche la réponse d'un constructeur de notre référentiel : les mots de
-     * 6 à 8 caractères du bandeau de résultat sont testés contre
-     * ms_moto.serial_constructeur (de la même marque).
+     * Rapproche la réponse d'un constructeur de notre référentiel.
+     *
+     * 1. Par CODE MODÈLE : les mots de 6 à 8 caractères du bandeau de résultat
+     *    sont testés contre ms_moto.serial_constructeur (même marque).
+     * 2. À défaut, par NOM + ANNÉE. Un même modèle porte un code différent selon le
+     *    marché (ex. 690 Enduro R 2016 : F9703P8 en Europe, F9775P8 aux USA) et notre
+     *    référentiel vient du catalogue européen — un VIN US, ou hors Europe, ne
+     *    retombe donc jamais sur un code connu alors que le modèle, lui, l'est.
      *
      * @return array<string,mixed>|null
      */
     private function matchMoto($marque, $html)
     {
-        $tokens = $this->headerTokens($html);
-        if (!$tokens) {
+        $info = $this->headerInfo($html);
+        if ($info === null) {
             return null;
         }
 
-        $in = implode(',', array_map(function ($t) {
-            return '"' . pSQL($t) . '"';
-        }, $tokens));
+        if ($info['tokens']) {
+            $in = implode(',', array_map(function ($t) {
+                return '"' . pSQL($t) . '"';
+            }, $info['tokens']));
 
-        $row = Db::getInstance()->getRow(
-            'SELECT `id_moto`, `annee`, `type`, `core_name`
-             FROM `' . _DB_PREFIX_ . 'ms_moto`
-             WHERE `marque` = "' . pSQL($marque) . '" AND `active` = 1
-               AND `serial_constructeur` IN (' . $in . ')
-             ORDER BY `id_moto` ASC'
-        );
+            $row = Db::getInstance()->getRow(
+                'SELECT `id_moto`, `annee`, `type`, `core_name`
+                 FROM `' . _DB_PREFIX_ . 'ms_moto`
+                 WHERE `marque` = "' . pSQL($marque) . '" AND `active` = 1
+                   AND `serial_constructeur` IN (' . $in . ')
+                 ORDER BY `id_moto` ASC'
+            );
+            if ($row) {
+                return $row;
+            }
+        }
 
-        return $row ?: null;
+        return $this->matchByName($marque, $info);
     }
 
-    /** @return string[] mots candidats (majuscules, dédoublonnés, 40 max) */
-    private function headerTokens($html)
+    /**
+     * Repli : le nom annoncé par le constructeur (« 690 ENDURO R ABS ») commence par
+     * le core_name d'une moto de la même année (« 690 Enduro R »). Le plus long
+     * gagne, pour ne pas confondre « 690 Duke » et « 690 Duke R » ; une égalité que
+     * le suffixe du code (année + révision, ex. P8) ne départage pas → aucun résultat
+     * plutôt qu'une moto au hasard.
+     *
+     * @param array<string,mixed> $info
+     * @return array<string,mixed>|null
+     */
+    private function matchByName($marque, array $info)
+    {
+        if ($info['name'] === '' || !$info['year']) {
+            return null;
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT `id_moto`, `annee`, `type`, `core_name`, `serial_constructeur`
+             FROM `' . _DB_PREFIX_ . 'ms_moto`
+             WHERE `marque` = "' . pSQL($marque) . '" AND `annee` = ' . (int) $info['year'] . ' AND `active` = 1'
+        ) ?: [];
+
+        $wanted = $this->normalize($info['name']);
+        $bestLen = 0;
+        $best = [];
+        foreach ($rows as $r) {
+            $n = $this->normalize($r['core_name']);
+            if ($n === '' || strpos($wanted, $n) !== 0) {
+                continue;
+            }
+            if (strlen($n) > $bestLen) {
+                $bestLen = strlen($n);
+                $best = [$r];
+            } elseif (strlen($n) === $bestLen) {
+                $best[] = $r;
+            }
+        }
+
+        if (count($best) === 1) {
+            return $best[0];
+        }
+        if (count($best) > 1) {
+            $suffixes = array_map(function ($t) {
+                return substr($t, -2);
+            }, $info['tokens']);
+            $bySuffix = array_values(array_filter($best, function ($r) use ($suffixes) {
+                return in_array(substr((string) $r['serial_constructeur'], -2), $suffixes, true);
+            }));
+            if (count($bySuffix) === 1) {
+                return $bySuffix[0];
+            }
+        }
+
+        return null;
+    }
+
+    private function normalize($text)
+    {
+        return preg_replace('/[^A-Z0-9]/', '', strtoupper((string) $text));
+    }
+
+    /**
+     * Lit le bandeau de résultat du constructeur, ex.
+     *   « 690 ENDURO R ABS 2016 <2016><US><F9775P8> »
+     *
+     * @return array{name:string,year:int,tokens:string[]}|null null si pas de bandeau
+     */
+    private function headerInfo($html)
     {
         $prev = libxml_use_internal_errors(true);
         $doc = new DOMDocument();
@@ -180,15 +256,28 @@ class Megaservice_microfichesVinlookupModuleFrontController extends ModuleFrontC
         foreach ($xpath->query('//*[@id="' . self::HEADER_ID . '"]') as $node) {
             $text .= ' ' . $node->textContent;
         }
-        if ($text === '') {
-            return [];
+        if (trim($text) === '') {
+            return null;
         }
 
         // Le texte peut arriver encodé deux fois (&amp;lt;) : on décode d'abord.
-        $text = strtoupper(html_entity_decode(html_entity_decode($text, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8'));
-        preg_match_all('/\b[A-Z0-9]{6,8}\b/', $text, $m);
+        $text = html_entity_decode(html_entity_decode($text, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+        $upper = strtoupper($text);
 
-        return array_slice(array_values(array_unique($m[0])), 0, 40);
+        preg_match_all('/\b[A-Z0-9]{6,8}\b/', $upper, $m);
+        $tokens = array_slice(array_values(array_unique($m[0])), 0, 40);
+
+        // Nom = ce qui précède le premier « < » ; l'année s'y trouve, et dans <2016>.
+        $name = trim(preg_split('/</', $upper)[0]);
+        $year = 0;
+        if (preg_match('/<\s*((?:19|20)\d{2})\s*>/', $upper, $ym)) {
+            $year = (int) $ym[1];
+        } elseif (preg_match('/\b((?:19|20)\d{2})\b/', $name, $ym)) {
+            $year = (int) $ym[1];
+        }
+        $name = trim(preg_replace('/\b(?:19|20)\d{2}\b/', '', $name));
+
+        return ['name' => $name, 'year' => $year, 'tokens' => $tokens];
     }
 
     /**
