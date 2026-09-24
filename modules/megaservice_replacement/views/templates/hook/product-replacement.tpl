@@ -94,9 +94,24 @@
                 <span class="ms-repl-front__stock is-unavailable">{l s='Indisponible' d='Modules.Megaservicereplacement.Shop'}</span>
               {/if}
               {if $msReplGroup && $t.selectable}
-                <input type="number" class="ms-repl-front__qty-input js-ms-repl-qty" min="1" max="999" step="1"
-                       value="{if $t.quantity > 1}{$t.quantity|intval}{else}1{/if}"
-                       aria-label="{l s='Quantité' d='Modules.Megaservicereplacement.Shop'}">
+                {* Même sélecteur que le panier latéral (an_sidebarcart). 1..20, ou
+                   jusqu'à la quantité nécessaire si elle est plus grande (jusqu'à 36 vus). *}
+                {assign var='msReplQty' value=1}
+                {if $t.quantity > 1}{assign var='msReplQty' value=$t.quantity|intval}{/if}
+                {assign var='msReplQtyMax' value=20}
+                {if $msReplQty > 20}{assign var='msReplQtyMax' value=$msReplQty}{/if}
+                <div class="ms-repl-front__qty-wrap">
+                  <select class="ms-repl-front__qty-select js-ms-repl-qty"
+                          aria-label="{l s='Quantité' d='Modules.Megaservicereplacement.Shop'}">
+                    {assign var='msReplQtyLoop' value=$msReplQtyMax+1}
+                    {section name=q loop=$msReplQtyLoop start=1}
+                      <option value="{$smarty.section.q.index}"{if $smarty.section.q.index == $msReplQty} selected{/if}>{$smarty.section.q.index}</option>
+                    {/section}
+                  </select>
+                  <svg class="ms-repl-front__qty-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
               {elseif $msReplGroup && $t.available}
                 <a href="{$t.product.url}" class="ms-repl-front__variants">{l s='Choisir sur la fiche' d='Modules.Megaservicereplacement.Shop'}</a>
               {/if}
@@ -118,7 +133,7 @@
     {if $msReplGroup}
       <div class="ms-repl-front__group">
         <label class="ms-repl-front__all">
-          <input type="checkbox" class="js-ms-repl-all" checked>
+          <input type="checkbox" class="ms-repl-front__check js-ms-repl-all" checked>
           {l s='Tout sélectionner' d='Modules.Megaservicereplacement.Shop'}
         </label>
         <span class="ms-repl-front__total js-ms-repl-total"></span>
