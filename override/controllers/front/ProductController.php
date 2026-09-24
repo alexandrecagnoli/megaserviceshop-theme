@@ -119,16 +119,12 @@ class ProductController extends ProductControllerCore
             ? \MsProductRelationService::getSpareRows($idProduct, $this->context)
             : [];
 
-        // 🔧 FALLBACK FAKE DATA — uniquement si aucune relation réelle n'existe
-        // pour faciliter la validation visuelle. À retirer quand toutes les
-        // catégories Powerparts auront leurs relations en BDD.
-        if (empty($mandatory) && empty($excluded) && empty($recommended) && empty($spare)) {
-            $pool = $this->presentProductsByIds($this->fetchFakeProductIds(12));
-            $mandatory   = array_slice($pool, 0, 2);
-            $excluded    = array_slice($pool, 2, 1);
-            $recommended = array_slice($pool, 3, 4);
-            $spare       = $this->buildSpareRows(array_slice($pool, 7, 3));
-        }
+        // Aucun repli sur des produits pris au hasard : faute de relations en
+        // base (18 lignes dans megaservice_product_relation au 24/09), tous les
+        // produits Powerparts affichaient les mêmes 12 articles — deux t-shirts
+        // annoncés « pièces obligatoires » sur une pièce de frein, par exemple.
+        // Le template a ses états vides (« Aucune pièce obligatoire »), qui
+        // disent la vérité : on n'a pas encore la donnée.
 
         $this->context->smarty->assign([
             'ms_show_powerparts_tabs' => true,
@@ -266,27 +262,6 @@ class ProductController extends ProductControllerCore
             }
         }
         return $out;
-    }
-
-    /**
-     * 🔧 Convertit une liste de produits présentés en lignes "spare parts"
-     * (format minimal pour la list view : nom, ref, prix, dispo, qty reco).
-     */
-    private function buildSpareRows(array $presentedProducts)
-    {
-        $rows = [];
-        foreach ($presentedProducts as $p) {
-            $rows[] = [
-                'id_product'      => isset($p['id_product']) ? (int) $p['id_product'] : 0,
-                'name'            => isset($p['name']) ? $p['name'] : 'Pièce',
-                'reference'       => !empty($p['reference']) ? $p['reference'] : 'P00000',
-                'price'           => isset($p['price']) ? $p['price'] : '0,00 €',
-                'availability'    => isset($p['availability']) ? $p['availability'] : 'available',
-                'recommended_qty' => 1,
-                'add_to_cart_url' => isset($p['add_to_cart_url']) ? $p['add_to_cart_url'] : '#',
-            ];
-        }
-        return $rows;
     }
 
     /**
