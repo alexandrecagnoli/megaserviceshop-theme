@@ -26,6 +26,19 @@
         <th>{l s='Relations mises à jour (existaient déjà)' mod='megaservice_relations'}</th>
         <td><span style="color:#6c757d;">{$ms_import_stats.skipped|intval}</span></td>
       </tr>
+      {if $ms_import_stats.resolved > 0}
+        <tr>
+          <th>{l s='Relations en attente posées (produits arrivés depuis)' mod='megaservice_relations'}</th>
+          <td><strong style="color:#28a745;">{$ms_import_stats.resolved|intval}</strong></td>
+        </tr>
+      {/if}
+      <tr>
+        <th>{l s='Relations en attente d\'un produit' mod='megaservice_relations'}</th>
+        <td>
+          <span style="color:#6c757d;">{$ms_import_stats.pending|intval}</span>
+          <small class="text-muted"> — {l s='posées automatiquement dès que la référence existe au catalogue' mod='megaservice_relations'}</small>
+        </td>
+      </tr>
       {if $ms_import_stats.deleted > 0}
         <tr>
           <th>{l s='Relations supprimées avant import' mod='megaservice_relations'}</th>
