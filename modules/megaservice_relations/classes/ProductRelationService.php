@@ -202,6 +202,136 @@ class MsProductRelationService
         return Db::getInstance()->execute($sql);
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Relations en attente — références pas (encore) présentes au catalogue
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private static $pendingTableReady = false;
+
+    /**
+     * Crée la table d'attente si besoin. Appelée à la volée : le module est déjà
+     * installé en préprod, install() ne rejouera pas.
+     * Collation alignée sur PrestaShop (cf. TECH_DEBT, #1267 sur les JOIN).
+     */
+    public static function ensurePendingTable()
+    {
+        if (self::$pendingTableReady) {
+            return;
+        }
+        Db::getInstance()->execute(
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'megaservice_product_relation_pending` (
+                `id_pending`      INT(11) NOT NULL AUTO_INCREMENT,
+                `ref_source`      VARCHAR(64) NOT NULL,
+                `ref_target`      VARCHAR(64) NOT NULL,
+                `relation_type`   ENUM(\'mandatory\',\'excluded\',\'recommended\',\'spare\') NOT NULL,
+                `position`        INT(11) NOT NULL DEFAULT 0,
+                `recommended_qty` INT(11) NOT NULL DEFAULT 1,
+                PRIMARY KEY (`id_pending`),
+                UNIQUE KEY `u_pending` (`ref_source`, `ref_target`, `relation_type`)
+            ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;'
+        );
+        self::$pendingTableReady = true;
+    }
+
+    /**
+     * Met une relation de côté quand la référence source ou cible est inconnue.
+     * Elle sera posée par resolvePending() dès que le produit existera.
+     */
+    public static function addPending($refSource, $type, $refTarget, $position = 0, $recommendedQty = 1)
+    {
+        if (!in_array($type, self::allTypes(), true) || $refSource === '' || $refTarget === '') {
+            return false;
+        }
+        self::ensurePendingTable();
+        return Db::getInstance()->execute(
+            'INSERT INTO `' . _DB_PREFIX_ . 'megaservice_product_relation_pending`
+             (`ref_source`, `ref_target`, `relation_type`, `position`, `recommended_qty`)
+             VALUES ("' . pSQL($refSource) . '", "' . pSQL($refTarget) . '", "' . pSQL($type) . '",
+                     ' . max(0, (int) $position) . ', ' . max(1, (int) $recommendedQty) . ')
+             ON DUPLICATE KEY UPDATE `position` = VALUES(`position`), `recommended_qty` = VALUES(`recommended_qty`)'
+        );
+    }
+
+    public static function countPending()
+    {
+        self::ensurePendingTable();
+        return (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'megaservice_product_relation_pending`'
+        );
+    }
+
+    /**
+     * Vide les relations en attente. Sans argument : toutes. Avec une liste de
+     * paires [ref_source, type] : seulement celles-là (mode replace_for_listed).
+     */
+    public static function clearPending($pairs = null)
+    {
+        self::ensurePendingTable();
+        $table = '`' . _DB_PREFIX_ . 'megaservice_product_relation_pending`';
+        if ($pairs === null) {
+            return Db::getInstance()->execute('DELETE FROM ' . $table);
+        }
+        foreach ($pairs as $pair) {
+            Db::getInstance()->execute(
+                'DELETE FROM ' . $table . '
+                 WHERE `ref_source` = "' . pSQL($pair[0]) . '" AND `relation_type` = "' . pSQL($pair[1]) . '"'
+            );
+        }
+        return true;
+    }
+
+    /**
+     * Pose les relations en attente dont les deux références existent maintenant.
+     * Idempotent, sans effet sur celles qui attendent encore un produit.
+     *
+     * @return array ['resolved' => int, 'remaining' => int]
+     */
+    public static function resolvePending()
+    {
+        self::ensurePendingTable();
+        $table = '`' . _DB_PREFIX_ . 'megaservice_product_relation_pending`';
+        $rows = Db::getInstance()->executeS('SELECT * FROM ' . $table . ' ORDER BY `id_pending` ASC');
+        $resolved = 0;
+
+        foreach (is_array($rows) ? $rows : [] as $r) {
+            $idSrc    = self::idByReference($r['ref_source']);
+            $idTarget = self::idByReference($r['ref_target']);
+            if (!$idSrc || !$idTarget) {
+                continue;
+            }
+            // Source = cible : jamais posable, on ne la garde pas indéfiniment.
+            $ok = ($idSrc === $idTarget) || self::addRelation(
+                $idSrc,
+                $r['relation_type'],
+                $idTarget,
+                ((int) $r['position']) ?: null,
+                (int) $r['recommended_qty']
+            );
+            if ($ok) {
+                Db::getInstance()->execute('DELETE FROM ' . $table . ' WHERE `id_pending` = ' . (int) $r['id_pending']);
+                if ($idSrc !== $idTarget) {
+                    $resolved++;
+                }
+            }
+        }
+
+        return ['resolved' => $resolved, 'remaining' => self::countPending()];
+    }
+
+    /**
+     * id_product d'une référence. Réf ambiguë → plus petit id (comme l'import CSV).
+     */
+    public static function idByReference($ref)
+    {
+        $ref = (string) $ref;
+        if ($ref === '') {
+            return 0;
+        }
+        return (int) Db::getInstance()->getValue(
+            'SELECT MIN(`id_product`) FROM `' . _DB_PREFIX_ . 'product` WHERE `reference` = "' . pSQL($ref) . '"'
+        );
+    }
+
     private static function getNextPosition($idSource, $type)
     {
         $sql = 'SELECT MAX(`position`) FROM `' . _DB_PREFIX_ . 'megaservice_product_relation`
