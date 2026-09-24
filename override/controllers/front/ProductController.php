@@ -79,9 +79,11 @@ class ProductController extends ProductControllerCore
      * si oui, expose les 4 listes de produits liés.
      *
      * Source de données : module `megaservice_relations` (table polymorphe).
-     * Si le module n'est pas installé OU si aucune relation n'est définie pour
-     * un type donné, on retombe sur de la fake data pour garder du visuel
-     * pendant la phase de dev/intégration.
+     * Si le module n'est pas installé, ou si aucune relation n'est définie, les
+     * listes restent vides et le template affiche ses états vides. Un repli sur
+     * des produits pris au hasard a existé ici : il montrait les mêmes articles
+     * sur toutes les fiches, jusqu'à annoncer des t-shirts en « pièces
+     * obligatoires ». Ne pas le réintroduire.
      */
     private function assignPowerpartsTabs()
     {
@@ -155,7 +157,8 @@ class ProductController extends ProductControllerCore
 
     /**
      * Section "Produits qui pourraient vous plaire" sous les tabs.
-     * Utilise les accessoires PS si le BO en a linké, sinon fake data.
+     * Utilise les accessoires liés en back-office. À défaut, la liste reste
+     * vide et le template masque le bloc — pas de produits pris au hasard.
      */
     private function assignSuggestedProducts()
     {
@@ -164,10 +167,10 @@ class ProductController extends ProductControllerCore
             $this->context->smarty->assign('ms_suggested_products', array_slice($accessories, 0, 4));
             return;
         }
-        $this->context->smarty->assign(
-            'ms_suggested_products',
-            $this->presentProductsByIds($this->fetchFakeProductIds(4))
-        );
+        // Pas de repli sur des produits pris au hasard : ils étaient identiques
+        // sur toutes les fiches. Sans accessoires déclarés, le template masque
+        // le bloc (cf. product.tpl, garde sur |count > 0).
+        $this->context->smarty->assign('ms_suggested_products', []);
     }
 
     private function isProductInPowerpartsSubtree()
@@ -211,57 +214,6 @@ class ProductController extends ProductControllerCore
         }
 
         return false;
-    }
-
-    /**
-     * 🔧 Récupère N IDs de produits actifs du shop (excluant le produit courant).
-     * Sert uniquement pour la fake data des tabs Powerparts et "Produits suggérés".
-     */
-    private function fetchFakeProductIds($limit)
-    {
-        $idShop      = (int) $this->context->shop->id;
-        $idCurrent   = (int) $this->product->id;
-        $sql = 'SELECT p.`id_product` FROM `' . _DB_PREFIX_ . 'product` p
-                INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps ON p.`id_product` = ps.`id_product`
-                WHERE ps.`id_shop` = ' . $idShop . ' AND ps.`active` = 1
-                AND p.`id_product` != ' . $idCurrent . '
-                ORDER BY p.`id_product` DESC
-                LIMIT ' . (int) $limit;
-        $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? array_map('intval', array_column($rows, 'id_product')) : [];
-    }
-
-    /**
-     * 🔧 Présente une liste d'IDs de produits au format miniature (mêmes clés
-     * que $accessories), via le ProductListingPresenter de PS.
-     */
-    private function presentProductsByIds(array $productIds)
-    {
-        if (empty($productIds)) {
-            return [];
-        }
-
-        $assembler = new \ProductAssembler($this->context);
-        $factory   = new \ProductPresenterFactory($this->context);
-        $settings  = $factory->getPresentationSettings();
-        $presenter = new \PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter(
-            new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link),
-            $this->context->link,
-            new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter(),
-            new \PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever(),
-            $this->context->getTranslator()
-        );
-
-        $out = [];
-        foreach ($productIds as $id) {
-            try {
-                $raw = $assembler->assembleProduct(['id_product' => (int) $id]);
-                $out[] = $presenter->present($settings, $raw, $this->context->language);
-            } catch (\Exception $e) {
-                // Silencieusement skip les produits qui plantent au présentation
-            }
-        }
-        return $out;
     }
 
     /**
