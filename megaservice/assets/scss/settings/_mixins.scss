@@ -100,3 +100,47 @@
   align-items: center;
   justify-content: space-between;
 }
+
+
+// ============================================
+// CARTE VISUELLE (fond sombre + image + libellé)
+// ============================================
+// Look de la carte « parent catégorie » au-dessus des filtres du catalogue
+// (.ms-catalog__cat-card). Partagé pour que le hub moto et les pages microfiches
+// (cycle / moteur) aient exactement la même apparence — une seule définition.
+@mixin visual-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 130px;
+  border-radius: 8px;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%),
+    radial-gradient(105.79% 23.63% at 50% 50%, #666 0%, #000 100%);
+  overflow: hidden;
+}
+
+@mixin visual-card-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.85;
+  z-index: 0;
+}
+
+@mixin visual-card-label {
+  position: relative;
+  z-index: 1;
+  color: $color-white;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 18px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 16px;
+}
