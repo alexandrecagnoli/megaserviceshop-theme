@@ -250,7 +250,8 @@ $model-panel-width:  472px;
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
-  border: 1px solid $color-gray-20;
+  border: 1px solid $color-ktm;
+  border-radius: 8px;
   background: $color-white;
 }
 
@@ -336,6 +337,15 @@ $model-panel-width:  472px;
 
   &:hover { background: darken($color-ktm, 8%); }
 
+  &[hidden] { display: none !important; }
+
+  // Recherche VIN en cours
+  &.is-loading {
+    opacity: 0.7;
+    cursor: progress;
+    pointer-events: none;
+  }
+
   &:disabled,
   &[disabled] {
     background: $color-gray-20;
@@ -379,6 +389,10 @@ $model-panel-width:  472px;
   position: relative;
   display: flex;
   align-items: center;
+
+  // display:flex l'emporte sur l'attribut hidden : sans cette règle le champ
+  // restait visible à l'étape 2 du parcours VIN.
+  &[hidden] { display: none !important; }
 }
 
 .ms-model-modal__vin-input {
@@ -392,8 +406,21 @@ $model-panel-width:  472px;
   color: $color-black;
   outline: none;
 
-  &::placeholder { color: $color-gray-50; }
+  text-transform: uppercase;
+
+  &::placeholder { color: $color-gray-50; text-transform: none; }
   &:focus { border-color: $color-ktm; }
+  &.has-error { border-color: #c0392b; }
+}
+
+.ms-model-modal__vin-error {
+  margin: 8px 0 0;
+  font-family: $font-main;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #c0392b;
+
+  &[hidden] { display: none; }
 }
 
 .ms-model-modal__vin-search {
