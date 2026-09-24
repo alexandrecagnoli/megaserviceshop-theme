@@ -99,7 +99,14 @@
     position: relative;
     display: block;
     width: 100%;
-    aspect-ratio: 250 / 171;
+    // Les vignettes PrestaShop (home_default) sont CARRÉES, 250 × 250. Le cadre
+    // imposait 250/171 : avec object-fit:contain, l'image était réduite à la
+    // hauteur et laissait deux bandes blanches sur les côtés. Au format carré
+    // elle occupe toute la largeur — la carte est plus haute, c'est assumé.
+    //
+    // `contain` est conservé plutôt que `cover` : une vignette qui ne serait pas
+    // carrée serait alors rognée, et on couperait le produit.
+    aspect-ratio: 1 / 1;
     background: $color-white;
     overflow: hidden;
 
