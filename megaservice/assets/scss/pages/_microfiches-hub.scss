@@ -23,49 +23,24 @@
   @include media-md { grid-template-columns: 1fr; }
 }
 
+// Même apparence que la carte au-dessus des filtres du catalogue
+// (.ms-catalog__cat-card) — cf. mixin visual-card. L'image est celle de la moto si
+// on l'a, sinon l'image par défaut de la partie ; sans image (Kits, pour l'instant)
+// la carte garde son fond sombre et son libellé.
 .ms-hub__card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 120px;
-  padding: $spacing-lg;
-  border-radius: $border-radius-lg;
-  background: $color-black;
-  background-size: cover;
-  background-position: right center;
-  background-repeat: no-repeat;
-  color: $color-white;
+  @include visual-card;
   text-decoration: none !important;
-  overflow: hidden;
   @include transition(transform, box-shadow);
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   }
-
-  // Voile sombre à gauche pour la lisibilité du label quand on aura les visuels.
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba($color-black, 0.85) 35%, rgba($color-black, 0.1) 100%);
-    z-index: 0;
-  }
-
-  // Placeholders d'illustration (visuels cycle/moteur/powerparts à venir — cf.
-  // sujet "visuels moto" reporté). On garde le fond noir pour l'instant.
 }
 
-.ms-hub__card-label {
-  position: relative;
-  z-index: 1;
-  font-family: $font-heading;
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 22px;
-  letter-spacing: 0.02em;
-}
+.ms-hub__card-bg { @include visual-card-bg; }
+
+.ms-hub__card-label { @include visual-card-label; }
 
 // ── Sections (Dernières microfiches, etc.) ──
 .ms-hub__section {
