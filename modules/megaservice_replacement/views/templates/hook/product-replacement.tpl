@@ -6,7 +6,7 @@
  * client doit pouvoir confirmer qu'il a trouvé la bonne ancienne référence.
  * Elle n'est simplement plus achetable — le JS neutralise l'ajout au panier.
  *}
-<div class="ms-repl-front ms-repl-front--{$ms_repl.case|lower}" data-case="{$ms_repl.case}">
+<div class="ms-repl-front ms-repl-front--{$ms_repl.case|lower}" data-case="{$ms_repl.case}"{if $ms_repl.replaced_orderable} data-orderable="1"{/if}>
 
   {* ── En-tête : le message change selon le cas ── *}
   <div class="ms-repl-front__head">
@@ -25,7 +25,11 @@
       </p>
       <p class="ms-repl-front__sub">
         {if $ms_repl.is_set && $ms_repl.case != 'E'}
-          {l s='Référence %s — à commander composant par composant.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+          {if $ms_repl.replaced_orderable}
+            {l s='Référence %s — vous pouvez aussi commander les composants séparément.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+          {else}
+            {l s='Référence %s — à commander composant par composant.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+          {/if}
         {else}
           {l s='Référence %s — remplacée par le constructeur.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
         {/if}
@@ -100,7 +104,7 @@
     {* ── Cas D : présent au catalogue mais rien de commandable ──
          Formulation de repli : le comportement définitif est en attente
          d'arbitrage COPROJ (et concerne ~26 % des remplaçants). *}
-    {if $ms_repl.case == 'D'}
+    {if $ms_repl.case == 'D' && !$ms_repl.replaced_orderable}
       <p class="ms-repl-front__msg ms-repl-front__msg--warning">
         {l s='La référence de remplacement est actuellement indisponible. Contactez-nous pour connaître le délai.' d='Modules.Megaservicereplacement.Shop'}
       </p>
