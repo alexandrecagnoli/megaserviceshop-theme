@@ -51,9 +51,10 @@ Commandable, peu importe le reste. **Prioritaire sur tout.**
 ### 4. `quantity = 0`, `StockAvailable = 0`, MAIS `hqETADate` renseignée
 Comportement actuel (par défaut du mapping) : `available_for_order = 0` → **non commandable**, mais la date peut être présente en base.
 
-**À trancher au prochain COPROJ client** (déjà tracé) : ce produit doit-il rester non commandable comme aujourd'hui, ou passer commandable en précommande sur cette date ?
-
-**Ne rien coder de plus sur ce cas avant l'arbitrage** — le comportement actuel (bloqué) est un choix par défaut sûr, pas un manque à corriger dans l'urgence.
+> **TRANCHÉ LE 24/09/2026 — voir §17.** Le client a choisi : commandable. Mesuré au
+> passage : **aucun produit du catalogue n'est aujourd'hui dans ce cas** (`available_for_order = 0`
+> ET une date renseignée = 0 produit). Ce cas est donc théorique en l'état de l'import ;
+> l'effet réel de l'arbitrage porte sur le §13.
 
 ---
 
@@ -200,6 +201,10 @@ if ($availableQuantity >= 0) {
 
 ## 13. Nuance ajoutée (04/09/2026) — bouton d'achat bloqué tant que la date annoncée n'est pas atteinte
 
+> **RENVERSÉE LE 24/09/2026 — voir §17.** Le client a tranché l'inverse : une date future
+> rend le produit commandable. La règle décrite ci-dessous reste documentée parce qu'elle
+> explique le code en place et le libellé du §15, tous deux à reprendre.
+
 Précisé par le client : « Dispo. le [date] » n'est commandable que si cette date est **déjà atteinte** — une date future veut dire « pas encore en stock », pas une précommande. Le brief §3 cas 2 ne faisait pas cette distinction (« commandable normalement » sans condition de date).
 
 **Implémenté** sur les 3 boutons concernés (card, bouton « Ajouter au panier » de la fiche produit) : nouvelle variable `msCommandable`, distincte du texte affiché — `$product.add_to_cart_url` natif ET la date annoncée n'est pas dans le futur (comparaison de chaînes `YYYY-MM-DD`, fiable car lexicographiquement ordonnée). Le texte « Dispo. le [date] » reste inchangé que la date soit future ou déjà passée ; seule la commandabilité du bouton en dépend désormais.
@@ -298,3 +303,54 @@ déclinaison peut avoir son propre délai — mais dépend du fichier constructe
 
 **Ne rien coder avant l'arbitrage** : le choix engage la sémantique de la donnée, pas seulement
 l'affichage.
+
+---
+
+## 17. Arbitrage client (24/09/2026) — une date de sortie rend le produit COMMANDABLE
+
+**Décision du client, qui renverse le §13 et clôt le cas 4 du §3 :**
+
+> Un produit non disponible **mais avec une date de sortie** doit être commandable quand même.
+> Le panier doit afficher une ligne avec la **date de livraison estimée**.
+
+C'est l'exact inverse de la consigne du 04/09 (§13), où une date future signifiait « pas encore
+en stock, donc pas commandable ». L'arbitrage « précommande » ouvert depuis le 04/09 est donc
+tranché, dans le sens de l'ouverture.
+
+### Population concernée — mesurée le 24/09 sur la préprod
+
+| Situation | Produits |
+|---|---|
+| Commandables, date **future** → bloqués par la règle §13 | **1 854** |
+| Non commandables **avec** une date (le cas 4 du §3) | **0** |
+| Non commandables **sans** date — restent bloqués, à juste titre | 1 236 |
+
+Le cas 4 n'a aucune population : l'import ne produit jamais la combinaison
+`available_for_order = 0` + date renseignée. **L'effet réel de la décision porte donc
+entièrement sur les 1 854 produits du §13**, et l'implémentation est côté thème, pas côté
+donnée — aucun `available_for_order` à modifier.
+
+### Ce que ça implique
+
+1. **Lever la condition de date dans `msCommandable`** (fiche produit et miniature de listing).
+   La variable redevient le `$product.add_to_cart_url` natif seul. Voir §15 pour les deux
+   emplacements.
+
+2. **Le libellé du §15 devient faux.** « Commandable à partir du [date] » a été écrit pour un
+   bouton bloqué ; le bouton ne l'est plus. Il faut un texte qui annonce un délai, pas un refus
+   — *« Expédition estimée le [date] »* ou équivalent. **À faire valider avec le client**, c'est
+   sa formulation qui a motivé le §15.
+
+3. **Nouvelle demande : la ligne de date dans le panier.** PrestaShop n'affiche aucune date de
+   disponibilité par ligne de panier nativement. À construire, sur le panier et le récapitulatif
+   de commande.
+
+### Questions ouvertes, à poser avant de coder
+
+- **Panier mixte** : si le panier contient un produit immédiat et un produit daté, affiche-t-on
+  une date par ligne seulement, ou aussi une date d'expédition globale (la plus tardive) ?
+- **Produits à déclinaisons** : le §16 reste entier — 135 produits concernés, et **0 déclinaison
+  datée sur 5 090**. Ces produits n'ont aucune date à afficher dans le panier. Le trou du §16
+  devient donc bloquant pour cette demande, alors qu'il ne l'était pas pour un simple libellé.
+- **Après la date** : un produit dont la date est passée mais toujours sans stock reste-t-il
+  commandable avec une date périmée affichée ? La règle ne le dit pas.
