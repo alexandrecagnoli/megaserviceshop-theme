@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (!modal) return;
 
+  // État du garage rendu par le serveur (module montabilité) — cf. plus bas.
+  var serverHasMoto = modal.getAttribute('data-garage') === '1';
+  var serverLabel   = modal.getAttribute('data-garage-label') || '';
+  var serverSel     = null;
+  try {
+    serverSel = JSON.parse(modal.getAttribute('data-garage-sel') || 'null');
+  } catch (err) { serverSel = null; }
+
   var headerBtn   = document.querySelector('.ms-header__model-btn');
   var mobileBarEl = document.querySelector('.js-model-trigger-mobile');
   var STORAGE_KEY = 'ms_selected_moto';
@@ -25,7 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // que « Afficher les pièces compatibles » soit ré-accessible directement.
     if (!restored) {
       restored = true;
-      var sel = readSelection();
+      // Le serveur fait foi : la moto du garage vient du cookie, quelle que soit
+      // la voie d'entrée. localStorage ne sert plus que de repli.
+      var sel = serverSel || readSelection();
       if (sel) restoreSelection(sel);
     }
   }
@@ -176,18 +186,17 @@ document.addEventListener('DOMContentLoaded', function () {
   // qu'une moto était bien active, et l'inverse après expiration du cookie.
   //
   // localStorage n'est plus qu'un cache : on le resynchronise sur le serveur.
-  var serverHasMoto = modal.getAttribute('data-garage') === '1';
-  var serverLabel   = modal.getAttribute('data-garage-label') || '';
   var storedSel     = readSelection();
 
   if (serverHasMoto && serverLabel) {
     applyFilled(serverLabel);
     if (!storedSel || storedSel.label !== serverLabel) {
-      // Entrée par une autre voie que la modale : on complète le cache. La
-      // sélection détaillée (marque/année/…) reste inconnue, mais le libellé
-      // suffit à l'affichage, et la modale se recharge depuis le serveur.
+      // Entrée par une autre voie que la modale : on complète le cache avec le
+      // détail fourni par le serveur (marque/année/pratique/modèle).
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ label: serverLabel }));
+        var cached = serverSel ? Object.assign({}, serverSel) : {};
+        cached.label = serverLabel;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cached));
       } catch (err) {}
     }
   } else {
@@ -384,7 +393,19 @@ document.addEventListener('DOMContentLoaded', function () {
         selectGamme.value = sel.type;
         fetchStep({ marque: sel.marque, annee: sel.annee, type: sel.type }, function (models) {
           fillSelect(selectModele, 'Modèle', models);
+          // Par URL (sélection faite dans la modale) sinon par libellé : l'URL
+          // d'une option porte l'id_moto le plus petit du modèle, qui n'est pas
+          // forcément celui du garage quand la moto est armée par une autre voie.
           if (sel.modeleUrl) selectModele.value = sel.modeleUrl;
+          if (!selectModele.value && sel.modeleLabel) {
+            Array.prototype.some.call(selectModele.options, function (opt) {
+              if (opt.value && opt.text === sel.modeleLabel) {
+                selectModele.value = opt.value;
+                return true;
+              }
+              return false;
+            });
+          }
           refreshModelSubmit();
         });
       });
