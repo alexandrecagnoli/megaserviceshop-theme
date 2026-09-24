@@ -3,7 +3,10 @@
    attribut, moto-cascade.js sort sans rien faire et les listes restent vides —
    c'était l'état de cette section depuis avril 2026. *}
 <section class="ms-parts-search"
-         data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}">
+         data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
+         {* Moto du garage (module montabilité) : préremplit la cascade au chargement,
+            même source que la modale du header. *}
+         data-garage-sel="{if isset($ms_garage) && $ms_garage}{$ms_garage.sel_json|escape:'html'}{/if}">
   <div class="ms-parts-search__container">
 
     {* ── Col 2-5 : texte ── *}
