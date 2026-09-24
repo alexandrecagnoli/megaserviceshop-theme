@@ -209,28 +209,13 @@ body#module-megaservice_microfiches-microfiche {
 
 // ── Carte "Partie" (cycle / moteur) — bandeau noir en haut de sidebar ──
 .ms-plp-partie-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 110px;
+  @include visual-card;
   margin-bottom: $spacing-lg;
-  background: $color-black;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
 }
 
-.ms-plp-partie-card__label {
-  position: relative;
-  z-index: 1;
-  color: $color-white;
-  font-family: $font-heading;
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-}
+.ms-plp-partie-card__bg { @include visual-card-bg; }
+
+.ms-plp-partie-card__label { @include visual-card-label; }
 
 // ── "Voir plus" / "Voir moins" ──
 .ms-plp-facet-extra[hidden] { display: none; }
