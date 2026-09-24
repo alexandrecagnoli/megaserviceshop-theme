@@ -16,13 +16,19 @@
         {if $ms_repl.case == 'E'}
           {l s='Référence remplacée' d='Modules.Megaservicereplacement.Shop'}
         {elseif $ms_repl.is_set}
-          {l s='Cette pièce est remplacée par un ensemble de %d références' sprintf=[$ms_repl.total_count] d='Modules.Megaservicereplacement.Shop'}
+          {* Règle client du 17/09 : « remplacé » est réservé au 1:1. Un 1:N —
+             vrai remplacement éclaté ou simple kit — se COMPOSE de N références. *}
+          {l s='Cet article se compose de %d références' sprintf=[$ms_repl.total_count] d='Modules.Megaservicereplacement.Shop'}
         {else}
           {l s='Cette pièce est remplacée' d='Modules.Megaservicereplacement.Shop'}
         {/if}
       </p>
       <p class="ms-repl-front__sub">
-        {l s='Référence %s — remplacée par le constructeur.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+        {if $ms_repl.is_set && $ms_repl.case != 'E'}
+          {l s='Référence %s — à commander composant par composant.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+        {else}
+          {l s='Référence %s — remplacée par le constructeur.' sprintf=[$ms_repl.reference] d='Modules.Megaservicereplacement.Shop'}
+        {/if}
       </p>
     </div>
   </div>
