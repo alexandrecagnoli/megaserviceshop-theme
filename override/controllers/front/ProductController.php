@@ -293,4 +293,132 @@ class ProductController extends ProductControllerCore
             true
         );
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Fil d'Ariane
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Rétablit les niveaux de catégorie absents du fil d'Ariane natif.
+     *
+     * PrestaShop construit le chemin depuis `id_category_default`. Or l'import
+     * catalogue pose comme catégorie principale un ancêtre de la catégorie réelle
+     * du produit : sur 47 916 produits actifs, 42 851 (89 %) sont rattachés à une
+     * catégorie PLUS PROFONDE que leur catégorie principale. Le fil s'arrêtait
+     * donc un ou plusieurs crans trop haut — « Accueil › Équipement pilotes ›
+     * S-M 5 HELMET CHEEK PADS » au lieu de passer par « Accessoires casque ».
+     *
+     * Corrigé à l'affichage et non en base : `ba_importer` réécrit
+     * `id_category_default` à chaque import, une correction de donnée ne tiendrait
+     * pas. On n'ajoute que des DESCENDANTS de la catégorie principale, donc le
+     * chemin ne contredit jamais l'URL du produit, elle-même bâtie sur celle-ci.
+     */
+    public function getBreadcrumbLinks()
+    {
+        $breadcrumb = parent::getBreadcrumbLinks();
+
+        $chain = $this->missingCategoryPath();
+        if (empty($chain) || empty($breadcrumb['links'])) {
+            return $breadcrumb;
+        }
+
+        // Le dernier maillon posé par le natif est le produit : on le met de côté,
+        // on insère les catégories manquantes, puis on le remet en queue.
+        $product = array_pop($breadcrumb['links']);
+
+        foreach ($chain as $category) {
+            $breadcrumb['links'][] = [
+                'title' => $category->name,
+                'url'   => $this->context->link->getCategoryLink($category),
+            ];
+        }
+
+        $breadcrumb['links'][] = $product;
+
+        return $breadcrumb;
+    }
+
+    /**
+     * Catégories à insérer entre la catégorie principale (exclue) et la catégorie
+     * réelle du produit (incluse), de la plus haute à la plus basse.
+     *
+     * @return Category[]
+     */
+    private function missingCategoryPath()
+    {
+        if (empty($this->product->id)) {
+            return [];
+        }
+
+        $idLang = (int) $this->context->language->id;
+        $default = new Category((int) $this->product->id_category_default, $idLang);
+
+        // Mêmes conditions que le natif : s'il n'a pas posé la catégorie
+        // principale, nos descendants n'auraient rien à quoi se rattacher.
+        if (!Validate::isLoadedObject($default)
+            || !$default->active
+            || $default->is_root_category
+            || !$default->id_parent
+        ) {
+            return [];
+        }
+
+        $leaf = $this->deepestVisibleDescendant($default);
+        if ($leaf === null) {
+            return [];
+        }
+
+        // Le chemin complet en une requête, grâce au nested set : toute catégorie
+        // qui contient la feuille et qui est contenue par la principale.
+        $rows = Db::getInstance()->executeS(
+            'SELECT c.id_category
+             FROM `' . _DB_PREFIX_ . 'category` c
+             WHERE c.active = 1
+               AND c.nleft  > ' . (int) $default->nleft . '
+               AND c.nright < ' . (int) $default->nright . '
+               AND c.nleft  <= ' . (int) $leaf['nleft'] . '
+               AND c.nright >= ' . (int) $leaf['nright'] . '
+             ORDER BY c.level_depth ASC'
+        );
+
+        $chain = [];
+        foreach ((array) $rows as $row) {
+            $chain[] = new Category((int) $row['id_category'], $idLang);
+        }
+
+        return $chain;
+    }
+
+    /**
+     * Catégorie la plus profonde associée au produit ET située sous sa catégorie
+     * principale, visible par le groupe du visiteur.
+     *
+     * @return array|null bornes nested set de la catégorie, ou null
+     */
+    private function deepestVisibleDescendant(Category $default)
+    {
+        $groups = FrontController::getCurrentCustomerGroups();
+        $inGroups = $groups
+            ? 'IN (' . implode(',', array_map('intval', $groups)) . ')'
+            : '= ' . (int) Configuration::get('PS_UNIDENTIFIED_GROUP');
+
+        $row = Db::getInstance()->getRow(
+            'SELECT c.nleft, c.nright
+             FROM `' . _DB_PREFIX_ . 'category_product` cp
+             JOIN `' . _DB_PREFIX_ . 'category` c ON c.id_category = cp.id_category
+             JOIN `' . _DB_PREFIX_ . 'category_shop` cs
+                  ON cs.id_category = c.id_category AND cs.id_shop = ' . (int) $this->context->shop->id . '
+             WHERE cp.id_product = ' . (int) $this->product->id . '
+               AND c.active = 1
+               AND c.nleft  > ' . (int) $default->nleft . '
+               AND c.nright < ' . (int) $default->nright . '
+               AND EXISTS (
+                   SELECT 1 FROM `' . _DB_PREFIX_ . 'category_group` cg
+                   WHERE cg.id_category = c.id_category AND cg.id_group ' . $inGroups . '
+               )
+             ORDER BY c.level_depth DESC, c.nleft ASC'
+        );
+
+        return $row ?: null;
+    }
 }
