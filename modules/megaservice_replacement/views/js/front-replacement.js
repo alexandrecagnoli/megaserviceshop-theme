@@ -10,7 +10,7 @@
  *      indexable (pas de 301) pour que le client confirme qu'il a trouvé la
  *      bonne ancienne référence, mais elle n'est plus commandable : c'est le
  *      bloc de remplacement qui porte le parcours d'achat.
- *   2. replier les très gros ensembles (jusqu'à 101 composants constatés).
+ *   2. ajout groupé des composants cochés (bloc 1:N, cf. bindGroupAdd).
  */
 (function () {
   'use strict';
@@ -36,20 +36,6 @@
 
     var qty = document.querySelector('.product-quantity, .product-quantities');
     if (qty) { qty.setAttribute('hidden', 'hidden'); }
-  }
-
-  /** Repli / dépli de la liste quand l'ensemble est volumineux. */
-  function bindSetToggle() {
-    var btn = document.querySelector('.js-ms-repl-more');
-    var list = document.querySelector('.js-ms-repl-list');
-    if (!btn || !list) { return; }
-
-    btn.addEventListener('click', function () {
-      var opened = list.classList.toggle('is-open');
-      btn.textContent = opened
-        ? btn.getAttribute('data-less')
-        : btn.getAttribute('data-more');
-    });
   }
 
   /**
@@ -192,7 +178,6 @@
     // son bouton reste actif, seule la liste est repliable.
     var block = document.querySelector('.ms-repl-front');
     if (!block.hasAttribute('data-orderable')) { disablePurchase(); }
-    bindSetToggle();
     bindGroupAdd();
   }
 
