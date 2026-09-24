@@ -12,7 +12,8 @@
         autre voie d'entrée armait le garage sans qu'il le sache. Le serveur fait
         désormais foi, localStorage n'est plus qu'un cache d'affichage. *}
      data-garage="{if isset($ms_garage) && $ms_garage}1{else}0{/if}"
-     data-garage-label="{if isset($ms_garage) && $ms_garage}{$ms_garage.label|escape:'html'}{/if}">
+     data-garage-label="{if isset($ms_garage) && $ms_garage}{$ms_garage.label|escape:'html'}{/if}"
+     data-garage-sel="{if isset($ms_garage) && $ms_garage}{$ms_garage.sel_json|escape:'html'}{/if}">
 
   {* ── Col gauche : image + texte (desktop uniquement) ── *}
   <div class="ms-model-modal__visual">
