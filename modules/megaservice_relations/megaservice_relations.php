@@ -23,7 +23,7 @@ class Megaservice_relations extends Module
     {
         $this->name             = 'megaservice_relations';
         $this->tab              = 'administration';
-        $this->version          = '1.0.0';
+        $this->version          = '1.1.0';
         $this->author           = 'Megaservice';
         $this->need_instance    = 0;
         $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION_];
@@ -48,7 +48,30 @@ class Megaservice_relations extends Module
             // Un seul hook : displayBackOfficeHeader. Le panneau est injecté
             // via JS dans la page produit (Plan B après échec des hooks "Step"
             // qui ne dispatchent pas dans la page produit moderne PS 8).
-            && $this->registerHook('displayBackOfficeHeader');
+            && $this->registerHook('displayBackOfficeHeader')
+            // Relations en attente : posées dès qu'un produit est créé ou que sa
+            // référence change (cf. resolvePending). Enregistrés aussi par
+            // upgrade/upgrade-1.1.0.php pour les installs existantes.
+            && $this->registerHook('actionObjectProductAddAfter')
+            && $this->registerHook('actionObjectProductUpdateAfter');
+    }
+
+    public function hookActionObjectProductAddAfter($params)
+    {
+        $this->resolvePendingFor($params);
+    }
+
+    public function hookActionObjectProductUpdateAfter($params)
+    {
+        $this->resolvePendingFor($params);
+    }
+
+    private function resolvePendingFor($params)
+    {
+        $ref = isset($params['object']->reference) ? trim((string) $params['object']->reference) : '';
+        if ($ref !== '') {
+            MsProductRelationService::resolvePending($ref);
+        }
     }
 
     public function uninstall()
@@ -62,6 +85,8 @@ class Megaservice_relations extends Module
     {
         return Db::getInstance()->execute(
             'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'megaservice_product_relation`'
+        ) && Db::getInstance()->execute(
+            'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'megaservice_product_relation_pending`'
         );
     }
 
@@ -79,7 +104,9 @@ class Megaservice_relations extends Module
             UNIQUE KEY `u_rel` (`id_product_source`, `id_product_target`, `relation_type`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
 
-        return Db::getInstance()->execute($sql);
+        $ok = Db::getInstance()->execute($sql);
+        MsProductRelationService::ensurePendingTable();
+        return $ok;
     }
 
     /**

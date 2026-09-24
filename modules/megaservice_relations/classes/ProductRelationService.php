@@ -227,7 +227,8 @@ class MsProductRelationService
                 `position`        INT(11) NOT NULL DEFAULT 0,
                 `recommended_qty` INT(11) NOT NULL DEFAULT 1,
                 PRIMARY KEY (`id_pending`),
-                UNIQUE KEY `u_pending` (`ref_source`, `ref_target`, `relation_type`)
+                UNIQUE KEY `u_pending` (`ref_source`, `ref_target`, `relation_type`),
+                INDEX `idx_ref_target` (`ref_target`)
             ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;'
         );
         self::$pendingTableReady = true;
@@ -284,13 +285,18 @@ class MsProductRelationService
      * Pose les relations en attente dont les deux références existent maintenant.
      * Idempotent, sans effet sur celles qui attendent encore un produit.
      *
+     * @param string|null $reference Limite aux lignes qui citent cette référence
+     *                               (hook produit : évite de tout balayer à chaque sauvegarde).
      * @return array ['resolved' => int, 'remaining' => int]
      */
-    public static function resolvePending()
+    public static function resolvePending($reference = null)
     {
         self::ensurePendingTable();
         $table = '`' . _DB_PREFIX_ . 'megaservice_product_relation_pending`';
-        $rows = Db::getInstance()->executeS('SELECT * FROM ' . $table . ' ORDER BY `id_pending` ASC');
+        $where = ($reference === null)
+            ? ''
+            : ' WHERE `ref_source` = "' . pSQL($reference) . '" OR `ref_target` = "' . pSQL($reference) . '"';
+        $rows = Db::getInstance()->executeS('SELECT * FROM ' . $table . $where . ' ORDER BY `id_pending` ASC');
         $resolved = 0;
 
         foreach (is_array($rows) ? $rows : [] as $r) {
