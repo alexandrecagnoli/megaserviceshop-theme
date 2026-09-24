@@ -681,3 +681,21 @@ Ce `return` ne devait sauter que la pose du filtre catégorie de la page. Il sor
 Ajouter la moto au hash aurait multiplié les entrées par le nombre de motos (405). On désactive plutôt le cache de bloc quand la population initiale porte un filtre `id_product` posé par un tiers : seules ces pages recalculent leur bloc.
 
 **Statut** : 🟠 actif — à réévaluer à chaque mise à jour de ps_facetedsearch.
+
+---
+
+## 🟠 Règle de taxe FR 20 % appliquée en SQL, hors import — les nouveaux produits repartent à 0
+
+**Contexte** : le 24/09, les 47 916 produits étaient à `id_tax_rules_group = 0` (aucune TVA). Correctif passé à la main sur `ps_product_shop` **et** `ps_product` (règle 1 « FR Taux standard (20%) »), sauvegardes `ps_product_shop_bak_20260924_tax` / `ps_product_bak_20260924_tax`. Prix en base = HT.
+
+**Pourquoi c'est de la dette** : aucun des 3 profils `ba_importer` (8 « Test produit variable AC », 10 « Import Images », 11 « MAJ_CONSTRUCTEUR ») ne mappe la colonne `price_id_tax_rules_group` (ni `priceintax`). Constaté en lisant `ba_step2` et le code du module.
+- **Produits existants** : l'import relit le groupe du produit et n'écrit `id_tax_rules_group` que s'il est non nul → les 47 916 gardent la règle 1. *(Lecture du code, non testé sur un import réel.)*
+- **Produits NOUVEAUX créés par l'import** : aucune source pour la taxe → ils arrivent à 0, donc sans TVA.
+
+**Fix proposé** (au choix) :
+1. Ajouter une colonne « règle de taxe » (valeur 1) au fichier d'import et la mapper sur `price_id_tax_rules_group` dans le profil produit (8) — la source propre.
+2. À défaut, rejouer après chaque import : `UPDATE ps_product_shop SET id_tax_rules_group = 1 WHERE id_tax_rules_group = 0;` idem sur `ps_product`.
+
+**À faire après tout changement de règle de taxe** : vider le cache PS, relancer `ps_facetedsearch-price-indexer.php` (bornes du filtre de prix).
+
+**Statut** : 🟠 actif tant que le profil d'import n'apporte pas la règle.
