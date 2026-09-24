@@ -75,6 +75,12 @@
       return rows.filter(function (r) { return r.querySelector('.js-ms-repl-check').checked; });
     }
 
+    // Lignes dont la case est utilisable : une ligne à déclinaisons est inactive
+    // tant que le client n'a pas choisi la sienne.
+    function selectableRows() {
+      return rows.filter(function (r) { return !r.querySelector('.js-ms-repl-check').disabled; });
+    }
+
     function refresh() {
       var sel = selectedRows();
       var total = sel.reduce(function (sum, r) {
@@ -83,8 +89,10 @@
       totalEl.textContent = (sel.length && money) ? money.format(total) : '';
       addBtn.disabled = busy || sel.length === 0;
       addBtn.textContent = addBtn.getAttribute('data-label') + (sel.length ? ' (' + sel.length + ')' : '');
-      allBox.checked = sel.length === rows.length;
-      allBox.indeterminate = sel.length > 0 && sel.length < rows.length;
+      var usable = selectableRows().length;
+      allBox.disabled = usable === 0;
+      allBox.checked = usable > 0 && sel.length === usable;
+      allBox.indeterminate = sel.length > 0 && sel.length < usable;
     }
 
     function say(msg, isError) {
@@ -97,7 +105,7 @@
       var body = new FormData();
       body.append('token', block.getAttribute('data-token'));
       body.append('id_product', row.getAttribute('data-id-product'));
-      body.append('id_product_attribute', '0');
+      body.append('id_product_attribute', row.getAttribute('data-id-attr') || '0');
       body.append('qty', String(rowQty(row)));
       body.append('add', '1');
       body.append('action', 'update');
@@ -112,7 +120,19 @@
 
     block.addEventListener('change', function (e) {
       if (e.target === allBox) {
-        rows.forEach(function (r) { r.querySelector('.js-ms-repl-check').checked = allBox.checked; });
+        selectableRows().forEach(function (r) { r.querySelector('.js-ms-repl-check').checked = allBox.checked; });
+      }
+      // Choix d'une déclinaison : on retient son id et son prix, on active la case
+      // et on la coche ; « Choisir » (vide) la désactive et la décoche.
+      if (e.target.classList.contains('js-ms-repl-variant')) {
+        var row = e.target.closest('.ms-repl-front__item');
+        var check = row.querySelector('.js-ms-repl-check');
+        var opt = e.target.options[e.target.selectedIndex];
+        var chosen = !!e.target.value;
+        row.setAttribute('data-id-attr', chosen ? e.target.value : '0');
+        if (chosen && opt) { row.setAttribute('data-price', opt.getAttribute('data-price') || '0'); }
+        check.disabled = !chosen;
+        check.checked = chosen;
       }
       refresh();
     });
