@@ -1,11 +1,9 @@
-{if $products}
-<section class="ms-products-section">
-  <div class="ms-container">
-    <div class="ms-products-section__header">
-      <h2 class="ms-products-section__title">{l s='En Promo' d='Modules.Specials.Shop'}</h2>
-      <a href="{$allSpecialProductsLink}" class="ms-products-section__see-all">{l s='Toutes les promos' d='Modules.Specials.Shop'}</a>
-    </div>
-    {include file='catalog/_partials/productlist.tpl' products=$products}
-  </div>
-</section>
-{/if}
+{* Habillage et règle « aucun produit sans photo » : _partials/home-products-section.tpl *}
+{capture name='ms_title'}{l s='En Promo' d='Modules.Specials.Shop'}{/capture}
+{capture name='ms_more'}{l s='Toutes les promos' d='Modules.Specials.Shop'}{/capture}
+
+{include file='_partials/home-products-section.tpl'
+         products=$products
+         title=$smarty.capture.ms_title
+         more_url=$allSpecialProductsLink
+         more_label=$smarty.capture.ms_more}
