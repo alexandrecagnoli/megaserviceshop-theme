@@ -1,4 +1,5 @@
 import { initMotoCascade } from './moto-cascade.js';
+import { initVinSearch } from './vin-search.js';
 
 /**
  * Section « Recherche de pièces compatibles » — home et pages catégorie.
@@ -39,6 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
       form: section.querySelector('[data-form="model"]'),
       submit: '[data-form="model"] .ms-parts-search__submit',
       initial: initial,
+    });
+
+    // L'onglet VIN existait dans le template mais n'était câblé nulle part : la
+    // saisie d'un VIN ne déclenchait rien ici, alors qu'elle fonctionnait dans
+    // la modale du header. Même module pour les deux (cf. vin-search.js).
+    initVinSearch(section, {
+      endpoint: section.getAttribute('data-vin-endpoint') || '',
     });
   });
 });

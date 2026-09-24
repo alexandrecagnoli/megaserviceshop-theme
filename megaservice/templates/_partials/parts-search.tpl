@@ -6,7 +6,10 @@
          data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
          {* Moto du garage (module montabilité) : préremplit la cascade au chargement,
             même source que la modale du header. *}
-         data-garage-sel="{if isset($ms_garage) && $ms_garage}{$ms_garage.sel_json|escape:'html'}{/if}">
+         data-garage-sel="{if isset($ms_garage) && $ms_garage}{$ms_garage.sel_json|escape:'html'}{/if}"
+         {* Recherche par VIN : même contrôleur que la modale du header. Sans cet
+            attribut, vin-search.js affiche « momentanément indisponible ». *}
+         data-vin-endpoint="{$link->getModuleLink('megaservice_microfiches', 'vinlookup')|escape:'html'}">
   <div class="ms-parts-search__container">
 
     {* ── Col 2-5 : texte ── *}
@@ -63,16 +66,41 @@
         <button type="submit" class="ms-parts-search__submit">{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
       </form>
 
+      {* Deux étapes, comme la modale du header (cf. vin-search.js) :
+         1. champ VIN + « Rechercher mon modèle »
+         2. véhicule trouvé + « Afficher les pièces compatibles », qui mène au hub
+            de la moto — c'est lui qui arme le garage.
+         Ce formulaire n'avait que le champ et aucun crochet js-vin-* : la saisie
+         d'un VIN ne déclenchait rien ici, alors qu'elle marchait dans le header. *}
       <form class="ms-parts-search__form" data-form="vin" action="#" method="get">
-        <div class="ms-parts-search__field ms-parts-search__field--search">
-          <input type="text" name="vin" class="ms-parts-search__input ms-parts-search__input--vin" placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}">
-          <button type="button" class="ms-parts-search__search-btn" aria-label="{l s='Rechercher' d='Shop.Theme.Global'}">
+
+        <div class="ms-parts-search__field ms-parts-search__field--search js-vin-fields">
+          <input type="text" name="vin" maxlength="17"
+                 class="ms-parts-search__input ms-parts-search__input--vin js-vin-input"
+                 placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}"
+                 aria-describedby="ms-parts-vin-error">
+          <button type="button" class="ms-parts-search__search-btn js-vin-search" aria-label="{l s='Rechercher' d='Shop.Theme.Global'}">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="#1E1E1E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
-        <button type="submit" class="ms-parts-search__submit">{l s='Rechercher' d='Shop.Theme.Global'}</button>
+
+        <p class="ms-parts-search__vin-error js-vin-error" id="ms-parts-vin-error" role="alert" hidden></p>
+
+        <div class="ms-parts-search__vin-result js-vin-result" hidden>
+          <span class="ms-parts-search__vin-result-label">{l s='1 véhicule correspond' d='Shop.Theme.Global'}</span>
+          <div class="ms-parts-search__vin-result-moto">
+            <strong class="js-vin-result-name"></strong>
+            <span class="js-vin-result-vin"></span>
+          </div>
+          <button type="button" class="ms-parts-search__vin-result-remove js-vin-result-remove" aria-label="{l s='Supprimer' d='Shop.Theme.Actions'}">&times;</button>
+        </div>
+
+        <button type="button" class="ms-parts-search__submit js-vin-search-btn">{l s='Rechercher mon modèle' d='Shop.Theme.Global'}</button>
+        <button type="submit" class="ms-parts-search__submit js-vin-submit" hidden>{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
+        <button type="button" class="ms-parts-search__vin-new js-vin-new" hidden>{l s='Nouvelle recherche' d='Shop.Theme.Global'}</button>
+
       </form>
 
     </div>

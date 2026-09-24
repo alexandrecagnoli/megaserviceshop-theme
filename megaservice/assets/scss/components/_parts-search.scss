@@ -290,3 +290,99 @@
     color: $color-white;
   }
 }
+
+// ── Recherche par VIN : erreur, résultat et bouton secondaire ──────
+//
+// Ces blocs n'existaient pas : le formulaire VIN de la section se limitait au
+// champ et au bouton, sans les deux étapes de la modale du header. Cf.
+// vin-search.js, partagé par les deux.
+
+.ms-parts-search__input--vin.has-error {
+  border-color: $color-ktm;
+}
+
+.ms-parts-search__vin-error {
+  margin: 8px 0 0;
+  font-family: $font-main;
+  font-size: 13px;
+  line-height: 1.4;
+  color: $color-ktm;
+}
+
+.ms-parts-search__vin-result {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 12px 44px 12px 15px;
+  border: 1px solid #F9D2C4;
+  background: $color-white;
+}
+
+.ms-parts-search__vin-result-label {
+  font-family: $font-main;
+  font-size: 13px;
+  color: $color-gray-50;
+}
+
+.ms-parts-search__vin-result-moto {
+  display: flex;
+  flex-direction: column;
+
+  strong {
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 15px;
+    text-transform: uppercase;
+    color: $color-black;
+  }
+
+  span {
+    font-family: $font-main;
+    font-size: 13px;
+    color: $color-gray-50;
+  }
+}
+
+.ms-parts-search__vin-result-remove {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: $color-gray-50;
+  cursor: pointer;
+  @include transition(color);
+
+  &:hover { color: $color-ktm; }
+}
+
+.ms-parts-search__vin-new {
+  width: 100%;
+  height: 50px;
+  margin-top: 8px;
+  background: transparent;
+  color: $color-black;
+  border: 1px solid $color-black;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  @include transition(background, color);
+
+  &:hover {
+    background: $color-black;
+    color: $color-white;
+  }
+}
