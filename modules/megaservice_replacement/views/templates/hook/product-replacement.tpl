@@ -6,7 +6,15 @@
  * client doit pouvoir confirmer qu'il a trouvé la bonne ancienne référence.
  * Elle n'est simplement plus achetable — le JS neutralise l'ajout au panier.
  *}
-<div class="ms-repl-front ms-repl-front--{$ms_repl.case|lower}" data-case="{$ms_repl.case}"{if $ms_repl.replaced_orderable} data-orderable="1"{/if}>
+{* Ajout groupé : 1:N dont au moins un composant est cochable. Ce bloc est rendu
+   DANS le <form> d'achat de la fiche : aucun champ ci-dessous n'a de `name` et le
+   bouton est type="button", sinon ils partiraient avec l'ajout du produit principal. *}
+{assign var='msReplGroup' value=false}
+{if $ms_repl.is_set}
+  {foreach from=$ms_repl.targets item=tg}{if $tg.selectable}{assign var='msReplGroup' value=true}{/if}{/foreach}
+{/if}
+<div class="ms-repl-front ms-repl-front--{$ms_repl.case|lower}" data-case="{$ms_repl.case}"{if $ms_repl.replaced_orderable} data-orderable="1"{/if}
+     {if $msReplGroup} data-group-add data-cart-url="{$ms_repl.cart_url|escape:'html':'UTF-8'}" data-token="{$ms_repl.token|escape:'html':'UTF-8'}" data-currency="{$ms_repl.currency|escape:'html':'UTF-8'}"{/if}>
 
   {* ── En-tête : le message change selon le cas ── *}
   <div class="ms-repl-front__head">
@@ -51,7 +59,17 @@
     {* ── Liste des références de remplacement ── *}
     <ul class="ms-repl-front__list{if $ms_repl.is_large_set} ms-repl-front__list--collapsed js-ms-repl-list{/if}">
       {foreach from=$ms_repl.targets item=t name=tg}
-        <li class="ms-repl-front__item{if !$t.available} is-unavailable{/if}{if $ms_repl.is_large_set && $smarty.foreach.tg.index >= 8} ms-repl-front__item--extra{/if}">
+        <li class="ms-repl-front__item{if !$t.available} is-unavailable{/if}{if $ms_repl.is_large_set && $smarty.foreach.tg.index >= 8} ms-repl-front__item--extra{/if}"
+            {if $msReplGroup && $t.selectable} data-id-product="{$t.product.id_product|intval}" data-price="{$t.product.price_raw}"{/if}>
+
+          {if $msReplGroup}
+            {if $t.selectable}
+              <input type="checkbox" class="ms-repl-front__check js-ms-repl-check" checked
+                     aria-label="{l s='Ajouter %s au panier' sprintf=[$t.ref|escape:'html'] d='Modules.Megaservicereplacement.Shop'}">
+            {else}
+              <span class="ms-repl-front__check ms-repl-front__check--none" aria-hidden="true"></span>
+            {/if}
+          {/if}
 
           {if $t.product}
             {if $t.product.image}
@@ -73,6 +91,13 @@
               {else}
                 <span class="ms-repl-front__stock is-unavailable">{l s='Indisponible' d='Modules.Megaservicereplacement.Shop'}</span>
               {/if}
+              {if $msReplGroup && $t.selectable}
+                <input type="number" class="ms-repl-front__qty-input js-ms-repl-qty" min="1" max="999" step="1"
+                       value="{if $t.quantity > 1}{$t.quantity|intval}{else}1{/if}"
+                       aria-label="{l s='Quantité' d='Modules.Megaservicereplacement.Shop'}">
+              {elseif $msReplGroup && $t.available}
+                <a href="{$t.product.url}" class="ms-repl-front__variants">{l s='Choisir sur la fiche' d='Modules.Megaservicereplacement.Shop'}</a>
+              {/if}
             </div>
           {else}
             {* Composant absent du catalogue au sein d'un ensemble *}
@@ -92,6 +117,22 @@
               data-less="{l s='Réduire la liste' d='Modules.Megaservicereplacement.Shop'}">
         {l s='Voir les %d références' sprintf=[$ms_repl.total_count] d='Modules.Megaservicereplacement.Shop'}
       </button>
+    {/if}
+
+    {* ── Ajout groupé des composants cochés ── *}
+    {if $msReplGroup}
+      <div class="ms-repl-front__group">
+        <label class="ms-repl-front__all">
+          <input type="checkbox" class="js-ms-repl-all" checked>
+          {l s='Tout sélectionner' d='Modules.Megaservicereplacement.Shop'}
+        </label>
+        <span class="ms-repl-front__total js-ms-repl-total"></span>
+        <button type="button" class="ms-repl-front__add js-ms-repl-add"
+                data-label="{l s='Ajouter la sélection' d='Modules.Megaservicereplacement.Shop'}">
+          {l s='Ajouter la sélection' d='Modules.Megaservicereplacement.Shop'}
+        </button>
+      </div>
+      <p class="ms-repl-front__feedback js-ms-repl-feedback" role="status" aria-live="polite" hidden></p>
     {/if}
 
     {* ── Message de disponibilité partielle (cas C) ── *}
