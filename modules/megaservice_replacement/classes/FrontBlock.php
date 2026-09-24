@@ -62,10 +62,13 @@ class MsReplacementFrontBlock
                 'quantity'     => (int) $t['quantity'],
                 'product'      => $product,
                 'available'    => $isAvailable,
-                // Cochable pour l'ajout groupé : commandable ET sans déclinaisons —
-                // sur un produit à déclinaisons, ajouter la déclinaison par défaut
-                // serait deviner le choix du client (cf. SPEC dispo §16).
-                'selectable'   => $isAvailable && (int) $product['id_product_attribute'] === 0,
+                // Cochable pour l'ajout groupé : le produit est commandable. Avec
+                // plusieurs déclinaisons, la case reste inactive tant que le client
+                // n'a pas choisi la sienne (on ne devine pas son choix) ; avec une
+                // seule, elle est ajoutée telle quelle (COPROJ 24/09 : beaucoup de
+                // produits sont marqués « déclinaisons » dans le XML constructeur
+                // mais n'en ont qu'une).
+                'selectable'   => $isAvailable,
                 'chain_status' => $t['chain_status'],
             ];
         }
@@ -149,6 +152,27 @@ class MsReplacementFrontBlock
         $idAttribute = (int) Product::getDefaultAttribute($idProduct);
         $quantity    = (int) StockAvailable::getQuantityAvailableByProduct($idProduct, $idAttribute);
 
+        // Déclinaisons : aucune → produit simple ; une seule → ajoutée telle quelle,
+        // sans sélecteur ; plusieurs → le client choisit dans le bloc.
+        $combos      = self::combinations($product, $context);
+        $variantMode = count($combos) > 1 ? 'multiple' : (count($combos) === 1 ? 'single' : 'none');
+        $priceRaw    = (float) Product::getPriceStatic($idProduct, true);
+        if ($variantMode === 'single') {
+            $idAttribute = $combos[0]['id_product_attribute'];
+            $quantity    = $combos[0]['quantity'];
+            $priceRaw    = $combos[0]['price_raw'];
+        }
+
+        if ($variantMode === 'multiple') {
+            $orderable = (bool) array_filter($combos, function ($c) {
+                return $c['orderable'];
+            });
+        } elseif ($variantMode === 'single') {
+            $orderable = $combos[0]['orderable'];
+        } else {
+            $orderable = self::isOrderable($product, $quantity);
+        }
+
         $cover    = Product::getCover($idProduct);
         $imageUrl = '';
         if (!empty($cover['id_image'])) {
@@ -162,9 +186,11 @@ class MsReplacementFrontBlock
             'reference'            => $product->reference,
             'url'                  => $context->link->getProductLink($product),
             'image'                => $imageUrl,
-            'price'                => Tools::displayPrice(Product::getPriceStatic($idProduct, true)),
-            'price_raw'            => (float) Product::getPriceStatic($idProduct, true),
+            'price'                => Tools::displayPrice($priceRaw),
+            'price_raw'            => $priceRaw,
             'quantity'             => $quantity,
+            'variant_mode'         => $variantMode,
+            'combinations'         => $variantMode === 'multiple' ? $combos : [],
             // Même règle que la fiche produit, et NON celle de la PDP microfiche.
             //
             // On exigeait ici `quantity > 0`. Or « en stock constructeur » veut
@@ -175,7 +201,47 @@ class MsReplacementFrontBlock
             // La microfiche, elle, exige bien du stock physique — c'est une
             // décision client assumée (cf. controllers/front/microfiche.php),
             // pas un oubli : ne pas réaligner l'une sur l'autre sans arbitrage.
-            'available'            => self::isOrderable($product, $quantity),
+            'available'            => $orderable,
         ];
+    }
+
+    /**
+     * Déclinaisons d'un produit : id, libellé (« Taille : XS, Couleur : Marron »),
+     * stock, prix TTC et commandabilité de CHAQUE déclinaison. Vide si le produit
+     * n'en a pas.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private static function combinations(Product $product, Context $context)
+    {
+        $rows = $product->getAttributeCombinations((int) $context->language->id);
+        if (empty($rows)) {
+            return [];
+        }
+
+        $byId = [];
+        foreach ($rows as $r) {
+            $id = (int) $r['id_product_attribute'];
+            if (!isset($byId[$id])) {
+                $byId[$id] = [];
+            }
+            $byId[$id][] = $r['group_name'] . ' : ' . $r['attribute_name'];
+        }
+
+        $out = [];
+        foreach ($byId as $idAttr => $parts) {
+            $qty = (int) StockAvailable::getQuantityAvailableByProduct((int) $product->id, $idAttr);
+            $raw = (float) Product::getPriceStatic((int) $product->id, true, $idAttr);
+            $out[] = [
+                'id_product_attribute' => $idAttr,
+                'label'                => implode(', ', $parts),
+                'quantity'             => $qty,
+                'price_raw'            => $raw,
+                'price'                => Tools::displayPrice($raw),
+                'orderable'            => self::isOrderable($product, $qty),
+            ];
+        }
+
+        return $out;
     }
 }
