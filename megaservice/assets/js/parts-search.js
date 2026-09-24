@@ -28,9 +28,17 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
+    // Moto déjà active côté serveur (cookie ms_moto) : on préremplit la cascade au
+    // lieu de la laisser vierge alors que le header affiche la moto.
+    let initial = null;
+    try {
+      initial = JSON.parse(section.getAttribute('data-garage-sel') || 'null');
+    } catch (err) { initial = null; }
+
     initMotoCascade(section, {
       form: section.querySelector('[data-form="model"]'),
       submit: '[data-form="model"] .ms-parts-search__submit',
+      initial: initial,
     });
   });
 });
