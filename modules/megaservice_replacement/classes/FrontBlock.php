@@ -121,9 +121,18 @@ class MsReplacementFrontBlock
             'image'                => $imageUrl,
             'price'                => Tools::displayPrice(Product::getPriceStatic($idProduct, true)),
             'quantity'             => $quantity,
-            // Même règle que la PDP microfiche : le stock ne suffit pas, il faut
-            // aussi que le produit soit réellement commandable.
-            'available'            => $quantity > 0 && (bool) $product->available_for_order,
+            // Même règle que la fiche produit, et NON celle de la PDP microfiche.
+            //
+            // On exigeait ici `quantity > 0`. Or « en stock constructeur » veut
+            // précisément dire stock magasin nul + réassort autorisé : la fiche
+            // du produit remplaçant proposait l'ajout au panier pendant que ce
+            // bloc l'annonçait indisponible (réf. 77512950200, produit 124401).
+            //
+            // La microfiche, elle, exige bien du stock physique — c'est une
+            // décision client assumée (cf. controllers/front/microfiche.php),
+            // pas un oubli : ne pas réaligner l'une sur l'autre sans arbitrage.
+            'available'            => (bool) $product->available_for_order
+                && ($quantity > 0 || (bool) Product::isAvailableWhenOutOfStock((int) $product->out_of_stock)),
         ];
     }
 }
