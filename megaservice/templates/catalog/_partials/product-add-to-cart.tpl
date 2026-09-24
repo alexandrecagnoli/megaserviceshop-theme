@@ -1,3 +1,16 @@
+{* Commandabilité — calculée ICI et pas seulement reçue de product.tpl.
+   PrestaShop re-rend ce partiel SEUL en AJAX (action=refresh) dès qu'un produit
+   a des déclinaisons. Dans ce rendu, la variable passée par l'include n'existe
+   pas : `{if !$msCommandable}` était donc toujours vrai et le bouton partait
+   désactivé, alors que la même fiche s'affichait correctement au premier rendu
+   et que la carte de listing, elle, restait juste. Cf. réf. 6070990104430.
+   La valeur reçue de l'appelant reste prioritaire. *}
+{if !isset($msCommandable)}
+  {assign var='msToday' value=$smarty.now|date_format:"%Y-%m-%d"}
+  {assign var='msDateFuture' value=($product.available_date && $product.available_date != '0000-00-00' && $product.available_date > $msToday)}
+  {assign var='msCommandable' value=($product.add_to_cart_url && !$msDateFuture)}
+{/if}
+
 <div class="ms-product__add-to-cart js-product-add-to-cart">
   {if !$configuration.is_catalog}
 
@@ -56,7 +69,14 @@
         </button>
       </div>
 
-      {if $product.add_to_cart_url}
+      {* Réservé aux motos NEUVES (catégorie 10). Il s'affichait sur tout le
+         catalogue, pièces détachées comprises. Les motos d'occasion (11) en sont
+         exclues sur demande du client.
+
+         La condition précédente était `$product.add_to_cart_url` : elle aurait
+         masqué le bouton sur une moto neuve non vendue en ligne, ce qui est le
+         cas normal. Seule la catégorie décide désormais. Cf. ProductController. *}
+      {if isset($ms_is_new_moto) && $ms_is_new_moto}
         <button type="button" class="ms-product__btn-reserve">
           {l s='Réserver un essai' d='Shop.Theme.Catalog'}
         </button>

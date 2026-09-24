@@ -10,12 +10,28 @@ class ProductController extends ProductControllerCore
     private static $POWERPARTS_ROOT_IDS = [41]; // Accessoires Powerparts
 
     /**
+     * Racine « Motos neuves ». Seuls ses produits affichent « Réserver un essai ».
+     * Les motos d'occasion (catégorie 11) en sont exclues — demande du client.
+     */
+    private static $NEW_MOTO_ROOT_IDS = [10];
+
+    /**
      * Expose à Smarty :
      *   - état wishlist du produit pour le user logué (cf. js-add-to-wishlist)
      *   - flag d'affichage du bloc tabs Powerparts + données hard-codées (à dynamiser)
      */
     public function initContent()
     {
+        // AVANT parent::initContent() : PrestaShop re-rend les blocs de la fiche
+        // en AJAX (action=refresh) dès qu'un produit a des déclinaisons, et le
+        // parent interrompt alors la requête. Une variable assignée après lui
+        // n'existe pas dans ce rendu — c'est ce qui désactivait le bouton panier
+        // (réf. 6070990104430) et ferait clignoter « Réserver un essai ».
+        $this->context->smarty->assign(
+            'ms_is_new_moto',
+            $this->isProductInSubtreeOf(self::$NEW_MOTO_ROOT_IDS)
+        );
+
         parent::initContent();
 
         $this->assignPowerpartsTabs();
@@ -160,7 +176,20 @@ class ProductController extends ProductControllerCore
 
     private function isProductInPowerpartsSubtree()
     {
-        if (empty(self::$POWERPARTS_ROOT_IDS) || !isset($this->product) || !$this->product->id) {
+        return $this->isProductInSubtreeOf(self::$POWERPARTS_ROOT_IDS);
+    }
+
+    /**
+     * Le produit est-il rattaché à l'une de ces racines, ou à l'un de leurs
+     * descendants ?
+     *
+     * @param int[] $rootIds
+     *
+     * @return bool
+     */
+    private function isProductInSubtreeOf(array $rootIds)
+    {
+        if (empty($rootIds) || !isset($this->product) || !$this->product->id) {
             return false;
         }
 
@@ -169,7 +198,7 @@ class ProductController extends ProductControllerCore
             return false;
         }
 
-        foreach (self::$POWERPARTS_ROOT_IDS as $rootId) {
+        foreach ($rootIds as $rootId) {
             $root = new Category((int) $rootId);
             if (!$root->id) {
                 continue;
