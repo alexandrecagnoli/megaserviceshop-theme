@@ -6,6 +6,7 @@
 {* Modal (desktop) / Bottomsheet (mobile) *}
 <div class="ms-model-modal js-model-modal" hidden role="dialog" aria-modal="true"
      data-selector-endpoint="{$link->getModuleLink('megaservice_microfiches', 'selectordata')|escape:'html'}"
+     data-vin-endpoint="{$link->getModuleLink('megaservice_microfiches', 'vinlookup')|escape:'html'}"
      data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}"
      {* État du garage rendu par le SERVEUR (module montabilité, hook SetMedia).
         Le header se fiait à localStorage, que seule la modale écrivait : toute
@@ -101,7 +102,10 @@
     <form class="ms-model-modal__form" data-form="vin" action="#" method="get">
 
       <div class="ms-model-modal__vin-field js-vin-fields">
-        <input type="text" class="ms-model-modal__vin-input js-vin-input" name="vin" placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}">
+        <input type="text" class="ms-model-modal__vin-input js-vin-input" name="vin" maxlength="17"
+               autocomplete="off" autocapitalize="characters" spellcheck="false"
+               aria-describedby="ms-vin-error"
+               placeholder="{l s='Saisissez votre VIN' d='Shop.Theme.Global'}">
         <button type="button" class="ms-model-modal__vin-search js-vin-search" aria-label="{l s='Rechercher' d='Shop.Theme.Actions'}">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="#1E1E1E" stroke-width="2.5" stroke-linecap="round"/>
@@ -109,7 +113,9 @@
         </button>
       </div>
 
-      {* Bloc résultat — visible après recherche VIN réussie *}
+      <p class="ms-model-modal__vin-error js-vin-error" id="ms-vin-error" role="alert" hidden></p>
+
+      {* Étape 2 — résultat, visible après une recherche VIN réussie *}
       <div class="ms-model-modal__result js-vin-result" hidden>
         <p class="ms-model-modal__result-count">{l s='1 véhicule correspond à votre recherche' d='Shop.Theme.Global'}</p>
         <div class="ms-model-modal__result-card">
@@ -136,8 +142,21 @@
         </div>
       </div>
 
-      <button type="submit" class="ms-model-modal__btn-primary js-vin-submit" disabled>{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
+      {* Étape 1 : Rechercher / Réinitialiser — Étape 2 : Afficher / Nouvelle recherche *}
+      <button type="button" class="ms-model-modal__btn-primary js-vin-search-btn">
+        {l s='Rechercher mon modèle' d='Shop.Theme.Global'}
+        <svg class="ms-model-modal__btn-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button type="submit" class="ms-model-modal__btn-primary js-vin-submit" hidden>
+        {l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}
+        <svg class="ms-model-modal__btn-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12H19M13 6L19 12L13 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button type="button" class="ms-model-modal__btn-secondary js-vin-reset">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
+      <button type="button" class="ms-model-modal__btn-secondary js-vin-new" hidden>{l s='Nouvelle recherche' d='Shop.Theme.Global'}</button>
 
     </form>
 
