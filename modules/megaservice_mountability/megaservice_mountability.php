@@ -241,7 +241,7 @@ class Megaservice_mountability extends Module
         }
 
         $row = Db::getInstance()->getRow(
-            'SELECT `annee`, `core_name`, `nom_fr`
+            'SELECT `marque`, `annee`, `type`, `core_name`, `nom_fr`
              FROM `' . _DB_PREFIX_ . 'ms_moto`
              WHERE `id_moto` = ' . $idMoto . ' AND `active` = 1'
         );
@@ -253,7 +253,25 @@ class Megaservice_mountability extends Module
 
         // Même libellé que le bandeau de contexte (ANNÉE + MODÈLE), pour que le
         // header et la page racontent la même chose.
-        return ['id' => $idMoto, 'label' => trim($row['annee'] . ' ' . $name)];
+        // Détail de la sélection, pour que la modale du header rejoue sa cascade
+        // Marque → Année → Pratique → Modèle depuis le SERVEUR. Sans lui, seule une
+        // sélection faite dans la modale (mémorisée en localStorage) pouvait être
+        // restaurée : moto armée par ?moto=, par le hub ou par un cookie encore
+        // valide → modale vierge malgré la moto affichée en haut de page.
+        // Codes de marque = ceux du formulaire (cf. microfiches/selectordata).
+        $marqueCodes = ['KTM' => 'ktm', 'HQV' => 'husqvarna', 'GASGAS' => 'gasgas'];
+        $sel = [
+            'marque'      => isset($marqueCodes[$row['marque']]) ? $marqueCodes[$row['marque']] : '',
+            'annee'       => (int) $row['annee'],
+            'type'        => (string) $row['type'],
+            'modeleLabel' => (string) $row['core_name'],
+        ];
+
+        return [
+            'id'       => $idMoto,
+            'label'    => trim($row['annee'] . ' ' . $name),
+            'sel_json' => json_encode($sel),
+        ];
     }
 
     /** La catégorie appartient-elle à l'un des sous-arbres filtrables (nested set) ? */
