@@ -85,6 +85,9 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_microfiches' => $microfiches,
             'ms_categories'  => $categories,
             'ms_partie'      => $partie,
+            // Image de la moto pour cette partie ; vide → le template retombe sur
+            // l'image par défaut du thème.
+            'ms_partie_img'  => $this->partieImageUrl($partie),
             'ms_total'       => count($microfiches),
         ]);
 
@@ -169,6 +172,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_moto'        => $this->motoToTemplate($this->moto),
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
+            // Images propres à la moto (BO → Motos). Vides tant qu'on ne les a pas :
+            // le template affiche alors l'image par défaut de la partie. Powerparts
+            // et Kits n'ont pas d'image par moto, seulement une image par défaut.
+            'ms_cycle_img'   => $this->partieImageUrl('cycle'),
+            'ms_moteur_img'  => $this->partieImageUrl('moteur'),
             // Powerparts filtrés sur la compatibilité de CETTE moto (montabilité).
             // Maillage SEO (Volet 2 étape 3) : lien vers la catégorie Powerparts
             // FILTRÉE sur cette moto (?moto=id-slug), source de vérité du filtre.
@@ -185,6 +193,25 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
+    }
+
+    /**
+     * URL de l'image de la moto pour une partie (cycle / moteur), ou '' si la moto
+     * n'en a pas — ou si le fichier référencé en base manque sur le disque, pour ne
+     * pas afficher une image cassée à la place de l'image par défaut.
+     */
+    protected function partieImageUrl(string $partie): string
+    {
+        $field = ['cycle' => 'picture_cycle', 'moteur' => 'picture_moteur'][$partie] ?? '';
+        $rel   = $field !== '' ? trim((string) $this->moto->{$field}) : '';
+        if ($rel === '' || strpos($rel, '..') !== false) {
+            return '';
+        }
+        if (!is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $rel)) {
+            return '';
+        }
+
+        return __PS_BASE_URI__ . 'img/ms_moto/' . $rel;
     }
 
     /**
