@@ -168,13 +168,23 @@
 @mixin visual-card-bg {
   position: absolute;
   inset: 0;
-  width: 100%;
+  // 60 % de la largeur, centré par `margin: auto` sur un élément en inset 0 :
+  // la photo respire au lieu de remplir la carte d'un bord à l'autre. Le zoom
+  // du survol reste un simple scale(), sans translate à recomposer.
+  margin: auto;
+  width: 60%;
   height: 100%;
   object-fit: contain;
   object-position: center;
   opacity: 0.85;
   z-index: 0;
-  @include transition(transform, filter);
+  // Pas @include transition(transform, filter) : le mixin prend ($props,
+  // $duration, $easing) POSITIONNELS, donc `filter` y serait pris pour la durée
+  // et la règle produite (`transition: transform filter ease`) est invalide —
+  // l'animation ne joue pas du tout. Cf. TECH_DEBT.
+  transition:
+    transform $transition-speed ease,
+    filter    $transition-speed ease;
 }
 
 @mixin visual-card-label {
@@ -183,7 +193,7 @@
   color: $color-white;
   font-family: $font-heading;
   font-weight: 900;
-  font-size: 18px;
+  font-size: 20px;
   text-transform: uppercase;
   text-align: center;
   padding: 0 16px;
