@@ -62,11 +62,13 @@
     <ul class="ms-repl-front__list{if $ms_repl.is_large_set} ms-repl-front__list--scroll{/if}">
       {foreach from=$ms_repl.targets item=t name=tg}
         <li class="ms-repl-front__item{if !$t.available} is-unavailable{/if}"
-            {if $msReplGroup && $t.selectable} data-id-product="{$t.product.id_product|intval}" data-price="{$t.product.price_raw}"{/if}>
+            {if $msReplGroup && $t.selectable} data-id-product="{$t.product.id_product|intval}" data-price="{$t.product.price_raw}" data-id-attr="{if $t.product.variant_mode == 'single'}{$t.product.id_product_attribute|intval}{else}0{/if}"{if $t.product.variant_mode == 'multiple'} data-variant="multiple"{/if}{/if}>
 
           {if $msReplGroup}
             {if $t.selectable}
-              <input type="checkbox" class="ms-repl-front__check js-ms-repl-check" checked
+              {* Plusieurs déclinaisons : case inactive et décochée tant que le client
+                 n'a pas choisi la sienne — on ne devine pas son choix. *}
+              <input type="checkbox" class="ms-repl-front__check js-ms-repl-check"{if $t.product.variant_mode == 'multiple'} disabled{else} checked{/if}
                      aria-label="{l s='Ajouter %s au panier' sprintf=[$t.ref|escape:'html'] d='Modules.Megaservicereplacement.Shop'}">
             {else}
               <span class="ms-repl-front__check ms-repl-front__check--none" aria-hidden="true"></span>
@@ -94,6 +96,23 @@
                 <span class="ms-repl-front__stock is-unavailable">{l s='Indisponible' d='Modules.Megaservicereplacement.Shop'}</span>
               {/if}
               {if $msReplGroup && $t.selectable}
+                {if $t.product.variant_mode == 'multiple'}
+                  {* Déclinaisons : à choisir ici. Celles qui ne sont pas commandables
+                     restent listées mais grisées. Une seule déclinaison → aucun
+                     sélecteur, elle est ajoutée telle quelle. *}
+                  <div class="ms-repl-front__qty-wrap ms-repl-front__variant-wrap">
+                    <select class="ms-repl-front__qty-select ms-repl-front__variant-select js-ms-repl-variant"
+                            aria-label="{l s='Déclinaison' d='Modules.Megaservicereplacement.Shop'}">
+                      <option value="">{l s='Choisir' d='Modules.Megaservicereplacement.Shop'}</option>
+                      {foreach from=$t.product.combinations item=c}
+                        <option value="{$c.id_product_attribute|intval}" data-price="{$c.price_raw}"{if !$c.orderable} disabled{/if}>{$c.label|escape:'html'}{if !$c.orderable} — {l s='indisponible' d='Modules.Megaservicereplacement.Shop'}{/if}</option>
+                      {/foreach}
+                    </select>
+                    <svg class="ms-repl-front__qty-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                {/if}
                 {* Même sélecteur que le panier latéral (an_sidebarcart). 1..20, ou
                    jusqu'à la quantité nécessaire si elle est plus grande (jusqu'à 36 vus). *}
                 {assign var='msReplQty' value=1}
@@ -112,8 +131,6 @@
                     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-              {elseif $msReplGroup && $t.available}
-                <a href="{$t.product.url}" class="ms-repl-front__variants">{l s='Choisir sur la fiche' d='Modules.Megaservicereplacement.Shop'}</a>
               {/if}
             </div>
           {else}
