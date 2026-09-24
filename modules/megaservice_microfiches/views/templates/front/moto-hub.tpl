@@ -44,12 +44,15 @@
     {* ── Accès : Cycle / Moteur / Powerparts / Kits ── *}
     <div class="ms-hub__access">
       <a href="{$ms_cycle_url}" class="ms-hub__card ms-hub__card--cycle">
+        <img src="{if !empty($ms_cycle_img)}{$ms_cycle_img|escape:'html'}{else}{$urls.theme_assets}img/THUMB_PARTIE_CYCLE.png{/if}" alt="" class="ms-hub__card-bg" loading="lazy">
         <span class="ms-hub__card-label">{l s='Partie cycle' d='Modules.Megaservicemicrofiches.Shop'}</span>
       </a>
       <a href="{$ms_moteur_url}" class="ms-hub__card ms-hub__card--moteur">
+        <img src="{if !empty($ms_moteur_img)}{$ms_moteur_img|escape:'html'}{else}{$urls.theme_assets}img/THUMB_PARTIE_MOTEUR.png{/if}" alt="" class="ms-hub__card-bg" loading="lazy">
         <span class="ms-hub__card-label">{l s='Partie moteur' d='Modules.Megaservicemicrofiches.Shop'}</span>
       </a>
       <a href="{$ms_powerparts_url}" class="ms-hub__card ms-hub__card--powerparts">
+        <img src="{$urls.theme_assets}img/THUMB_POWERPARTS.png" alt="" class="ms-hub__card-bg" loading="lazy">
         <span class="ms-hub__card-label">{l s='Powerparts' d='Modules.Megaservicemicrofiches.Shop'}</span>
       </a>
       {* Les kits ne figurent sur aucune vue éclatée : sans cet accès, ils sont
