@@ -18,7 +18,13 @@
     </div>
 
     <div class="ms-catalog-context">
-      <img src="{$urls.theme_assets}img/moto-context.png" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
+      {* Image de la moto filtrée, même source que la carte « Partie cycle » juste
+         en dessous (ms_cycle_img). Le hero affichait une photo générique alors
+         que la page entière est celle d'un modèle précis. Repli sur l'image du
+         thème si la moto n'a pas de visuel, ou si le fichier manque sur le
+         disque — cf. MotoController::partieImageUrl(). *}
+      <img src="{if !empty($ms_cycle_img)}{$ms_cycle_img|escape:'html'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
+           alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>
