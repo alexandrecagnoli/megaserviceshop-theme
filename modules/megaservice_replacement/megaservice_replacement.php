@@ -128,19 +128,29 @@ class Megaservice_replacement extends Module
             return $this->frontBlockCache = null;
         }
 
-        // Une référence remplacée mais encore achetable (en stock G8, ou réassort
-        // autorisé) se vend normalement : ni bloc, ni neutralisation du bouton.
-        // Seule l'indisponibilité de la référence elle-même déclenche le message
-        // de remplacement (COPROJ 17/09, confirmé le 24/09 sur un 1:N dont le
-        // bouton marchait en liste mais était désactivé sur la fiche).
-        if (!$idProduct) {
-            $idProduct = (int) Tools::getValue('id_product');
-        }
-        if ($idProduct && MsReplacementFrontBlock::isReplacedProductOrderable($idProduct)) {
+        $block = MsReplacementFrontBlock::build($reference, $this->context);
+        if ($block === null) {
             return $this->frontBlockCache = null;
         }
 
-        return $this->frontBlockCache = MsReplacementFrontBlock::build($reference, $this->context);
+        if (!$idProduct) {
+            $idProduct = (int) Tools::getValue('id_product');
+        }
+        $orderable = $idProduct && MsReplacementFrontBlock::isReplacedProductOrderable($idProduct);
+        $block['replaced_orderable'] = (bool) $orderable;
+
+        // Référence encore achetable (en stock G8, ou réassort autorisé) :
+        //  - 1:1 → elle se vend normalement, le remplacement ne dit rien d'utile :
+        //    ni bloc, ni neutralisation du bouton (COPROJ 17/09) ;
+        //  - 1:N → le bloc est une information de COMPOSITION (« se compose de N
+        //    références », commandables séparément), il reste affiché ; seul le
+        //    bouton n'est pas touché (COPROJ 24/09). Sauf si aucun composant
+        //    n'existe au catalogue : il n'y aurait rien à montrer.
+        if ($orderable && (!$block['is_set'] || $block['case'] === MsReplacementFrontBlock::CASE_MISSING)) {
+            return $this->frontBlockCache = null;
+        }
+
+        return $this->frontBlockCache = $block;
     }
 
     /**
