@@ -131,6 +131,9 @@
       {* ── Carte "Partie" (cycle / moteur) — visible si la PLP est scopée ── *}
       {if $ms_partie}
         <div class="ms-plp-partie-card ms-plp-partie-card--{$ms_partie}">
+          {* Image de la moto si on l'a, sinon image par défaut de la partie —
+             même règle que les cartes du hub. *}
+          <img src="{if !empty($ms_partie_img)}{$ms_partie_img|escape:'html'}{elseif $ms_partie == 'moteur'}{$urls.theme_assets}img/THUMB_PARTIE_MOTEUR.png{else}{$urls.theme_assets}img/THUMB_PARTIE_CYCLE.png{/if}" alt="" class="ms-plp-partie-card__bg" loading="lazy">
           <span class="ms-plp-partie-card__label">
             {if $ms_partie == 'moteur'}{l s='Partie moteur' d='Modules.Megaservicemicrofiches.Shop'}
             {else}{l s='Partie cycle' d='Modules.Megaservicemicrofiches.Shop'}{/if}
