@@ -52,6 +52,140 @@
     });
   }
 
+  /**
+   * Ajout groupé des composants cochés (bloc 1:N).
+   *
+   * - Envois à la SUITE, jamais en parallèle : sans panier, des requêtes
+   *   simultanées en créeraient chacune un.
+   * - Un composant refusé (stock, quantité minimum…) n'arrête pas les autres ;
+   *   on les signale à la fin.
+   * - UN SEUL `updateCart` à la fin, avec la dernière réponse : le panier latéral
+   *   s'ouvre et se rafraîchit une fois, pas N.
+   * - Le bloc est dans le <form> d'achat : les champs n'ont pas de `name`, rien
+   *   ne part avec l'ajout du produit principal.
+   */
+  function bindGroupAdd() {
+    var block = document.querySelector('.ms-repl-front[data-group-add]');
+    if (!block) { return; }
+
+    var addBtn   = block.querySelector('.js-ms-repl-add');
+    var allBox   = block.querySelector('.js-ms-repl-all');
+    var totalEl  = block.querySelector('.js-ms-repl-total');
+    var feedback = block.querySelector('.js-ms-repl-feedback');
+    var rows     = Array.prototype.slice.call(block.querySelectorAll('.ms-repl-front__item[data-id-product]'));
+    var busy     = false;
+
+    var money;
+    try {
+      money = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: block.getAttribute('data-currency') || 'EUR' });
+    } catch (e) { money = null; }
+
+    function rowQty(row) {
+      var n = parseInt(row.querySelector('.js-ms-repl-qty').value, 10);
+      return n > 0 ? n : 1;
+    }
+
+    function selectedRows() {
+      return rows.filter(function (r) { return r.querySelector('.js-ms-repl-check').checked; });
+    }
+
+    function refresh() {
+      var sel = selectedRows();
+      var total = sel.reduce(function (sum, r) {
+        return sum + (parseFloat(r.getAttribute('data-price')) || 0) * rowQty(r);
+      }, 0);
+      totalEl.textContent = (sel.length && money) ? money.format(total) : '';
+      addBtn.disabled = busy || sel.length === 0;
+      addBtn.textContent = addBtn.getAttribute('data-label') + (sel.length ? ' (' + sel.length + ')' : '');
+      allBox.checked = sel.length === rows.length;
+      allBox.indeterminate = sel.length > 0 && sel.length < rows.length;
+    }
+
+    function say(msg, isError) {
+      feedback.textContent = msg;
+      feedback.hidden = !msg;
+      feedback.classList.toggle('is-error', !!isError);
+    }
+
+    function addOne(row) {
+      var body = new FormData();
+      body.append('token', block.getAttribute('data-token'));
+      body.append('id_product', row.getAttribute('data-id-product'));
+      body.append('id_product_attribute', '0');
+      body.append('qty', String(rowQty(row)));
+      body.append('add', '1');
+      body.append('action', 'update');
+      body.append('ajax', '1');
+
+      return fetch(block.getAttribute('data-cart-url'), {
+        method: 'POST',
+        body: body,
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      }).then(function (r) { return r.json(); });
+    }
+
+    block.addEventListener('change', function (e) {
+      if (e.target === allBox) {
+        rows.forEach(function (r) { r.querySelector('.js-ms-repl-check').checked = allBox.checked; });
+      }
+      refresh();
+    });
+    block.addEventListener('input', function (e) {
+      if (e.target.classList.contains('js-ms-repl-qty')) { refresh(); }
+    });
+
+    addBtn.addEventListener('click', function () {
+      var sel = selectedRows();
+      if (busy || !sel.length) { return; }
+      busy = true;
+      say('', false);
+      addBtn.classList.add('is-loading');
+      refresh();
+
+      var failed = [];
+      var added = 0;
+      var last = null;
+      var lastId = 0;
+
+      // Chaîne de promesses : chaque ajout attend le précédent.
+      sel.reduce(function (chain, row) {
+        return chain.then(function () {
+          return addOne(row).then(function (data) {
+            var name = (row.querySelector('.ms-repl-front__name') || {}).textContent || row.getAttribute('data-id-product');
+            if (data && data.hasError) {
+              failed.push(name.trim() + ' — ' + ((data.errors && data.errors[0]) || 'refusé'));
+            } else {
+              added++;
+              last = data;
+              lastId = parseInt(row.getAttribute('data-id-product'), 10) || 0;
+            }
+          }).catch(function () {
+            var name = (row.querySelector('.ms-repl-front__name') || {}).textContent || row.getAttribute('data-id-product');
+            failed.push(name.trim() + ' — erreur réseau');
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        busy = false;
+        addBtn.classList.remove('is-loading');
+        refresh();
+
+        if (added && window.prestashop && typeof window.prestashop.emit === 'function') {
+          window.prestashop.emit('updateCart', {
+            reason: { idProduct: lastId, idProductAttribute: 0, linkAction: 'add-to-cart', cart: (last && last.cart) || null },
+            resp: last
+          });
+        }
+        if (failed.length) {
+          say((added ? added + ' ajouté(s). ' : '') + 'Non ajouté : ' + failed.join(' ; '), true);
+        } else if (added) {
+          say(added + (added > 1 ? ' références ajoutées au panier.' : ' référence ajoutée au panier.'), false);
+        }
+      });
+    });
+
+    refresh();
+  }
+
   function init() {
     if (!document.querySelector('.ms-repl-front')) { return; }
     // Référence encore achetable (1:N : le bloc n'est qu'une composition) :
@@ -59,6 +193,7 @@
     var block = document.querySelector('.ms-repl-front');
     if (!block.hasAttribute('data-orderable')) { disablePurchase(); }
     bindSetToggle();
+    bindGroupAdd();
   }
 
   if (document.readyState === 'loading') {
