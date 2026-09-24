@@ -276,7 +276,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ── Tab VIN : loupe → recherche → result + enable submit ────────
+  // ── Tab VIN : deux étapes — saisie, puis résultat ────────────────
+  //
+  // Étape 1 : champ VIN + « Rechercher mon modèle ». Étape 2 : « 1 véhicule
+  // correspond » + « Afficher les pièces compatibles » (navigue vers le hub de la
+  // moto, ce qui ARME le garage) ou « Nouvelle recherche ».
+  // Le VIN est résolu côté serveur (module microfiches, vinlookup) : il n'existe
+  // aucun moyen de le décoder ici.
 
   var vinForm        = modal.querySelector('[data-form="vin"]');
   var vinFieldsBlock = modal.querySelector('.js-vin-fields');
@@ -284,58 +290,141 @@ document.addEventListener('DOMContentLoaded', function () {
   var vinResultName  = modal.querySelector('.js-vin-result-name');
   var vinResultVin   = modal.querySelector('.js-vin-result-vin');
   var vinResultRm    = modal.querySelector('.js-vin-result-remove');
-  var vinSearchBtn   = modal.querySelector('.js-vin-search');
+  var vinSearchBtn   = modal.querySelector('.js-vin-search');      // loupe dans le champ
+  var vinSearchMain  = modal.querySelector('.js-vin-search-btn');  // bouton principal, étape 1
   var vinInput       = modal.querySelector('.js-vin-input');
-  var vinSubmit      = modal.querySelector('.js-vin-submit');
-  var vinReset       = modal.querySelector('.js-vin-reset');
+  var vinSubmit      = modal.querySelector('.js-vin-submit');      // bouton principal, étape 2
+  var vinReset       = modal.querySelector('.js-vin-reset');       // secondaire, étape 1
+  var vinNew         = modal.querySelector('.js-vin-new');         // secondaire, étape 2
+  var vinError       = modal.querySelector('.js-vin-error');
 
-  function showVinResult(label, vin) {
-    if (vinResultName)  vinResultName.textContent = label;
-    if (vinResultVin)   vinResultVin.textContent  = vin;
-    if (vinFieldsBlock) vinFieldsBlock.setAttribute('hidden', '');
-    if (vinResultBlock) vinResultBlock.removeAttribute('hidden');
-    if (vinSubmit)      vinSubmit.disabled = false;
+  var VIN_ENDPOINT = modal.getAttribute('data-vin-endpoint') || '';
+  var VIN_PATTERN  = /^[A-HJ-NPR-Z0-9]{17}$/; // ISO 3779 : ni I, ni O, ni Q
+  var vinTargetUrl = '';
+  var vinBusy      = false;
+
+  var VIN_MESSAGES = {
+    invalid:     'Le VIN comporte 17 caractères (lettres et chiffres, sans I, O ni Q). Vérifiez votre saisie.',
+    not_found:   'Aucun véhicule ne correspond à ce VIN. Vérifiez la saisie, ou utilisez la recherche par modèle.',
+    unavailable: 'La recherche par VIN est momentanément indisponible. Réessayez dans un instant, ou utilisez la recherche par modèle.',
+    throttled:   'Trop de recherches successives. Patientez quelques minutes, ou utilisez la recherche par modèle.'
+  };
+
+  function normalizeVin(value) {
+    return String(value || '').replace(/\s+/g, '').toUpperCase();
   }
 
-  function hideVinResult() {
-    if (vinFieldsBlock) vinFieldsBlock.removeAttribute('hidden');
-    if (vinResultBlock) vinResultBlock.setAttribute('hidden', '');
-    if (vinSubmit)      vinSubmit.disabled = true;
-    if (vinInput)       vinInput.value = '';
+  function showVinError(message) {
+    if (!vinError) return;
+    vinError.textContent = message || '';
+    vinError.hidden = !message;
+    if (vinInput) vinInput.classList.toggle('has-error', !!message);
   }
 
-  if (vinSearchBtn) {
-    vinSearchBtn.addEventListener('click', function () {
-      var vin = vinInput ? vinInput.value.trim() : '';
-      if (!vin) return;
-      // Démo : à brancher sur l'API du plugin pour récupérer le vrai modèle
-      showVinResult('KTM 990 RC R Track', vin);
+  function setVinBusy(busy) {
+    vinBusy = busy;
+    [vinSearchMain, vinSearchBtn].forEach(function (b) {
+      if (!b) return;
+      b.disabled = busy;
+      b.classList.toggle('is-loading', busy);
     });
   }
+
+  // Bascule entre les deux étapes : champ + boutons de l'étape 1, ou résultat +
+  // boutons de l'étape 2.
+  function setVinStep(step) {
+    var two = step === 2;
+    if (vinFieldsBlock) vinFieldsBlock.hidden = two;
+    if (vinResultBlock) vinResultBlock.hidden = !two;
+    if (vinSearchMain)  vinSearchMain.hidden  = two;
+    if (vinReset)       vinReset.hidden       = two;
+    if (vinSubmit)      vinSubmit.hidden      = !two;
+    if (vinNew)         vinNew.hidden         = !two;
+  }
+
+  function showVinResult(label, vin, url) {
+    if (vinResultName) vinResultName.textContent = label;
+    if (vinResultVin)  vinResultVin.textContent  = 'n° ' + vin;
+    vinTargetUrl = url;
+    showVinError('');
+    setVinStep(2);
+  }
+
+  // Retour à l'étape 1, champ vidé. Ne touche PAS au filtre moto actif : chercher
+  // un autre véhicule n'est pas retirer celui du garage (contrairement à
+  // « Réinitialiser », qui purge le filtre).
+  function hideVinResult() {
+    vinTargetUrl = '';
+    if (vinInput) vinInput.value = '';
+    showVinError('');
+    setVinStep(1);
+    if (vinInput) vinInput.focus();
+  }
+
+  function searchVin() {
+    if (vinBusy) return;
+    var vin = normalizeVin(vinInput ? vinInput.value : '');
+    if (vinInput) vinInput.value = vin;
+
+    if (!VIN_PATTERN.test(vin)) {
+      showVinError(VIN_MESSAGES.invalid);
+      return;
+    }
+    if (!VIN_ENDPOINT) {
+      showVinError(VIN_MESSAGES.unavailable);
+      return;
+    }
+
+    showVinError('');
+    setVinBusy(true);
+
+    // POST : le VIN ne doit pas figurer dans l'URL (journaux d'accès, historique).
+    var body = new FormData();
+    body.append('vin', vin);
+
+    fetch(VIN_ENDPOINT, {
+      method: 'POST',
+      body: body,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.ok ? r.json() : { status: 'unavailable' }; })
+      .then(function (data) {
+        if (data && data.status === 'ok' && data.url) {
+          showVinResult(data.label || '', data.vin || vin, data.url);
+        } else {
+          showVinError(VIN_MESSAGES[data && data.status] || VIN_MESSAGES.unavailable);
+        }
+      })
+      .catch(function () { showVinError(VIN_MESSAGES.unavailable); })
+      .then(function () { setVinBusy(false); });
+  }
+
+  if (vinSearchBtn)  vinSearchBtn.addEventListener('click', searchVin);
+  if (vinSearchMain) vinSearchMain.addEventListener('click', searchVin);
 
   if (vinInput) {
     vinInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (vinSearchBtn) vinSearchBtn.click();
+        searchVin();
       }
     });
+    // L'erreur affichée ne vaut plus dès que la saisie change.
+    vinInput.addEventListener('input', function () { showVinError(''); });
   }
 
   if (vinForm) {
     vinForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!vinResultName || !vinResultName.textContent) return;
-      var label = vinResultName.textContent;
-      applyFilled(label);
-      try { localStorage.setItem(STORAGE_KEY, label); } catch (err) {}
-      closeModal();
+      // Le hub de la moto arme le garage (cookie) : le filtre et l'état de la
+      // modale suivent au rechargement, le serveur faisant foi.
+      if (vinTargetUrl) window.location.href = vinTargetUrl;
     });
   }
 
-  if (vinResultRm) {
-    vinResultRm.addEventListener('click', hideVinResult);
-  }
+  if (vinResultRm) vinResultRm.addEventListener('click', hideVinResult);
+  if (vinNew)      vinNew.addEventListener('click', hideVinResult);
 
   if (vinReset) {
     vinReset.addEventListener('click', function () {
