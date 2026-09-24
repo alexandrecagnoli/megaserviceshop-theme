@@ -10,6 +10,10 @@
  * résolue en id_product à l'import ; le stockage reste en id_product.
  * Réf ambiguë (plusieurs produits) → plus petit id_product (déterministe).
  *
+ * Référence source ou cible inconnue : la ligne n'est pas rejetée, elle va dans
+ * la table d'attente et est posée automatiquement (fin de chaque import, ou
+ * scripts/cli/resolve_pending_relations.php) dès que le produit existe.
+ *
  * Robustesse :
  * - Auto-détection du séparateur (, ou ;)
  * - Strip du BOM UTF-8 si présent
@@ -32,11 +36,12 @@ class MsRelationsCsvImporter
     /**
      * @param string $filepath Chemin du fichier uploadé (tmp_name)
      * @param string $mode     'append' | 'replace_for_listed' | 'full_replace'
-     * @return array stats : ['imported' => int, 'skipped' => int, 'deleted' => int, 'errors' => [['line', 'msg']]]
+     * @return array stats : ['imported' => int, 'skipped' => int, 'deleted' => int, 'resolved' => int (en attente, posées ce coup-ci),
+     *               'pending' => int (encore en attente au total), 'errors' => [['line', 'msg']]]
      */
     public function import($filepath, $mode = 'append')
     {
-        $stats = ['imported' => 0, 'skipped' => 0, 'deleted' => 0, 'errors' => []];
+        $stats = ['imported' => 0, 'skipped' => 0, 'deleted' => 0, 'pending' => 0, 'resolved' => 0, 'errors' => []];
 
         $fh = @fopen($filepath, 'r');
         if (!$fh) {
@@ -89,6 +94,7 @@ class MsRelationsCsvImporter
             Db::getInstance()->execute(
                 'DELETE FROM `' . _DB_PREFIX_ . 'megaservice_product_relation`'
             );
+            MsProductRelationService::clearPending();
             $stats['deleted'] = $deleted;
         }
 
@@ -97,6 +103,7 @@ class MsRelationsCsvImporter
             $rows = $this->readAllRows($fh, $delim);
             $sourcesToReset = $this->collectSourceTypePairs($rows, $colIdx);
             $stats['deleted'] = $this->resetRelations($sourcesToReset);
+            MsProductRelationService::clearPending($this->collectRefTypePairs($rows, $colIdx));
             foreach ($rows as $r) {
                 $this->processRow($r['data'], $r['line'], $colIdx, $stats);
             }
@@ -111,6 +118,13 @@ class MsRelationsCsvImporter
         }
 
         fclose($fh);
+
+        // Les produits ajoutés depuis le dernier import débloquent d'anciennes
+        // lignes en attente : on les pose maintenant.
+        $res = MsProductRelationService::resolvePending();
+        $stats['resolved'] = $res['resolved'];
+        $stats['pending']  = $res['remaining'];
+
         return $stats;
     }
 
@@ -141,6 +155,22 @@ class MsRelationsCsvImporter
             }
         }
         return $pairs;
+    }
+
+    /**
+     * Paires [ref_source, type] listées dans le fichier, produit connu ou non.
+     */
+    private function collectRefTypePairs(array $rows, array $colIdx)
+    {
+        $pairs = [];
+        foreach ($rows as $r) {
+            $refSrc = trim((string) ($r['data'][$colIdx['ref_product_source']] ?? ''));
+            $type   = trim((string) ($r['data'][$colIdx['relation_type']] ?? ''));
+            if ($refSrc !== '' && $type !== '') {
+                $pairs[$refSrc . '|' . $type] = [$refSrc, $type];
+            }
+        }
+        return array_values($pairs);
     }
 
     private function resetRelations(array $sourcesToReset)
@@ -189,14 +219,18 @@ class MsRelationsCsvImporter
         }
 
         // Résolution référence → id_product (le fichier d'import n'a pas l'id PS)
-        $idSrc = $this->resolveReference($refSrc);
-        if (!$idSrc) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_source "' . $refSrc . '" introuvable dans le catalogue'];
-            return;
-        }
+        // Référence inconnue : la ligne n'est plus rejetée, elle est mise en attente
+        // et posée toute seule quand le produit arrivera au catalogue.
+        $idSrc    = $this->resolveReference($refSrc);
         $idTarget = $this->resolveReference($refTarget);
-        if (!$idTarget) {
-            $stats['errors'][] = ['line' => $lineNum, 'msg' => 'ref_product_target "' . $refTarget . '" introuvable dans le catalogue'];
+        if (!$idSrc || !$idTarget) {
+            if ($refSrc === $refTarget) {
+                $stats['errors'][] = ['line' => $lineNum, 'msg' => 'source et cible identiques (réf "' . $refSrc . '")'];
+                return;
+            }
+            if (!MsProductRelationService::addPending($refSrc, $type, $refTarget, $position, $qty)) {
+                $stats['errors'][] = ['line' => $lineNum, 'msg' => 'Erreur SQL à la mise en attente'];
+            }
             return;
         }
         if ($idSrc === $idTarget) {
@@ -241,10 +275,7 @@ class MsRelationsCsvImporter
         if (isset($this->refCache[$ref])) {
             return $this->refCache[$ref];
         }
-        $id = (int) Db::getInstance()->getValue(
-            'SELECT MIN(`id_product`) FROM `' . _DB_PREFIX_ . 'product` WHERE `reference` = "' . pSQL($ref) . '"'
-        );
-        return $this->refCache[$ref] = $id;
+        return $this->refCache[$ref] = MsProductRelationService::idByReference($ref);
     }
 
     private function relationExists($idSrc, $type, $idTarget)
