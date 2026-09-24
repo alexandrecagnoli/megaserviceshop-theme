@@ -88,6 +88,11 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             // Image de la moto pour cette partie ; vide → le template retombe sur
             // l'image par défaut du thème.
             'ms_partie_img'  => $this->partieImageUrl($partie),
+            // Photo de la MOTO pour le hero, distincte de l'image de la partie :
+            // le bandeau représente le véhicule, pas la section consultée. Une
+            // moto peut n'avoir que l'une des deux (GASGAS EC 300 2024 : cycle
+            // oui, moteur non), le hero afficherait alors l'image générique.
+            'ms_moto_img'    => $this->motoImageUrl(),
             'ms_total'       => count($microfiches),
         ]);
 
@@ -177,6 +182,8 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             // et Kits n'ont pas d'image par moto, seulement une image par défaut.
             'ms_cycle_img'   => $this->partieImageUrl('cycle'),
             'ms_moteur_img'  => $this->partieImageUrl('moteur'),
+            // Photo de la moto pour le hero — même source que la page partie.
+            'ms_moto_img'    => $this->motoImageUrl(),
             // Powerparts filtrés sur la compatibilité de CETTE moto (montabilité).
             // Maillage SEO (Volet 2 étape 3) : lien vers la catégorie Powerparts
             // FILTRÉE sur cette moto (?moto=id-slug), source de vérité du filtre.
@@ -193,6 +200,21 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         ]);
 
         $this->setTemplate('module:megaservice_microfiches/views/templates/front/moto-hub.tpl');
+    }
+
+    /**
+     * Photo de la moto, pour le bandeau des pages moto (hub et partie).
+     *
+     * Le bandeau représente le VÉHICULE, pas la section consultée : on prend la
+     * première image disponible, partie cycle d'abord. Sans ça, consulter la
+     * partie moteur d'une moto qui n'a qu'une photo de partie cycle affichait
+     * l'image générique du thème.
+     */
+    protected function motoImageUrl(): string
+    {
+        $url = $this->partieImageUrl('cycle');
+
+        return $url !== '' ? $url : $this->partieImageUrl('moteur');
     }
 
     /**

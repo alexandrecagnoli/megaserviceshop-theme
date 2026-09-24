@@ -22,7 +22,12 @@
     <div class="ms-catalog-context">
       {* Image générique (comme le bloc natif) — les vraies photos motos
          arriveront avec PR-Visuels (cron download, bloqué côté MSS). *}
-      <img src="{$urls.theme_assets}img/moto-context.png" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
+      {* Photo de la moto filtrée. Le hero représente le véhicule, pas la partie
+         consultée : ms_moto_img prend la première image disponible (cycle puis
+         moteur), là où ms_partie_img ne vaut que pour la section affichée. Repli
+         sur l'image du thème si la moto n'a aucun visuel. *}
+      <img src="{if !empty($ms_moto_img)}{$ms_moto_img|escape:'html'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
+           alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>

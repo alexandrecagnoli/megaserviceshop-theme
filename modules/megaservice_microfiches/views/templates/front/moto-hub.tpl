@@ -19,11 +19,13 @@
 
     <div class="ms-catalog-context">
       {* Image de la moto filtrée, même source que la carte « Partie cycle » juste
-         en dessous (ms_cycle_img). Le hero affichait une photo générique alors
+         en dessous, mais via ms_moto_img : le hero représente le véhicule, pas
+         une partie, et prend donc la première image disponible (cycle puis
+         moteur). Le hero affichait une photo générique alors
          que la page entière est celle d'un modèle précis. Repli sur l'image du
          thème si la moto n'a pas de visuel, ou si le fichier manque sur le
          disque — cf. MotoController::partieImageUrl(). *}
-      <img src="{if !empty($ms_cycle_img)}{$ms_cycle_img|escape:'html'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
+      <img src="{if !empty($ms_moto_img)}{$ms_moto_img|escape:'html'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
            alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
