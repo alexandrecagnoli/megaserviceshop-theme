@@ -54,7 +54,10 @@
 
   function init() {
     if (!document.querySelector('.ms-repl-front')) { return; }
-    disablePurchase();
+    // Référence encore achetable (1:N : le bloc n'est qu'une composition) :
+    // son bouton reste actif, seule la liste est repliable.
+    var block = document.querySelector('.ms-repl-front');
+    if (!block.hasAttribute('data-orderable')) { disablePurchase(); }
     bindSetToggle();
   }
 
