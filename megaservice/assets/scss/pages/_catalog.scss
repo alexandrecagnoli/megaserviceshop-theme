@@ -126,6 +126,11 @@ body#category {
   padding-bottom: 0;
 }
 
+// Conteneur des flèches — elles se superposent au défilement, sans le décaler.
+.ms-subcat-scroller {
+  position: relative;
+}
+
 .ms-subcat-nav {
   display: flex;
   gap: 8px;
@@ -133,8 +138,59 @@ body#category {
   margin-top: 20px;
   padding-bottom: 28px;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 
   &::-webkit-scrollbar { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { scroll-behavior: auto; }
+}
+
+// Flèches de défilement des sous-catégories.
+//
+// Réservées au pointeur fin : au doigt et au trackpad le défilement latéral est
+// naturel, à la souris sans molette horizontale les cartes hors cadre sont
+// simplement inatteignables. `hidden` est retiré par subcat-nav.js uniquement
+// quand le contenu déborde vraiment.
+.ms-subcat-scroller__arrow {
+  display: none;
+
+  @media (min-width: #{$breakpoint-md + 1px}) and (hover: hover) and (pointer: fine) {
+    position: absolute;
+    top: calc((100% - 28px) / 2);
+    transform: translateY(-50%);
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+
+    color: $color-white;
+    background: rgba($color-black, 0.75);
+    @include transition(background);
+
+    &[hidden] { display: none; }
+
+    &:hover { background: $color-ktm; }
+
+    &:focus-visible {
+      outline: 2px solid $color-ktm;
+      outline-offset: 2px;
+    }
+
+    // Bout de course : on garde la place pour éviter un saut de mise en page.
+    &:disabled {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &--prev { left: 0; }
+  &--next { right: 0; }
 }
 
 .ms-subcat-nav__item {
