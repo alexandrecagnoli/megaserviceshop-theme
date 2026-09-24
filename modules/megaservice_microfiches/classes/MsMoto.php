@@ -82,6 +82,24 @@ class MsMoto extends ObjectModel
         return self::buildSlug($this->marque, $this->core_name, $this->annee, $this->type);
     }
 
+    /**
+     * URL de la page hub d'une moto. `moto=` EN PLUS de id_moto : c'est ce paramètre
+     * — et lui seul — que MsMountability::resolveActiveMoto() lit pour ARMER le garage
+     * (cookie ms_moto). Partagé par le sélecteur en cascade et la recherche par VIN :
+     * deux copies de cette règle finiraient par diverger.
+     */
+    public static function hubUrl(Context $context, $idMoto, $marque, $coreName, $annee, $type)
+    {
+        $idMoto = (int) $idMoto;
+        $slug   = self::buildSlug($marque, $coreName, $annee, $type);
+
+        return $context->link->getModuleLink('megaservice_microfiches', 'moto', [
+            'id_moto' => $idMoto,
+            'slug'    => $slug,
+            'moto'    => $idMoto . ($slug !== '' ? '-' . $slug : ''),
+        ]);
+    }
+
     /** Variante statique (quand on n'a pas d'objet MsMoto hydraté, ex. requête groupée). */
     public static function buildSlug($marque, $coreName, $annee, $type)
     {
