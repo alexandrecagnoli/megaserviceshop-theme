@@ -259,10 +259,16 @@
   display: block;
 }
 
-.ms-repl-front__variants {
-  font-size: 12px;
-  color: #FE6604;
-  text-decoration: underline;
+/* Choix de la déclinaison — même sélecteur, plus large : le libellé
+   (« Taille : XS, Couleur : Marron ») est plus long qu'un chiffre. */
+.ms-repl-front__variant-wrap {
+  display: block;
+}
+
+.ms-repl-front__variant-select {
+  width: 100%;
+  min-width: 170px;
+  max-width: 240px;
 }
 
 .ms-repl-front__group {
