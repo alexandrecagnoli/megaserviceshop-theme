@@ -1055,8 +1055,9 @@ body#category {
 .ms-catalog-context__moto-img {
   position: absolute;
   left: 0;
-  bottom: -10px;
-  height: 130px;
+  // Débordait du bandeau : hauteur réduite et calée sur le bas.
+  bottom: 0;
+  height: 110px;
   width: auto;
   z-index: 2;
   pointer-events: none;
@@ -1072,7 +1073,7 @@ body#category {
   align-items: center;
   gap: 24px;
   min-height: 80px;
-  padding: 12px $container-padding 12px 200px;
+  padding: 12px $container-padding 12px 170px;
 
   @include media-md() {
     padding-left: 120px;
