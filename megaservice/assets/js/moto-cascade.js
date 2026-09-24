@@ -98,6 +98,44 @@ export function initMotoCascade(root, options) {
   modele.addEventListener('change', refreshSubmit);
   refreshSubmit();
 
+  // Préremplit la cascade depuis une sélection connue (moto du garage). Même
+  // chaînage asynchrone que la modale du header : chaque niveau est un appel AJAX.
+  // Le modèle est retrouvé par son libellé — l'URL d'une option porte le plus petit
+  // id_moto du groupe, pas forcément celui du garage.
+  function restore(sel) {
+    if (!sel || !sel.marque) { return; }
+    marque.value = sel.marque;
+    if (!marque.value) { return; }
+
+    fetchStep({ marque: marque.value }, function (years) {
+      fill(annee, years);
+      if (!sel.annee) { return; }
+      annee.value = sel.annee;
+      if (!annee.value) { return; }
+
+      fetchStep({ marque: marque.value, annee: annee.value }, function (types) {
+        fill(gamme, types);
+        if (!sel.type) { return; }
+        gamme.value = sel.type;
+        if (!gamme.value) { return; }
+
+        fetchStep({ marque: marque.value, annee: annee.value, type: gamme.value }, function (models) {
+          fill(modele, models);
+          Array.prototype.some.call(modele.options, function (opt) {
+            if (opt.value && opt.text === sel.modeleLabel) {
+              modele.value = opt.value;
+              return true;
+            }
+            return false;
+          });
+          refreshSubmit();
+        });
+      });
+    });
+  }
+
+  restore(options.initial);
+
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
