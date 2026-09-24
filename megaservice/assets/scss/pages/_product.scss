@@ -645,6 +645,95 @@
   h2, h3, h4 { font-family: $font-heading; font-weight: 900; text-transform: uppercase; margin: 1.5em 0 0.5em; }
   p { margin: 0 0 1em; }
   ul, ol { padding-left: 1.5em; margin: 0 0 1em; }
+
+  // ── Tableaux de la description ──────────────────────────────
+  //
+  // Le contenu est saisi à la main dans le back-office : les classes qu'on y
+  // trouve (ms-specs__table, ms-specs__group-title) ne sont pas garanties, elles
+  // dépendent de ce qui a été collé. Le style porte donc sur les ÉLÉMENTS, pour
+  // qu'un tableau collé sans aucune classe soit présenté correctement.
+  //
+  // Jusqu'ici aucune règle n'existait : les fiches techniques des motos
+  // s'affichaient en rendu navigateur brut.
+
+  table {
+    width: 100%;
+    margin: 0 0 1.75em;
+    border-collapse: collapse;
+    // Largeurs imposées + césure : une valeur longue passe à la ligne au lieu
+    // d'élargir le tableau et de faire défiler la page horizontalement.
+    table-layout: fixed;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  th,
+  td {
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  // Colonne de libellés d'une fiche technique (th en tête de ligne).
+  tbody th {
+    width: 38%;
+    font-family: $font-main;
+    font-weight: 600;
+    color: $color-gray-60;
+  }
+
+  tbody td { color: $color-text; }
+
+  // Alternance plutôt que filets : plus lisible sur une longue liste de
+  // caractéristiques, et ça tient sans bordure interne.
+  tbody tr:nth-child(odd) { background: $color-gray-5; }
+
+  // En-tête, pour les tableaux qui en ont un (colonnes, pas fiche technique).
+  thead th {
+    background: $color-black;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  // Titre de groupe quand il est présent — un <p> dans le contenu collé.
+  .ms-specs__group-title {
+    margin: 1.75em 0 0.5em;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: $color-text;
+  }
+
+  .ms-specs__group:first-child .ms-specs__group-title { margin-top: 0; }
+
+  @include media-sm {
+    th, td { padding: 8px 10px; }
+
+    // Sur mobile, une fiche technique se lit mieux empilée : libellé au-dessus
+    // de la valeur. Limité aux lignes menées par un <th> — un vrai tableau à
+    // colonnes (avec thead) garde sa grille. `:has()` non supporté : on retombe
+    // sur le tableau à deux colonnes, qui reste lisible grâce à la césure.
+    tbody tr:has(> th:first-child) {
+      display: block;
+      padding: 8px 10px;
+
+      th, td {
+        display: block;
+        width: auto;
+        padding: 0;
+      }
+
+      th { margin-bottom: 2px; }
+    }
+  }
 }
 
 // ── Fiche technique ────────────────────────────

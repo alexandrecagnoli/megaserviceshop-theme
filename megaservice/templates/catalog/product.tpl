@@ -228,10 +228,13 @@
     <div class="ms-product__tabs-section">
 
       <nav class="ms-product__tabs-nav">
+        {* La Description est l'onglet ouvert par défaut. Elle n'existe pas
+           toujours : sans elle, c'est la Fiche technique qui prend le relais,
+           sinon la page s'ouvrirait sur deux onglets fermés. *}
         {if $product.description}
-          <button class="ms-product__tab-btn js-product-tab-btn" data-tab="description">{l s='Description' d='Shop.Theme.Catalog'}</button>
+          <button class="ms-product__tab-btn js-product-tab-btn is-active" data-tab="description">{l s='Description' d='Shop.Theme.Catalog'}</button>
         {/if}
-        <button class="ms-product__tab-btn js-product-tab-btn is-active" data-tab="features">{l s='Fiche technique' d='Shop.Theme.Catalog'}</button>
+        <button class="ms-product__tab-btn js-product-tab-btn{if !$product.description} is-active{/if}" data-tab="features">{l s='Fiche technique' d='Shop.Theme.Catalog'}</button>
         {foreach from=$product.extra_tabs item=extra_tab}
           <button class="ms-product__tab-btn js-product-tab-btn" data-tab="{$extra_tab.id_tab|escape:'htmlall'}">{$extra_tab.title}</button>
         {/foreach}
@@ -240,12 +243,12 @@
       <div class="ms-product__tabs-content">
 
         {if $product.description}
-          <div class="ms-product__tab-panel js-product-tab-panel" data-panel="description">
+          <div class="ms-product__tab-panel js-product-tab-panel is-active" data-panel="description">
             <div class="ms-product__description">{$product.description nofilter}</div>
           </div>
         {/if}
 
-        <div class="ms-product__tab-panel js-product-tab-panel is-active" data-panel="features">
+        <div class="ms-product__tab-panel js-product-tab-panel{if !$product.description} is-active{/if}" data-panel="features">
           {if $product.features}
             <div class="ms-product__features">
               <table class="ms-product__feature-group is-active">
