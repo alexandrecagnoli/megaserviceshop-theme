@@ -699,3 +699,39 @@ Ajouter la moto au hash aurait multiplié les entrées par le nombre de motos (4
 **À faire après tout changement de règle de taxe** : vider le cache PS, relancer `ps_facetedsearch-price-indexer.php` (bornes du filtre de prix).
 
 **Statut** : 🟠 actif tant que le profil d'import n'apporte pas la règle.
+
+---
+
+## 🟡 Mixin `transition()` — toute transition à deux propriétés est silencieusement morte
+
+**Fichier** : [megaservice/assets/scss/settings/_mixins.scss](megaservice/assets/scss/settings/_mixins.scss)
+
+**Contexte** : le mixin prend des paramètres **positionnels** :
+
+```scss
+@mixin transition($props: all, $duration: $transition-speed, $easing: ease) {
+  transition: $props $duration $easing;
+}
+```
+
+Appelé avec deux propriétés — `@include transition(background, color)` — la deuxième est prise pour la **durée**. La règle produite est `transition: background color ease`, invalide : le navigateur la jette, et **l'animation ne joue pas du tout**. L'appel paraît correct à la lecture, d'où le fait que personne ne l'ait vu.
+
+**Mesuré au 25/09 sur `assets/dist/app.css` : 31 règles dans ce cas.** Exemples : `transition:background color ease`, `transition:background-color border-color ease`, `transition:border-color background ease`.
+
+**Contourné, pas corrigé** : la carte visuelle (`visual-card-bg`) écrit sa transition à la main plutôt que d'appeler le mixin, avec le commentaire qui explique pourquoi.
+
+**Fix proposé** : rendre le mixin variadique et composer chaque propriété avec la durée et l'easing.
+
+```scss
+@mixin transition($props...) {
+  $out: ();
+  @each $p in $props {
+    $out: append($out, #{$p} $transition-speed ease, comma);
+  }
+  transition: $out;
+}
+```
+
+**Pourquoi ce n'est pas fait** : le correctif ferait s'animer d'un coup 31 survols aujourd'hui instantanés, dans le header, les boutons, les filtres et les cartes. C'est un changement de ressenti sur tout le thème — à faire en connaissance de cause et à valider visuellement, pas en passant.
+
+**Statut** : 🟡 actif — à traiter dans une passe dédiée aux animations.
