@@ -57,9 +57,11 @@
   {else}
 
     {* ── Liste des références de remplacement ── *}
-    <ul class="ms-repl-front__list{if $ms_repl.is_large_set} ms-repl-front__list--collapsed js-ms-repl-list{/if}">
+    {* Gros ensemble : la liste défile dans le bloc (hauteur bornée) au lieu de
+       s'allonger, et tout reste visible — y compris les cases cochées. *}
+    <ul class="ms-repl-front__list{if $ms_repl.is_large_set} ms-repl-front__list--scroll{/if}">
       {foreach from=$ms_repl.targets item=t name=tg}
-        <li class="ms-repl-front__item{if !$t.available} is-unavailable{/if}{if $ms_repl.is_large_set && $smarty.foreach.tg.index >= 8} ms-repl-front__item--extra{/if}"
+        <li class="ms-repl-front__item{if !$t.available} is-unavailable{/if}"
             {if $msReplGroup && $t.selectable} data-id-product="{$t.product.id_product|intval}" data-price="{$t.product.price_raw}"{/if}>
 
           {if $msReplGroup}
@@ -111,13 +113,6 @@
       {/foreach}
     </ul>
 
-    {if $ms_repl.is_large_set}
-      <button type="button" class="ms-repl-front__more js-ms-repl-more"
-              data-more="{l s='Voir les %d références' sprintf=[$ms_repl.total_count] d='Modules.Megaservicereplacement.Shop'}"
-              data-less="{l s='Réduire la liste' d='Modules.Megaservicereplacement.Shop'}">
-        {l s='Voir les %d références' sprintf=[$ms_repl.total_count] d='Modules.Megaservicereplacement.Shop'}
-      </button>
-    {/if}
 
     {* ── Ajout groupé des composants cochés ── *}
     {if $msReplGroup}
