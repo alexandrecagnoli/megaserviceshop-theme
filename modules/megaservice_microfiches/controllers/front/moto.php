@@ -278,6 +278,9 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */
     const POWERPARTS_CATEGORY_ID = 41;
 
+    /** Catégorie racine "Pièces détachées d'origine" — cf. fil d'Ariane ci-dessous. */
+    const ORIGINE_CATEGORY_ID = 12;
+
     /**
      * Catégorie "Kits de pièces détachées".
      *
@@ -576,6 +579,10 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
 
     /**
      * Fil d'Ariane : Accueil > Pièces détachées d'origine > [moto].
+     *
+     * Le niveau "Pièces détachées d'origine" pointait vers '#' (REC-10) : un lien
+     * qui a l'air cliquable mais ne mène nulle part. Il pointe désormais vers la
+     * catégorie racine (12), au même titre que les autres niveaux du fil d'Ariane.
      */
     public function getBreadcrumbLinks()
     {
@@ -583,7 +590,7 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
 
         $breadcrumb['links'][] = [
             'title' => $this->module->l('Pièces détachées d\'origine', 'moto'),
-            'url'   => '#',
+            'url'   => $this->context->link->getCategoryLink(self::ORIGINE_CATEGORY_ID),
         ];
         $motoSlug = $this->moto->slug();
         $breadcrumb['links'][] = [
