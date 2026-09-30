@@ -735,3 +735,17 @@ Appelé avec deux propriétés — `@include transition(background, color)` — 
 **Pourquoi ce n'est pas fait** : le correctif ferait s'animer d'un coup 31 survols aujourd'hui instantanés, dans le header, les boutons, les filtres et les cartes. C'est un changement de ressenti sur tout le thème — à faire en connaissance de cause et à valider visuellement, pas en passant.
 
 **Statut** : 🟡 actif — à traiter dans une passe dédiée aux animations.
+
+---
+
+## 🟠 Index de recherche natif quasi vide — l'import catalogue ne passe pas par Product::save()
+
+**Contexte** : constaté le 30/09 en regardant comment exposer une recherche par référence. Seuls 38 produits sur 47 918 actifs figuraient dans `ps_search_index`, malgré un réglage de poids correct (`PS_SEARCH_WEIGHT_REF=10`, le plus haut — une référence exacte remonterait en tête si elle était indexée).
+
+**Cause** : même famille que les taxes ([entrée dédiée](#-r%C3%A8gle-de-taxe-fr-20--appliqu%C3%A9e-en-sql-hors-import--les-nouveaux-produits-repartent-%C3%A0-0)) et les relations en attente : l'import catalogue écrit directement en SQL et ne déclenche jamais `Product::save()`, le seul point qui réindexe automatiquement un produit pour la recherche.
+
+**Fix appliqué** : [scripts/cli/reindex_search.php](scripts/cli/reindex_search.php) — `Search::indexation(true)`, à relancer après chaque import. Ne modifie aucune donnée produit, seulement l'index (`ps_search_index` / `ps_search_word`).
+
+**Reste à faire** : la recherche native `/recherche?s=<référence>` existe déjà côté PrestaShop (friendly URL `recherche`), mais rien dans le header ne pointe dessus — le bouton `.ms-search-widget__toggle` de `ps_searchbar.tpl` n'a aucun JS ni formulaire associé. À implémenter si le client veut une recherche utilisable depuis le site, pas seulement par URL directe.
+
+**Statut** : 🟠 actif — reindexation manuelle tant que l'import ne marque pas les produits comme non indexés lui-même.
