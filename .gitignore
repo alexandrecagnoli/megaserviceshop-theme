@@ -36,8 +36,12 @@ var/logs/
 /docs/ukooparts*/
 /docs/ps_facetedsearch/
 
-# Config locale Claude Code
-.claude/
+# Config locale Claude Code — sauf les skills, qui sont du travail d'equipe et
+# doivent suivre le depot (sinon ils ne vivent que sur le poste qui les a crees).
+# On exclut le CONTENU de .claude/, pas le dossier : git ne sait pas reinclure
+# un fichier dont un dossier parent est exclu.
+.claude/*
+!.claude/skills/
 
 # Sources constructeur brutes (3,8 Go : XML PIM, PHO, microfiches, exports).
 /IMPORT_FILES/
