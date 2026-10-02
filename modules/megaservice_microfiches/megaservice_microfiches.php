@@ -648,7 +648,9 @@ class Megaservice_microfiches extends Module
         $out = '<div class="panel"><h3>Rapport d\'import</h3>';
         foreach ($reports as $marque => $r) {
             $a          = $r->toArray();
-            $alertClass = count($r->errors) > 0 ? 'alert-warning' : 'alert-success';
+            $alertClass = (count($r->errors) > 0 || count($r->yearMismatches) > 0)
+                ? 'alert-warning'
+                : 'alert-success';
             $out .= sprintf(
                 '<div class="alert %s">'
                 . '<h4>%s &mdash; %s</h4>'
@@ -659,6 +661,7 @@ class Megaservice_microfiches extends Module
                 . '<li>Dédupliquées (MODELNUMBER doublon) : <strong>%d</strong></li>'
                 . '<li>Skippées (bruit / invalides) : <strong>%d</strong></li>'
                 . '<li>Tombées en <code>Autres</code> (à corriger en BO) : <strong>%d</strong></li>'
+                . '<li>Année contredite par le nom du modèle : <strong>%d</strong></li>'
                 . '<li>Durée : <strong>%d ms</strong></li>'
                 . '<li>Erreurs SQL : <strong>%d</strong></li>'
                 . '</ul>'
@@ -667,7 +670,8 @@ class Megaservice_microfiches extends Module
                 htmlspecialchars($marque),
                 htmlspecialchars($a['csv']),
                 $a['read'], $a['inserted'], $a['updated'], $a['deduped'],
-                $a['skipped'], $a['autres'], $a['duration_ms'], count($r->errors)
+                $a['skipped'], $a['autres'], $a['year_mismatches'],
+                $a['duration_ms'], count($r->errors)
             );
 
             if (count($r->errors) > 0) {
@@ -681,6 +685,28 @@ class Megaservice_microfiches extends Module
                 }
                 if (count($r->errors) > 10) {
                     $out .= sprintf('<li><em>&hellip; et %d autres</em></li>', count($r->errors) - 10);
+                }
+                $out .= '</ul>';
+            }
+
+            if (count($r->yearMismatches) > 0) {
+                $out .= '<h5>Année du CSV contredite par le nom du modèle '
+                      . '(10 premières) &mdash; <em>importées telles quelles, '
+                      . 'à corriger à la source</em> :</h5><ul>';
+                foreach (array_slice($r->yearMismatches, 0, 10) as $ym) {
+                    $out .= sprintf(
+                        '<li><code>%s</code> &mdash; colonne année : <strong>%d</strong>, '
+                        . 'nom du modèle : <strong>%d</strong></li>',
+                        htmlspecialchars($ym['modelnumber']),
+                        (int) $ym['annee'],
+                        (int) $ym['declared']
+                    );
+                }
+                if (count($r->yearMismatches) > 10) {
+                    $out .= sprintf(
+                        '<li><em>&hellip; et %d autres</em></li>',
+                        count($r->yearMismatches) - 10
+                    );
                 }
                 $out .= '</ul>';
             }

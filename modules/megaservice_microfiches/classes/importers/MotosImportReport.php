@@ -30,6 +30,14 @@ class MotosImportReport
     /** @var array<int, array{modelnumber: string, core_name: string}> Motos en 'Autres'. */
     public $autresFound = [];
 
+    /**
+     * Rows dont la colonne `année` contredit le millésime inscrit dans le nom
+     * du modèle. Signalées, jamais corrigées : voir MotosImporter::declaredYear().
+     *
+     * @var array<int, array{modelnumber: string, annee: int, declared: int}>
+     */
+    public $yearMismatches = [];
+
     /** @var float */
     private $startedAt;
     /** @var float|null */
@@ -58,6 +66,15 @@ class MotosImportReport
         $this->autresFound[] = ['modelnumber' => $modelnumber, 'core_name' => $coreName];
     }
 
+    public function addYearMismatch(string $modelnumber, int $annee, int $declared): void
+    {
+        $this->yearMismatches[] = [
+            'modelnumber' => $modelnumber,
+            'annee'       => $annee,
+            'declared'    => $declared,
+        ];
+    }
+
     public function finish(): void
     {
         $this->finishedAt = microtime(true);
@@ -82,6 +99,7 @@ class MotosImportReport
             'skipped'     => $this->rowsSkipped,
             'errors'      => count($this->errors),
             'autres'      => count($this->autresFound),
+            'year_mismatches' => count($this->yearMismatches),
             'duration_ms' => $this->durationMs(),
         ];
     }

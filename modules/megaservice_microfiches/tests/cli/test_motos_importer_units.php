@@ -197,6 +197,54 @@ check('buildRow trim category_fr',  $trimmed['category_fr'], 'X 2024');
 check('buildRow trim nom_fr',       $trimmed['nom_fr'],      'X');
 
 // =====================================================================
+// declaredYear() — millésime inscrit dans le libellé du modèle
+// =====================================================================
+
+// Les deux cas réels qui ont motivé le garde-fou (REC-50).
+check('declaredYear 1390 Super Duke R 2025', MotosImporter::declaredYear([
+    'category_fr'   => '1390 Super Duke R 2025',
+    'model_name_fr' => '2025 KTM 1390 SUPER DUKE R',
+]), 2025);
+check('declaredYear 950 Super Duke 2004', MotosImporter::declaredYear([
+    'category_fr'   => '950 Super Duke 2004',
+    'model_name_fr' => '950 SUPER DUKE 2004',
+]), 2004);
+
+// Le dernier millésime du libellé gagne : la cylindrée ne doit jamais passer
+// pour une année, et le millésime est en fin de libellé.
+check('declaredYear ignore la cylindree 1390', MotosImporter::declaredYear([
+    'category_fr' => '1390 Super Duke R 2026',
+]), 2026);
+check('declaredYear ignore 125', MotosImporter::declaredYear([
+    'category_fr' => '125 Duke 2021',
+]), 2021);
+
+// Pas de millésime → pas de signalement possible.
+check('declaredYear sans annee', MotosImporter::declaredYear([
+    'category_fr'   => 'Super Duke R',
+    'model_name_fr' => 'KTM SUPER DUKE R',
+]), null);
+check('declaredYear champs vides', MotosImporter::declaredYear([
+    'category_fr'   => '',
+    'model_name_fr' => '',
+]), null);
+check('declaredYear champs absents', MotosImporter::declaredYear([]), null);
+
+// Repli sur model_name_fr quand category_fr ne porte pas d'année.
+check('declaredYear repli sur model_name_fr', MotosImporter::declaredYear([
+    'category_fr'   => 'Super Duke R',
+    'model_name_fr' => '2025 KTM 1390 SUPER DUKE R',
+]), 2025);
+
+// Nombres à 4 chiffres hors plage ou noyés dans un plus long : pas des années.
+check('declaredYear ignore 1890 hors plage', MotosImporter::declaredYear([
+    'category_fr' => 'Modele 1890',
+]), null);
+check('declaredYear ignore un nombre a 5 chiffres', MotosImporter::declaredYear([
+    'category_fr' => 'Reference 120250',
+]), null);
+
+// =====================================================================
 // Résultat final
 // =====================================================================
 

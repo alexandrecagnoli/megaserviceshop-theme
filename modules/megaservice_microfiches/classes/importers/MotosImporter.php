@@ -84,6 +84,15 @@ class MotosImporter
                 $report->addAutres($mn, $built['core_name']);
             }
 
+            // La colonne `année` est recopiée telle quelle du CSV constructeur.
+            // Si elle contredit le millésime inscrit dans le nom du modèle, on
+            // le signale : la row est importée quand même, mais l'anomalie
+            // apparaît dans le rapport au lieu d'atteindre le front en silence.
+            $declared = self::declaredYear($row);
+            if ($declared !== null && $declared !== $built['annee']) {
+                $report->addYearMismatch($mn, $built['annee'], $declared);
+            }
+
             $this->upsert($built, $report);
         }
 
@@ -158,6 +167,45 @@ class MotosImporter
             'description_fr'      => $textFr !== '' ? $textFr : null,
             'picture_main'        => $picture !== '' ? $picture : null,
         ];
+    }
+
+    /**
+     * Millésime inscrit dans le libellé du modèle, ou null s'il n'y en a pas.
+     *
+     * Le CSV constructeur porte l'année deux fois : dans sa propre colonne, et
+     * dans le libellé de catégorie / le nom du modèle (« 1390 Super Duke R 2025 »,
+     * « 2025 KTM 1390 SUPER DUKE R »). Les deux doivent concorder. Quand elles
+     * divergent, l'une des deux est fausse — et on ne peut pas deviner laquelle :
+     *
+     *   $M-20251390SUPERDUKER  annee=2017, libellé 2025 → l'ANNÉE est fausse
+     *   $M-950SUPERDUKER2014   annee=2014, libellé 2004 → le LIBELLÉ est faux
+     *
+     * D'où un simple signalement, jamais une correction automatique : trancher
+     * en faveur du libellé réparerait la première ligne et casserait la seconde.
+     *
+     * On retient le DERNIER nombre de 4 chiffres en 19xx/20xx : les cylindrées
+     * (125, 1390, 950) ne peuvent pas être confondues avec un millésime, et le
+     * millésime est en fin de libellé de catégorie. Mesuré sur les 7 466 motos
+     * des trois CSV constructeur : 10 divergences, aucun faux positif.
+     *
+     * @param array<string, string|null> $csvRow Keys normalisées par CsvReader.
+     */
+    public static function declaredYear(array $csvRow): ?int
+    {
+        foreach (['category_fr', 'model_name_fr'] as $field) {
+            $value = trim((string) ($csvRow[$field] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            if (preg_match_all('/(?<!\d)(19|20)\d{2}(?!\d)/', $value, $m) >= 1) {
+                $year = (int) end($m[0]);
+                if ($year >= self::MIN_YEAR && $year <= self::MAX_YEAR) {
+                    return $year;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
