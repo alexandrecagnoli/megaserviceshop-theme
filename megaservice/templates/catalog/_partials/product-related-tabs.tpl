@@ -21,10 +21,10 @@
         {l s='Pièces exclues' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_excluded_products|count})</span>
       </button>
       <button class="ms-related-tabs__btn js-related-tab-btn is-active" type="button" role="tab" data-tab="recommended">
-        {l s='Pièces recommandées' d='Shop.Theme.Catalog'}
+        {l s='Pièces recommandées' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_recommended_products|count})</span>
       </button>
       <button class="ms-related-tabs__btn js-related-tab-btn" type="button" role="tab" data-tab="spare">
-        {l s='Pièces de rechange' d='Shop.Theme.Catalog'}
+        {l s='Pièces de rechange' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_spare_products|count})</span>
       </button>
     </nav>
 
