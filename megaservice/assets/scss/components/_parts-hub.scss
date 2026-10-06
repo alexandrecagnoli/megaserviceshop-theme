@@ -1,0 +1,229 @@
+// ============================================================================
+// Hub d'orientation des pièces détachées d'origine (catégorie 12).
+// Template : megaservice/templates/catalog/_partials/parts-hub.tpl
+//
+// Remplace la liste produits, qui remontait 40 897 références sur 3 409 pages.
+// Deux chemins vers le hub moto : le sélecteur au-dessus, la navigation par
+// gamme ici.
+//
+// Les tuiles de gamme réutilisent le mixin visual-card — même apparence que les
+// accès du hub moto et que les cartes de catégorie, une seule définition.
+// ============================================================================
+
+.ms-parts-hub {
+  @include container;
+  padding-bottom: $spacing-xxl;
+}
+
+.ms-parts-hub__block {
+  padding-top: $spacing-xxl;
+
+  // Alterne les fonds sans sortir du conteneur : le full-bleed de cette page est
+  // déjà pris par le hero et le bandeau noir du fil d'ariane.
+  &--alt {
+    margin-top: $spacing-xxl;
+    padding: $spacing-xl $spacing-lg $spacing-xl;
+    background: $color-gray-5;
+
+    @include media-md { padding-left: $spacing-md; padding-right: $spacing-md; }
+  }
+}
+
+.ms-parts-hub__title {
+  margin: 0 0 $spacing-sm;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: $font-size-h2;
+  text-transform: uppercase;
+  color: $color-text;
+}
+
+.ms-parts-hub__lead {
+  margin: 0 0 $spacing-xl;
+  font-family: $font-main;
+  font-size: $font-size-base;
+  color: $color-text-light;
+  max-width: 44rem;
+}
+
+// ── Gammes ──────────────────────────────────────────────────────────────────
+
+.ms-parts-hub__gammes {
+  display: grid;
+  // auto-fit : le nombre de gammes dépend du catalogue (une gamme sans modèle
+  // n'est pas rendue), la grille ne doit pas supposer un compte fixe.
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: $spacing-lg;
+
+  @include media-md { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+
+.ms-parts-hub__gamme {
+  @include visual-card;
+  text-decoration: none;
+
+  // La gamme affichée porte déjà son libellé : on la marque au lieu de la
+  // masquer, pour qu'on puisse en changer sans remonter la page.
+  &.is-active {
+    outline: 3px solid $color-ktm;
+    outline-offset: -3px;
+  }
+
+  &:focus-visible { @include focus-ring; }
+}
+
+.ms-parts-hub__gamme-bg { @include visual-card-bg; }
+
+.ms-parts-hub__gamme-label { @include visual-card-label; }
+
+.ms-parts-hub__gamme-count {
+  position: relative;
+  z-index: 2;
+  margin-top: $spacing-xs;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  color: rgba($color-white, 0.82);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+}
+
+// ── Modèles ─────────────────────────────────────────────────────────────────
+
+.ms-parts-hub__models {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: $spacing-lg;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-parts-hub__model {
+  display: flex;
+  flex-direction: column;
+  background: $color-white;
+  border: 1px solid $color-border;
+}
+
+.ms-parts-hub__model-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 130px;
+  background: $color-white;
+  border-bottom: 1px solid $color-border;
+  overflow: hidden;
+
+  img {
+    max-width: 80%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+// Réserve quand la moto n'a pas de photo : la marque plutôt qu'un cadre vide.
+.ms-parts-hub__model-noimg {
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: $font-size-lg;
+  text-transform: uppercase;
+  color: $color-gray-35;
+}
+
+.ms-parts-hub__model-body {
+  padding: $spacing-md;
+}
+
+.ms-parts-hub__model-brand {
+  margin: 0;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: $font-size-sm;
+  text-transform: uppercase;
+  color: $color-ktm;
+}
+
+.ms-parts-hub__model-name {
+  margin: 2px 0 $spacing-md;
+  font-family: $font-heading;
+  font-weight: 900;
+  font-size: $font-size-lg;
+  text-transform: uppercase;
+  color: $color-text;
+}
+
+// ── Millésimes ──────────────────────────────────────────────────────────────
+// Portés sur la carte, et non derrière une page intermédiaire : une pièce
+// dépend de l'année, le choix doit rester explicite mais ne pas coûter un clic.
+
+.ms-parts-hub__years {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    display: block;
+    // 44px de haut : cible tactile, cf. les boutons du thème.
+    min-height: 44px;
+    padding: 0 $spacing-sm;
+    line-height: 44px;
+    border: 1px solid $color-border;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: $font-size-sm;
+    color: $color-text;
+    text-decoration: none;
+    @include transition(background-color);
+
+    &:hover,
+    &:focus-visible {
+      background: $color-ktm;
+      border-color: $color-ktm;
+      color: $color-white;
+    }
+
+    &:focus-visible { @include focus-ring; }
+  }
+}
+
+.ms-parts-hub__years-more {
+  align-self: center;
+  padding: 0 $spacing-xs;
+  font-family: $font-main;
+  font-size: $font-size-sm;
+  color: $color-text-light;
+}
+
+// ── Les deux familles ───────────────────────────────────────────────────────
+
+.ms-parts-hub__families {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-lg;
+
+  @include media-md { grid-template-columns: 1fr; }
+}
+
+.ms-parts-hub__family {
+  padding: $spacing-xl;
+  border: 1px solid $color-border;
+
+  h3 {
+    margin: 0 0 $spacing-sm;
+    font-family: $font-heading;
+    font-weight: 900;
+    font-size: $font-size-h3;
+    text-transform: uppercase;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0;
+    font-family: $font-main;
+    font-size: $font-size-base;
+    line-height: 1.6;
+    color: $color-text-light;
+  }
+}

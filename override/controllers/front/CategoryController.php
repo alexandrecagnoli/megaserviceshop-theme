@@ -43,6 +43,36 @@ class CategoryController extends CategoryControllerCore
      */
     private static $MOTO_FINDER_ROOT_IDS = [12, 41];
 
+    /**
+     * Catégories dont la page devient un hub d'orientation au lieu d'une liste.
+     *
+     *   12  Pièces détachées d'origine
+     *
+     * Sous le sélecteur, cette page remontait 40 897 produits sur 3 409 pages —
+     * et les premiers affichés étaient des manuels d'utilisateur sans photo. Une
+     * liste n'a aucun sens ici : sans moto, la compatibilité n'est pas connue, et
+     * la compatibilité des pièces d'origine passe de toute façon par les vues
+     * éclatées, pas par la montabilité (cf. $MOTO_CONTEXT_ROOT_IDS).
+     *
+     * On remplace donc la liste par deux chemins vers la même fin : le sélecteur
+     * pour qui connaît sa moto, la navigation par gamme pour qui la cherche. Les
+     * deux mènent au hub moto, inchangé.
+     *
+     * Volontairement limité à 12 : ses enfants (39 partie cycle, 40 partie
+     * moteur) souffrent du même défaut, mais les y étendre se décide, cf. le
+     * commentaire de showPartsHub().
+     */
+    private static $PARTS_HUB_CATEGORY_IDS = [12];
+
+    /** Millésimes affichés sur une carte modèle avant le repli « + N ». */
+    const HUB_YEARS_SHOWN = 6;
+
+    /** Modèles affichés quand aucune gamme n'est choisie. */
+    const HUB_MODELS_DEFAULT = 12;
+
+    /** Garde-fou : une gamme très fournie ne doit pas rendre 300 cartes. */
+    const HUB_MODELS_MAX = 60;
+
     /** @var int|null id_moto du "garage" (cookie), mémoïsé. */
     private $motoFilterId;
 
@@ -101,6 +131,267 @@ class CategoryController extends CategoryControllerCore
             // carte doit vérifier, pas supposer (cf. compatibleProductIds).
             'ms_compatible_ids'     => $this->compatibleProductIds(),
         ]);
+
+        $this->assignPartsHub();
+    }
+
+    /**
+     * Données du hub d'orientation qui remplace la liste produits (cf.
+     * $PARTS_HUB_CATEGORY_IDS). Rien n'est posé hors de ces catégories : le
+     * template ne rend le hub que sur `ms_show_parts_hub`.
+     */
+    private function assignPartsHub()
+    {
+        if (!$this->showPartsHub()) {
+            $this->context->smarty->assign('ms_show_parts_hub', false);
+
+            return;
+        }
+
+        // La gamme choisie reste dans l'URL (?gamme=Enduro) : pas de nouvelle
+        // route à déclarer, et le lien est partageable et indexable.
+        $gamme = trim((string) Tools::getValue('gamme'));
+        if ($gamme !== '' && !in_array($gamme, MsMoto::TYPES, true)) {
+            $gamme = '';
+        }
+
+        $this->context->smarty->assign([
+            'ms_show_parts_hub' => true,
+            'ms_hub_gammes'     => $this->partsHubGammes(),
+            'ms_hub_gamme'      => $gamme,
+            'ms_hub_models'     => $this->partsHubModels($gamme),
+        ]);
+    }
+
+    /**
+     * Le hub remplace-t-il la liste sur cette page ?
+     *
+     * Vrai avec ou sans moto en garage : sur ces branches le filtre moto ne
+     * s'applique pas aux produits (cf. $MOTO_CONTEXT_ROOT_IDS), donc une liste y
+     * est tout aussi indifférenciée dans les deux cas. Une moto en garage change
+     * seulement ce que propose le hub, pas le fait qu'il s'affiche.
+     *
+     * Test sur l'identifiant exact, pas sur le sous-arbre : étendre aux enfants
+     * 39 et 40 supprimerait leur liste produits, ce qui se décide avant de se
+     * coder — elles sont des catégories marchandes à part entière.
+     */
+    private function showPartsHub()
+    {
+        return $this->category->id
+            && in_array((int) $this->category->id, self::$PARTS_HUB_CATEGORY_IDS, true)
+            && $this->motoClassesAvailable();
+    }
+
+    /**
+     * MsMoto vit dans megaservice_microfiches, pas dans le thème : si le module
+     * est désinstallé, le hub s'efface au lieu de casser la catégorie.
+     */
+    private function motoClassesAvailable()
+    {
+        if (class_exists('MsMoto')) {
+            return true;
+        }
+
+        $file = _PS_MODULE_DIR_ . 'megaservice_microfiches/classes/MsMoto.php';
+        if (is_file($file)) {
+            require_once $file;
+        }
+
+        return class_exists('MsMoto');
+    }
+
+    /**
+     * Les gammes (type de moto), avec leur nombre de modèles distincts et une
+     * photo représentative — celle du millésime le plus récent qui en a une.
+     *
+     * @return array<int, array{type:string,label:string,nb:int,picture:string,url:string}>
+     */
+    private function partsHubGammes()
+    {
+        $table = _DB_PREFIX_ . 'ms_moto';
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT t.`type`, t.`nb`,
+                    (SELECT m2.`picture_main` FROM `' . $table . '` m2
+                      WHERE m2.`type` = t.`type` AND m2.`active` = 1
+                        AND m2.`picture_main` IS NOT NULL AND m2.`picture_main` <> ""
+                      ORDER BY m2.`annee` DESC LIMIT 1) AS picture
+               FROM (SELECT `type`, COUNT(DISTINCT CONCAT(`marque`, "|", `core_name`)) AS nb
+                       FROM `' . $table . '`
+                      WHERE `active` = 1
+                      GROUP BY `type`) t'
+        ) ?: [];
+
+        $byType = [];
+        foreach ($rows as $r) {
+            $byType[(string) $r['type']] = $r;
+        }
+
+        // Ordre de MsMoto::TYPES plutôt que celui du SQL : l'ordre d'affichage
+        // ne doit pas bouger au gré du catalogue.
+        $out = [];
+        foreach (MsMoto::TYPES as $type) {
+            if (empty($byType[$type]) || (int) $byType[$type]['nb'] === 0) {
+                continue;
+            }
+            $out[] = [
+                'type'    => $type,
+                'label'   => $this->gammeLabel($type),
+                'nb'      => (int) $byType[$type]['nb'],
+                'picture' => $this->motoPictureUrl((string) $byType[$type]['picture']),
+                'url'     => $this->hubGammeUrl($type),
+            ];
+        }
+
+        return $out;
+    }
+
+    /** `Electrique` est stocké sans accent (enum SQL) ; l'affichage en porte un. */
+    private function gammeLabel($type)
+    {
+        return $type === 'Electrique' ? 'Électrique' : (string) $type;
+    }
+
+    /**
+     * URL de la page courante filtrée sur une gamme.
+     *
+     * Le paramètre est ajouté à la main plutôt que passé à getCategoryLink() :
+     * sa signature n'accepte pas de paramètres libres — son 4e argument est la
+     * chaîne de facettes de ps_facetedsearch, pas un tableau de query string.
+     */
+    private function hubGammeUrl($type)
+    {
+        $url = $this->context->link->getCategoryLink($this->category);
+
+        return $url
+            . (strpos($url, '?') === false ? '?' : '&')
+            . 'gamme=' . urlencode((string) $type);
+    }
+
+    /**
+     * Les modèles à afficher : ceux de la gamme choisie, sinon les plus récents.
+     *
+     * Une ligne de ps_ms_moto = un couple (modèle, millésime). On regroupe par
+     * modèle et on porte les millésimes SUR la carte : une pièce dépend de
+     * l'année, le choix doit rester explicite — mais sans page intermédiaire
+     * entre le modèle et son hub.
+     *
+     * @return array<int, array{marque:string,name:string,picture:string,years:array}>
+     */
+    private function partsHubModels($gamme)
+    {
+        $table = _DB_PREFIX_ . 'ms_moto';
+
+        // Deux passes, et c'est voulu. Une seule requête avec LIMIT donnerait des
+        // millésimes TRONQUÉS : limiter les lignes limite les couples
+        // (modèle, année), pas les modèles. Une carte aurait annoncé « 2026,
+        // 2025 » pour une moto produite depuis 2017 — faux, et sur un site de
+        // pièces une année manquante se paie en retour client.
+        //
+        // Passe 1 : quels modèles afficher.
+        $where = '`active` = 1';
+        if ($gamme !== '') {
+            $where .= ' AND `type` = "' . pSQL($gamme) . '"';
+        }
+
+        $max = $gamme !== '' ? self::HUB_MODELS_MAX : self::HUB_MODELS_DEFAULT;
+
+        $keys = Db::getInstance()->executeS(
+            'SELECT `marque`, `core_name`, MAX(`annee`) AS recent
+               FROM `' . $table . '`
+              WHERE ' . $where . '
+              GROUP BY `marque`, `core_name`
+              ORDER BY ' . ($gamme !== '' ? '`marque`, `core_name`' : 'recent DESC, `marque`, `core_name`') . '
+              LIMIT ' . (int) $max
+        ) ?: [];
+
+        if (empty($keys)) {
+            return [];
+        }
+
+        // Passe 2 : TOUS les millésimes de ces modèles, tronqués par personne.
+        $pairs = [];
+        foreach ($keys as $k) {
+            $pairs[] = '(`marque` = "' . pSQL($k['marque']) . '"'
+                     . ' AND `core_name` = "' . pSQL($k['core_name']) . '")';
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT `id_moto`, `marque`, `core_name`, `type`, `annee`, `picture_main`
+               FROM `' . $table . '`
+              WHERE `active` = 1 AND (' . implode(' OR ', $pairs) . ')
+              ORDER BY `annee` DESC'
+        ) ?: [];
+
+        // L'ordre des cartes est celui de la passe 1, pas celui des millésimes.
+        $models = [];
+        foreach ($keys as $k) {
+            $models[$k['marque'] . '|' . $k['core_name']] = [
+                'marque'  => (string) $k['marque'],
+                'name'    => (string) $k['core_name'],
+                'picture' => '',
+                'years'   => [],
+            ];
+        }
+
+        foreach ($rows as $r) {
+            $key = $r['marque'] . '|' . $r['core_name'];
+            if (!isset($models[$key])) {
+                continue;
+            }
+
+            if ($models[$key]['picture'] === '') {
+                $models[$key]['picture'] = $this->motoPictureUrl((string) $r['picture_main']);
+            }
+
+            $models[$key]['years'][] = [
+                'annee' => (int) $r['annee'],
+                'url'   => MsMoto::hubUrl(
+                    $this->context,
+                    (int) $r['id_moto'],
+                    $r['marque'],
+                    $r['core_name'],
+                    $r['annee'],
+                    $r['type']
+                ),
+            ];
+        }
+
+        // Millésimes du plus récent au plus ancien, quel que soit l'ordre SQL,
+        // puis coupés : le surplus est annoncé, pas rendu. Le découpage est fait
+        // ici et non dans le template, pour que le seuil reste une constante et
+        // non un nombre recopié des deux côtés.
+        foreach ($models as &$model) {
+            usort($model['years'], function ($a, $b) {
+                return $b['annee'] - $a['annee'];
+            });
+
+            $total = count($model['years']);
+            $model['years_more'] = max(0, $total - self::HUB_YEARS_SHOWN);
+            $model['years']      = array_slice($model['years'], 0, self::HUB_YEARS_SHOWN);
+        }
+        unset($model);
+
+        return array_values($models);
+    }
+
+    /**
+     * URL publique d'une photo de moto, ou '' si le fichier manque sur le disque.
+     *
+     * Même garde-fou que MotoController::partieImageUrl : une image cassée est
+     * pire que pas d'image, le template a sa réserve.
+     */
+    private function motoPictureUrl($relative)
+    {
+        $rel = trim((string) $relative);
+        if ($rel === '' || strpos($rel, '..') !== false) {
+            return '';
+        }
+        if (!is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $rel)) {
+            return '';
+        }
+
+        return __PS_BASE_URI__ . 'img/ms_moto/' . $rel;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

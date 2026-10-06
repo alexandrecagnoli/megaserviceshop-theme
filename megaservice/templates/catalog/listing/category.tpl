@@ -45,3 +45,33 @@
 {block name='product_list_footer'}
   {include file='catalog/_partials/category-footer.tpl' listing=$listing category=$category}
 {/block}
+
+{* Sur « Pièces détachées d'origine », la liste produits cède la place à un hub
+   d'orientation : elle remontait 40 897 références sur 3 409 pages, à commencer
+   par des manuels d'utilisateur sans photo. Sans moto, la compatibilité n'y est
+   pas connue — et pour ces pièces elle passe de toute façon par les vues
+   éclatées, pas par la montabilité (cf. CategoryController::showPartsHub).
+
+   On court-circuite `content` plutôt que les blocs de liste : ni la colonne de
+   facettes, ni le tri, ni la pagination n'ont de sens sur une page sans
+   produits. Partout ailleurs, le listing reste strictement celui du parent. *}
+{block name='content'}
+  {if isset($ms_show_parts_hub) && $ms_show_parts_hub}
+
+    {block name='parts_hub_header'}
+      {if $ms_is_full_width}
+        {include file='catalog/_partials/category-header-full.tpl' listing=$listing category=$category}
+      {else}
+        {include file='catalog/_partials/category-header.tpl' listing=$listing category=$category}
+      {/if}
+    {/block}
+
+    {* Le sélecteur reste la voie rapide pour qui connaît sa moto. *}
+    {include file='_partials/parts-search.tpl'}
+
+    {include file='catalog/_partials/parts-hub.tpl'}
+
+  {else}
+    {$smarty.block.parent}
+  {/if}
+{/block}
