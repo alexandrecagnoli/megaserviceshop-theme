@@ -189,7 +189,24 @@ window.prestashop.on('updateProductList', function(data) {
     if (!updateUrl) return;
 
     var newVal  = parseInt($select.val(), 10);
+
+    // La quantité d'avant : nécessaire parce que CartController attend un DELTA
+    // (`qty` + `op=up|down`), jamais une quantité cible.
+    //
+    // Elle était lue dans `data-current-qty`, que le template ne pose pas (REC-25) :
+    // le champ a été converti de <select> en <input type="number"> sans reporter
+    // l'attribut. `baseVal` valait donc NaN, le garde-fou ci-dessous coupait, et
+    // AUCUNE requête ne partait — d'où un prix qui ne bougeait pas et une quantité
+    // revenue à 1 au rechargement.
+    //
+    // On se replie sur `defaultValue`, c'est-à-dire l'attribut `value` rendu par le
+    // serveur, donc la quantité réellement en panier. Plus rien à maintenir en
+    // double dans le template : le bug ne peut pas se reproduire si quelqu'un
+    // retouche le champ.
     var baseVal = parseInt($select.data('current-qty'), 10);
+    if (isNaN(baseVal)) {
+      baseVal = parseInt(this.defaultValue, 10);
+    }
     if (isNaN(newVal) || isNaN(baseVal) || newVal === baseVal) return;
 
     var diff = newVal - baseVal;
@@ -215,6 +232,52 @@ window.prestashop.on('updateProductList', function(data) {
       })
       .fail(function(xhr) {
         console.error('[megaservice] update-qty failed:', xhr.status, xhr.responseText ? xhr.responseText.substring(0, 300) : '(no body)');
+      });
+  });
+
+  // ── Rafraîchissement de l'affichage après modification du panier ──────────
+  //
+  // Le thème ÉMETTAIT updateCart sans que personne ne l'écoute. Même requête
+  // partie et base à jour, l'écran gardait les anciens montants jusqu'au
+  // rechargement : c'est le second volet de REC-25 (« pas de mise à jour du
+  // prix final »). Corriger le delta seul n'aurait rien changé à l'écran.
+  //
+  // Le cœur rend déjà les blocs pour nous (CartController, action=refresh) :
+  // on les injecte plutôt que de recomposer les montants en JS, sans quoi il
+  // faudrait réimplémenter remises, écotaxe, frais de port et arrondis.
+  //
+  // Chaque bloc est remplacé seulement s'il est présent : la page panier et le
+  // tunnel de commande n'en affichent pas les mêmes.
+  var CART_BLOCKS = [
+    ['.js-cart',                           'cart_detailed'],
+    ['.js-cart-detailed-totals',           'cart_detailed_totals'],
+    ['.js-cart-summary-products',          'cart_summary_products'],
+    ['.js-cart-summary-subtotals-container', 'cart_summary_subtotals_container'],
+    ['.js-cart-summary-totals',            'cart_summary_totals'],
+    ['#items-subtotal',                    'cart_summary_items_subtotal']
+  ];
+
+  window.prestashop.on('updateCart', function() {
+    // L'URL est posée par le template sur la racine du panier détaillé.
+    var refreshUrl = $('.js-cart').data('refresh-url');
+    if (!refreshUrl) return;
+
+    $.get(refreshUrl, null, null, 'json')
+      .done(function(resp) {
+        if (!resp) return;
+        CART_BLOCKS.forEach(function(pair) {
+          var $target = $(pair[0]);
+          var html    = resp[pair[1]];
+          if ($target.length && typeof html === 'string' && html !== '') {
+            $target.replaceWith(html);
+          }
+        });
+      })
+      .fail(function(xhr) {
+        // Pas de repli silencieux : mieux vaut un rechargement visible qu'un
+        // panier affichant des montants faux.
+        console.error('[megaservice] cart refresh failed:', xhr.status);
+        window.location.reload();
       });
   });
 }());
