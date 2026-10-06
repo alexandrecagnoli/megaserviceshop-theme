@@ -52,3 +52,9 @@ var/logs/
 # commitees deux fois par megarde via un `git add` trop large : on les exclut.
 megaservice/assets/img/*_MY*.jpg
 megaservice/assets/img/mosaique/[0-9]*_*.jpg
+
+# CSV de travail : liaisons produits, references manquantes, extraits de CSV
+# constructeur. Ce sont des donnees generees par l'application d'export, pas du
+# code — perimees au prochain export, et deja tracees ailleurs (le fichier
+# importe vit sur la preprod, les sources constructeur dans data/imports/).
+samples/*.csv
