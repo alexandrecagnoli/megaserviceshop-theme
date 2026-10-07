@@ -105,6 +105,35 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ── Référence affichée sous le titre, mise à jour au changement de déclinaison ──
+  //
+  // PrestaShop recalcule bien la bonne référence par déclinaison côté serveur
+  // (vérifié : choisir "Taille L" renvoie la référence de L, pas celle par
+  // défaut). Mais l'AJAX de rafraîchissement (action=refresh) ne renvoie que
+  // des fragments HTML nommés (product_details, product_prices, ...) ; il n'y a
+  // pas de fragment pour notre paragraphe personnalisé sous le titre, et rien
+  // dans ce thème ne le ciblait pour le reconstruire. Il restait donc figé sur
+  // la référence de la déclinaison par défaut, quelle que soit la taille
+  // choisie ensuite.
+  //
+  // Le natif product-details.tpl (onglet "Fiche technique"), lui, est bien mis
+  // à jour — PrestaShop le cible par sa classe .js-product-details. On relit sa
+  // référence dans le fragment renvoyé par l'évènement `updatedProduct` plutôt
+  // que de retraduire la logique de calcul côté client.
+  if (window.prestashop && typeof window.prestashop.on === 'function') {
+    window.prestashop.on('updatedProduct', function (event) {
+      var valueEl = document.querySelector('.js-product-reference-value');
+      if (!valueEl || !event || !event.product_details) return;
+
+      var tmp = document.createElement('div');
+      tmp.innerHTML = event.product_details;
+      var span = tmp.querySelector('.product-reference span');
+      if (span) {
+        valueEl.textContent = span.textContent.trim();
+      }
+    });
+  }
+
   // ── Quantité +/- ─────────────────────────────────────────────────────────────
   document.querySelectorAll('.js-product-add-to-cart').forEach(function (form) {
     var minusBtn = form.querySelector('.js-qty-minus');
