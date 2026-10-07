@@ -222,6 +222,24 @@
     }
   }
 
+  // Point de connexion — même convention que le badge du panier ci-dessous.
+  &__account-icon {
+    position: relative;
+    display: inline-flex;
+    line-height: 0;
+  }
+
+  &__account-dot {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: $color-ktm;
+    border: 1.5px solid $color-black;
+  }
+
   // Wrapper pour le badge compteur — position relative sur l'icône seulement
   &__cart-icon {
     position: relative;
