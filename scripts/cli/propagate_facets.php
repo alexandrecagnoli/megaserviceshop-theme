@@ -1,6 +1,6 @@
 <?php
 /**
- * Donne aux sous-catégories de Powerparts les facettes de Powerparts.
+ * Donne des facettes aux catégories feuilles qui n'en ont pas.
  * ==============================================
  *
  * Ticket : « le menu facettes est absent sur /74-guidon ».
@@ -12,13 +12,17 @@
  * profondeur : 41 des 53 catégories de niveau 3, mais 10 des 77 de niveau 4,
  * celles où le client arrive réellement en naviguant.
  *
- * Règle appliquée (actée avec Alex le 08/10) : toute sous-catégorie de
- * Powerparts reçoit les filtres de Powerparts, SAUF le filtre `category`
- * (« sous-catégories ») — une feuille n'a pas d'enfant à proposer. Soit, pour la
- * configuration actuelle de la racine : Disponibilité, Sélections, Marque, Prix.
+ * Règle appliquée (actée avec Alex le 08/10) : une catégorie SANS SOUS-CATÉGORIE
+ * hérite de TOUTE la configuration de son ancêtre configuré le plus proche, SAUF
+ * le filtre `category`. Deux raisons à chacune des deux clauses :
  *
- * Volontairement limité à Powerparts : les autres branches ont leurs propres
- * modèles de filtres et leurs propres besoins, leur couverture se décide à part.
+ *   - sans sous-catégorie : une feuille n'a rien à proposer sous elle, le filtre
+ *     `category` y serait vide. Une catégorie qui a des enfants, elle, le garde —
+ *     c'est par lui qu'on descend.
+ *   - toute la configuration de SON ancêtre, et non un jeu uniforme : « Vêtements
+ *     casual » offre Taille, Couleur, Genre, Pointure, Composition ; Powerparts
+ *     offre Disponibilité, Sélections, Marque, Prix. Appliquer le second aux
+ *     t-shirts leur retirerait le filtre Taille, le seul qui y serve vraiment.
  *
  * ATTENTION : enregistrer un modèle de filtres en back-office RECONSTRUIT
  * ps_layered_category pour ses catégories et effacera donc ces lignes. Le script
@@ -59,108 +63,115 @@ if (!$configPath) {
 define('_PS_ADMIN_DIR_', dirname($configPath) . '/admin');
 require_once $configPath;
 
-/**
- * Catégorie dont la configuration sert de modèle à toutes les autres.
- * « Accessoires powerparts » : Disponibilité, Sélections, Marque, Prix.
- */
-const SOURCE_CATEGORY = 41;
-
-/**
- * Profondeur traitée, au sens PrestaShop : Accueil 1, une grande famille 2
- * (Powerparts), une sous-catégorie 3 (Guidon & commandes), une sous-sous-
- * catégorie 4 (Guidon). C'est ce dernier niveau qui est massivement dépourvu de
- * facettes — 10 catégories configurées sur 77 — et c'est là que le client
- * arrive en naviguant.
- */
-const TARGET_DEPTH = 4;
-
-/**
- * Le filtre « sous-catégories » n'est pas hérité : une feuille n'a pas d'enfant
- * à proposer, et la racine l'affiche déjà pour descendre d'un cran.
- */
+/** Filtre « sous-catégories » : jamais hérité par une feuille. */
 const EXCLUDED_TYPE = 'category';
 
 $db     = Db::getInstance();
 $catTbl = _DB_PREFIX_ . 'category';
 $lcTbl  = _DB_PREFIX_ . 'layered_category';
 
-// ── Configuration de la racine : c'est elle qu'on duplique
-$source = $db->executeS(
-    'SELECT `id_shop`, `controller`, `id_value`, `type`, `filter_type`, `filter_show_limit`
-       FROM `' . $lcTbl . '`
-      WHERE `id_category` = ' . (int) SOURCE_CATEGORY . '
-        AND `type` <> "' . pSQL(EXCLUDED_TYPE) . '"
-      ORDER BY `position`'
-) ?: [];
-
-if (!$source) {
-    fwrite(STDERR, sprintf(
-        "La catégorie modèle %d n'a aucune facette configurée : rien à propager.\n",
-        SOURCE_CATEGORY
-    ));
-    exit(1);
-}
-
-// Sous-sous-catégories actives sans configuration propre, toutes branches
-// confondues. Le LEFT JOIN est ce qui rend le script rejouable : une catégorie
-// déjà servie n'est jamais retouchée.
-$targets = $db->executeS(
-    'SELECT c.`id_category`, c.`id_parent`, cl.`name`,
-            (SELECT pl.`name` FROM `' . _DB_PREFIX_ . 'category_lang` pl
-              WHERE pl.`id_category` = c.`id_parent` AND pl.`id_lang` = 1) AS parent_name
+// ── Catégories actives, hors racine et « Accueil »
+$categories = $db->executeS(
+    'SELECT c.`id_category`, c.`id_parent`, c.`level_depth`, cl.`name`,
+            (SELECT COUNT(*) FROM `' . $catTbl . '` k
+              WHERE k.`id_parent` = c.`id_category` AND k.`active` = 1) AS enfants
        FROM `' . $catTbl . '` c
        JOIN `' . _DB_PREFIX_ . 'category_lang` cl
          ON cl.`id_category` = c.`id_category` AND cl.`id_lang` = 1
-       LEFT JOIN (SELECT DISTINCT `id_category` FROM `' . $lcTbl . '`) lc
-         ON lc.`id_category` = c.`id_category`
-      WHERE c.`active` = 1
-        AND c.`level_depth` = ' . (int) TARGET_DEPTH . '
-        AND lc.`id_category` IS NULL
-      ORDER BY parent_name, cl.`name`'
+      WHERE c.`active` = 1 AND c.`id_category` NOT IN (1, 2)
+      ORDER BY c.`level_depth`, cl.`name`'
 ) ?: [];
 
+// ── Configuration existante, groupée par catégorie
+$rows = $db->executeS(
+    'SELECT `id_shop`, `controller`, `id_category`, `id_value`, `type`,
+            `position`, `filter_type`, `filter_show_limit`
+       FROM `' . $lcTbl . '`
+      WHERE `id_category` > 0
+      ORDER BY `id_category`, `position`'
+) ?: [];
+
+$configured = [];
+foreach ($rows as $r) {
+    $configured[(int) $r['id_category']][] = $r;
+}
+
+$parentOf = $nameOf = [];
+foreach ($categories as $c) {
+    $parentOf[(int) $c['id_category']] = (int) $c['id_parent'];
+    $nameOf[(int) $c['id_category']]   = (string) $c['name'];
+}
+
+/** Ancêtre configuré le plus proche, ou 0. */
+$nearestConfiguredAncestor = function ($idCategory) use ($parentOf, $configured) {
+    $seen = [];
+    $id   = isset($parentOf[$idCategory]) ? $parentOf[$idCategory] : 0;
+
+    // Garde-fou : un arbre corrompu a déjà bloqué les facettes une fois
+    // (cf. data/sql/2026-09-23_reparation_arbre_categories.sql).
+    while ($id > 2 && !isset($seen[$id])) {
+        if (!empty($configured[$id])) {
+            return $id;
+        }
+        $seen[$id] = true;
+        $id = isset($parentOf[$id]) ? $parentOf[$id] : 0;
+    }
+
+    return 0;
+};
+
 printf("Mode : %s\n", $apply ? 'APPLICATION' : 'simulation (aucune écriture)');
-printf("Profondeur traitée : %d (sous-sous-catégories)\n", TARGET_DEPTH);
-printf("Configuration modèle : catégorie %d\n", SOURCE_CATEGORY);
-printf(
-    "Filtres hérités : %s\n\n",
-    implode(', ', array_map(function ($r) { return $r['type']; }, $source))
-);
+printf("Règle : les catégories SANS sous-catégorie héritent de leur ancêtre, sans le filtre « %s »\n\n", EXCLUDED_TYPE);
 
-if (!$targets) {
-    echo "Toutes les sous-sous-catégories sont déjà configurées.\n";
-    exit(0);
-}
-
-// Regroupées par parent : c'est ce qui permet de relire la liste et de repérer
-// une branche qui n'aurait rien à faire là.
-$byParent = [];
-foreach ($targets as $t) {
-    $byParent[(string) $t['parent_name']][] = $t;
-}
-
-printf("Sous-sous-catégories à compléter : %d, dans %d branches\n\n", count($targets), count($byParent));
-ksort($byParent);
-foreach ($byParent as $parent => $list) {
-    printf("  %s (%d)\n", $parent, count($list));
-    printf("      %s\n", implode(', ', array_map(function ($t) { return $t['name']; }, $list)));
-}
-
+$plan     = [];
 $inserted = 0;
-if ($apply) {
-    foreach ($targets as $t) {
-        $position = 1;
-        foreach ($source as $r) {
-            $row = [
-                'id_shop'           => (int) $r['id_shop'],
-                'controller'        => pSQL($r['controller']),
-                'id_category'       => (int) $t['id_category'],
-                'id_value'          => $r['id_value'] === null ? null : (int) $r['id_value'],
-                'type'              => pSQL($r['type']),
-                'position'          => $position++,
-                'filter_type'       => (int) $r['filter_type'],
-                'filter_show_limit' => (int) $r['filter_show_limit'],
-            ];
+$orphans  = [];
+$skipped  = 0;
+
+foreach ($categories as $c) {
+    $id = (int) $c['id_category'];
+
+    if (!empty($configured[$id])) {
+        continue;
+    }
+    if ((int) $c['enfants'] > 0) {
+        // Elle a des sous-catégories : hors de la règle.
+        ++$skipped;
+        continue;
+    }
+
+    $source = $nearestConfiguredAncestor($id);
+    if (!$source) {
+        $orphans[] = $c['name'] . ' (' . $id . ')';
+        continue;
+    }
+
+    $toInsert = [];
+    $position = 1;
+    foreach ($configured[$source] as $r) {
+        if ($r['type'] === EXCLUDED_TYPE) {
+            continue;
+        }
+        $toInsert[] = [
+            'id_shop'           => (int) $r['id_shop'],
+            'controller'        => pSQL($r['controller']),
+            'id_category'       => $id,
+            'id_value'          => $r['id_value'] === null ? null : (int) $r['id_value'],
+            'type'              => pSQL($r['type']),
+            'position'          => $position++,
+            'filter_type'       => (int) $r['filter_type'],
+            'filter_show_limit' => (int) $r['filter_show_limit'],
+        ];
+    }
+
+    if (!$toInsert) {
+        continue;
+    }
+
+    $plan[$source][] = ['name' => $c['name'], 'id' => $id, 'nb' => count($toInsert)];
+
+    if ($apply) {
+        foreach ($toInsert as $row) {
             if ($db->insert('layered_category', $row, false, true, Db::INSERT_IGNORE)) {
                 ++$inserted;
             }
@@ -168,11 +179,47 @@ if ($apply) {
     }
 }
 
+$totalCats  = 0;
+$totalLines = 0;
+foreach ($plan as $src => $list) {
+    $totalCats += count($list);
+    foreach ($list as $l) {
+        $totalLines += $l['nb'];
+    }
+}
+
+printf("Feuilles à compléter : %d\n", $totalCats);
+printf("Catégories à enfants laissées en l'état : %d\n\n", $skipped);
+
+foreach ($plan as $src => $list) {
+    $types = [];
+    foreach ($configured[$src] as $r) {
+        if ($r['type'] !== EXCLUDED_TYPE) {
+            $types[] = $r['type'];
+        }
+    }
+    printf(
+        "  hérite de %s (%d) → %d feuille(s), %d filtres : %s\n",
+        isset($nameOf[$src]) ? $nameOf[$src] : ('cat ' . $src),
+        $src,
+        count($list),
+        count($types),
+        implode(', ', array_unique($types))
+    );
+    printf("      %s\n", implode(', ', array_map(function ($l) { return $l['name']; }, $list)));
+}
+
 printf(
     "\nLignes de filtres %s : %d\n",
     $apply ? 'insérées' : 'à insérer',
-    $apply ? $inserted : count($targets) * count($source)
+    $apply ? $inserted : $totalLines
 );
+
+if ($orphans) {
+    printf("\n%d feuille(s) sans aucun ancêtre configuré — laissées en l'état :\n", count($orphans));
+    echo '  ' . implode(', ', $orphans) . "\n";
+    echo "  (il leur faut un modèle de filtres créé en back-office)\n";
+}
 
 if (!$apply) {
     echo "\nRelancer avec --apply pour écrire.\n";
