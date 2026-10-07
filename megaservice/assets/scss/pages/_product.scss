@@ -258,7 +258,9 @@
     border: 1px solid $color-gray-20;
     font-family: $font-main;
     font-size: 14px;
-    padding: 0 12px;
+    // Flèche native du navigateur collée au bord droit (REC — Design des listes
+    // déroulantes) : zone de protection avant le texte, et avant le bord.
+    padding: 0 28px 0 12px;
     width: 100%;
     background: $color-white;
   }
@@ -449,11 +451,17 @@
   overflow: hidden;
 }
 
+// Le select ne couvrait que l'espace à gauche du chevron (flex:1 face à un
+// sibling flex-shrink:0) : cliquer sur le chevron n'ouvrait rien (REC — Cliquabilité
+// menu déroulant). Il occupe désormais toute la zone cliquable ; le chevron est un
+// repère visuel posé par-dessus, pointer-events:none pour laisser passer le clic.
 .ms-product__qty-select {
-  flex: 1;
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
   border: none;
-  padding: 0 16px;
+  padding: 0 40px 0 16px;
   font-family: $font-main;
   font-size: 14px;
   font-weight: 400;
@@ -467,11 +475,12 @@
 }
 
 .ms-product__qty-chevron {
-  flex-shrink: 0;
-  margin: 0 12px;
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
   pointer-events: none;
-  position: relative;
-  z-index: 0;
+  z-index: 2;
 }
 
 .ms-product__cta-group {
