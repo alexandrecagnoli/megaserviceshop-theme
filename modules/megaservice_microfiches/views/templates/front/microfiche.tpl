@@ -52,7 +52,13 @@
           {/foreach}
         </div>
         {if $ms_microfiche.image_url}
-          <a class="ms-pdp__download" href="{$ms_microfiche.image_url}" target="_blank" rel="noopener" download>
+          {* L'attribut download ne fonctionne que sur une URL de même origine —
+             image_url pointe vers les sites constructeur (cross-origin), le
+             navigateur l'ignorait et ouvrait l'image au lieu de la télécharger
+             (REC — téléchargement microfiche). On passe par notre relais. *}
+          <a class="ms-pdp__download"
+             href="{$link->getModuleLink('megaservice_microfiches', 'download', ['id_microfiche' => $ms_microfiche.id_microfiche])|escape:'html'}"
+             download>
             {l s='Télécharger la microfiche' d='Modules.Megaservicemicrofiches.Shop'}
           </a>
         {/if}
