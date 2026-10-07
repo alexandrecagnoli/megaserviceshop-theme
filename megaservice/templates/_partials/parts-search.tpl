@@ -9,7 +9,9 @@
          data-garage-sel="{if isset($ms_garage) && $ms_garage}{$ms_garage.sel_json|escape:'html'}{/if}"
          {* Recherche par VIN : même contrôleur que la modale du header. Sans cet
             attribut, vin-search.js affiche « momentanément indisponible ». *}
-         data-vin-endpoint="{$link->getModuleLink('megaservice_microfiches', 'vinlookup')|escape:'html'}">
+         data-vin-endpoint="{$link->getModuleLink('megaservice_microfiches', 'vinlookup')|escape:'html'}"
+         {* Purge du cookie ms_moto — même endpoint que la modale du header. *}
+         data-clear-endpoint="{$link->getModuleLink('megaservice_mountability', 'clearmoto')|escape:'html'}">
   <div class="ms-parts-search__container">
 
     {* ── Col 2-5 : texte ── *}
@@ -64,6 +66,9 @@
           </select>
         </div>
         <button type="submit" class="ms-parts-search__submit">{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
+        {* Comme dans la modale du header : on pouvait choisir une moto depuis
+           cette section, jamais s'en défaire. Même action, même libellé. *}
+        <button type="button" class="ms-parts-search__reset js-model-reset">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
       </form>
 
       {* Deux étapes, comme la modale du header (cf. vin-search.js) :
@@ -100,6 +105,9 @@
         <button type="button" class="ms-parts-search__submit js-vin-search-btn">{l s='Rechercher mon modèle' d='Shop.Theme.Global'}</button>
         <button type="submit" class="ms-parts-search__submit js-vin-submit" hidden>{l s='Afficher les pièces compatibles' d='Shop.Theme.Global'}</button>
         <button type="button" class="ms-parts-search__vin-new js-vin-new" hidden>{l s='Nouvelle recherche' d='Shop.Theme.Global'}</button>
+        {* Étape 1 uniquement : à l'étape 2 c'est « Nouvelle recherche » qui
+           prend le relais (cf. vin-search.js, setStep). *}
+        <button type="button" class="ms-parts-search__reset js-vin-reset">{l s='Réinitialiser' d='Shop.Theme.Global'}</button>
 
       </form>
 

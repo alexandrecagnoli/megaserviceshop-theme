@@ -1,5 +1,6 @@
 import { initMotoCascade } from './moto-cascade.js';
 import { initVinSearch } from './vin-search.js';
+import { clearMotoFilter, forgetStoredMoto } from './moto-garage.js';
 
 /**
  * Section « Recherche de pièces compatibles » — home et pages catégorie.
@@ -42,11 +43,29 @@ document.addEventListener('DOMContentLoaded', function () {
       initial: initial,
     });
 
+    // Retirer le filtre moto — jusqu'ici possible depuis la seule modale du
+    // header. Sur la section, on pouvait choisir une moto sans jamais pouvoir
+    // s'en défaire, alors que la page affichait bien un catalogue filtré.
+    const clearEndpoint = section.getAttribute('data-clear-endpoint') || '';
+
+    function resetGarage() {
+      clearMotoFilter(clearEndpoint, forgetStoredMoto);
+    }
+
+    const modelReset = section.querySelector('.js-model-reset');
+    if (modelReset) {
+      modelReset.addEventListener('click', resetGarage);
+    }
+
     // L'onglet VIN existait dans le template mais n'était câblé nulle part : la
     // saisie d'un VIN ne déclenchait rien ici, alors qu'elle fonctionnait dans
     // la modale du header. Même module pour les deux (cf. vin-search.js).
+    //
+    // onReset : le bouton « Réinitialiser » de l'onglet VIN revient à l'étape 1
+    // ET purge le garage — sans lui, il n'aurait vidé que le champ.
     initVinSearch(section, {
       endpoint: section.getAttribute('data-vin-endpoint') || '',
+      onReset: resetGarage,
     });
   });
 });

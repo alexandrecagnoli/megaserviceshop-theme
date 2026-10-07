@@ -1,4 +1,5 @@
 import { initVinSearch } from './vin-search.js';
+import { clearMotoFilter as clearGarage, forgetStoredMoto } from './moto-garage.js';
 /**
  * Sélecteur de moto — Modal desktop / Bottomsheet mobile
  */
@@ -148,34 +149,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // que par l'override CategoryController).
   var CLEAR_ENDPOINT = modal.getAttribute('data-clear-endpoint') || '';
 
+  // Corps déplacé dans moto-garage.js : la section « Recherche de pièces »
+  // a désormais le même bouton, et une seconde copie aurait divergé.
   function clearMotoFilter() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
-    applyEmpty();
-
-    if (!CLEAR_ENDPOINT) return;
-
-    fetch(CLEAR_ENDPOINT, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin'
-    })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        // Rechargement UNIQUEMENT si un filtre était réellement armé : le
-        // contenu affiché était alors filtré et ment désormais. Sinon on ne
-        // touche à rien, la modale reste ouverte pour choisir une autre moto.
-        if (data && data.cleared) {
-          // PAS reload() : l'URL courante peut porter ?moto=…, que le serveur
-          // relit pour ARMER le garage. On vidait donc le cookie, puis on le
-          // réarmait dans la foulée — le filtre « se désactivait un instant et
-          // revenait ». On recharge sur l'URL débarrassée des paramètres qui
-          // réarment.
-          var u = new URL(window.location.href);
-          u.searchParams.delete('moto');
-          u.searchParams.delete('ms_clear_moto');
-          window.location.href = u.pathname + (u.search === '?' ? '' : u.search) + u.hash;
-        }
-      })
-      .catch(function () { /* réseau HS : le localStorage est déjà purgé */ });
+    clearGarage(CLEAR_ENDPOINT, function () {
+      forgetStoredMoto();
+      applyEmpty();
+    });
   }
 
   // État « moto sélectionnée » du header et de la barre mobile.
