@@ -59,8 +59,20 @@ if (!$configPath) {
 define('_PS_ADMIN_DIR_', dirname($configPath) . '/admin');
 require_once $configPath;
 
-/** Racine dont les descendants héritent — « Accessoires powerparts ». */
-const ROOT_CATEGORY = 41;
+/**
+ * Catégorie dont la configuration sert de modèle à toutes les autres.
+ * « Accessoires powerparts » : Disponibilité, Sélections, Marque, Prix.
+ */
+const SOURCE_CATEGORY = 41;
+
+/**
+ * Profondeur traitée, au sens PrestaShop : Accueil 1, une grande famille 2
+ * (Powerparts), une sous-catégorie 3 (Guidon & commandes), une sous-sous-
+ * catégorie 4 (Guidon). C'est ce dernier niveau qui est massivement dépourvu de
+ * facettes — 10 catégories configurées sur 77 — et c'est là que le client
+ * arrive en naviguant.
+ */
+const TARGET_DEPTH = 4;
 
 /**
  * Le filtre « sous-catégories » n'est pas hérité : une feuille n'a pas d'enfant
@@ -76,62 +88,62 @@ $lcTbl  = _DB_PREFIX_ . 'layered_category';
 $source = $db->executeS(
     'SELECT `id_shop`, `controller`, `id_value`, `type`, `filter_type`, `filter_show_limit`
        FROM `' . $lcTbl . '`
-      WHERE `id_category` = ' . (int) ROOT_CATEGORY . '
+      WHERE `id_category` = ' . (int) SOURCE_CATEGORY . '
         AND `type` <> "' . pSQL(EXCLUDED_TYPE) . '"
       ORDER BY `position`'
 ) ?: [];
 
 if (!$source) {
     fwrite(STDERR, sprintf(
-        "La catégorie racine %d n'a aucune facette configurée : rien à propager.\n",
-        ROOT_CATEGORY
+        "La catégorie modèle %d n'a aucune facette configurée : rien à propager.\n",
+        SOURCE_CATEGORY
     ));
     exit(1);
 }
 
-// ── Bornes du sous-arbre (nested set)
-$root = $db->getRow(
-    'SELECT `nleft`, `nright` FROM `' . $catTbl . '` WHERE `id_category` = ' . (int) ROOT_CATEGORY
-);
-if (!$root) {
-    fwrite(STDERR, sprintf("Catégorie racine %d introuvable.\n", ROOT_CATEGORY));
-    exit(1);
-}
-
-// Descendants actifs sans configuration propre. Le LEFT JOIN est ce qui rend le
-// script rejouable : une catégorie déjà servie n'est jamais retouchée.
+// Sous-sous-catégories actives sans configuration propre, toutes branches
+// confondues. Le LEFT JOIN est ce qui rend le script rejouable : une catégorie
+// déjà servie n'est jamais retouchée.
 $targets = $db->executeS(
-    'SELECT c.`id_category`, c.`level_depth`, cl.`name`
+    'SELECT c.`id_category`, c.`id_parent`, cl.`name`,
+            (SELECT pl.`name` FROM `' . _DB_PREFIX_ . 'category_lang` pl
+              WHERE pl.`id_category` = c.`id_parent` AND pl.`id_lang` = 1) AS parent_name
        FROM `' . $catTbl . '` c
        JOIN `' . _DB_PREFIX_ . 'category_lang` cl
          ON cl.`id_category` = c.`id_category` AND cl.`id_lang` = 1
        LEFT JOIN (SELECT DISTINCT `id_category` FROM `' . $lcTbl . '`) lc
          ON lc.`id_category` = c.`id_category`
       WHERE c.`active` = 1
-        AND c.`nleft` > ' . (int) $root['nleft'] . '
-        AND c.`nright` < ' . (int) $root['nright'] . '
+        AND c.`level_depth` = ' . (int) TARGET_DEPTH . '
         AND lc.`id_category` IS NULL
-      ORDER BY c.`level_depth`, cl.`name`'
+      ORDER BY parent_name, cl.`name`'
 ) ?: [];
 
 printf("Mode : %s\n", $apply ? 'APPLICATION' : 'simulation (aucune écriture)');
-printf("Racine : Powerparts (%d)\n", ROOT_CATEGORY);
+printf("Profondeur traitée : %d (sous-sous-catégories)\n", TARGET_DEPTH);
+printf("Configuration modèle : catégorie %d\n", SOURCE_CATEGORY);
 printf(
     "Filtres hérités : %s\n\n",
     implode(', ', array_map(function ($r) { return $r['type']; }, $source))
 );
 
 if (!$targets) {
-    echo "Toutes les sous-catégories de Powerparts sont déjà configurées.\n";
+    echo "Toutes les sous-sous-catégories sont déjà configurées.\n";
     exit(0);
 }
 
-printf("Sous-catégories à compléter : %d\n", count($targets));
-foreach (array_slice($targets, 0, 25) as $t) {
-    printf("  niveau %d  %-44s (id %d)\n", $t['level_depth'], $t['name'], $t['id_category']);
+// Regroupées par parent : c'est ce qui permet de relire la liste et de repérer
+// une branche qui n'aurait rien à faire là.
+$byParent = [];
+foreach ($targets as $t) {
+    $byParent[(string) $t['parent_name']][] = $t;
 }
-if (count($targets) > 25) {
-    printf("  … et %d autres\n", count($targets) - 25);
+
+printf("Sous-sous-catégories à compléter : %d, dans %d branches\n\n", count($targets), count($byParent));
+ksort($byParent);
+foreach ($byParent as $parent => $list) {
+    printf("  %s (%d)\n", $parent, count($list));
+    printf("      %s\n", implode(', ', array_map(function ($t) { return $t['name']; }, $list)));
 }
 
 $inserted = 0;
