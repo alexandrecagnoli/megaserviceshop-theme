@@ -26,6 +26,32 @@
   {foreach from=$groups key=id_attribute_group item=group}
     {if !empty($group.attributes)}
     <div class="clearfix product-variants-item product-variants-item--{$group.group_type|escape:'htmlall'}">
+      {if $group.group_type == 'select'}
+        {* Le select affiche déjà la valeur choisie : répéter "Taille : L" au-dessus
+           était un doublon. Label à côté du select, même rangée que la quantité. *}
+        <div class="ms-product__qty-row">
+          <label class="ms-product__qty-label" for="group_{$id_attribute_group}">{$group.name}</label>
+          {* Même design que le sélecteur de quantité (REC — Design des listes
+             déroulantes) : select en overlay plein cadre, chevron par-dessus.
+             Classes form-control / form-control-select conservées pour ne rien
+             casser côté JS natif PrestaShop (product.js cible ces sélecteurs). *}
+          <div class="ms-product__qty-control ms-product__qty-control--variant">
+            <select
+              class="form-control form-control-select ms-product__qty-select"
+              id="group_{$id_attribute_group}"
+              aria-label="{$group.name}"
+              data-product-attribute="{$id_attribute_group}"
+              name="group[{$id_attribute_group}]">
+              {foreach from=$group.attributes key=id_attribute item=group_attribute}
+                <option value="{$id_attribute}" title="{$group_attribute.name}"{if $group_attribute.selected} selected="selected"{/if}>{$group_attribute.name}</option>
+              {/foreach}
+            </select>
+            <svg class="ms-product__qty-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M4 6L8 10L12 6" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      {elseif $group.group_type == 'color'}
       <span class="control-label">
         <strong>{$group.name}</strong>{l s=' : ' d='Shop.Theme.Catalog'}<span class="control-label__value">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
@@ -33,27 +59,6 @@
           {/foreach}
         </span>
       </span>
-      {if $group.group_type == 'select'}
-        {* Même design que le sélecteur de quantité (REC — Design des listes
-           déroulantes) : select en overlay plein cadre, chevron par-dessus.
-           Classes form-control / form-control-select conservées pour ne rien
-           casser côté JS natif PrestaShop (product.js cible ces sélecteurs). *}
-        <div class="ms-product__qty-control ms-product__qty-control--variant">
-          <select
-            class="form-control form-control-select ms-product__qty-select"
-            id="group_{$id_attribute_group}"
-            aria-label="{$group.name}"
-            data-product-attribute="{$id_attribute_group}"
-            name="group[{$id_attribute_group}]">
-            {foreach from=$group.attributes key=id_attribute item=group_attribute}
-              <option value="{$id_attribute}" title="{$group_attribute.name}"{if $group_attribute.selected} selected="selected"{/if}>{$group_attribute.name}</option>
-            {/foreach}
-          </select>
-          <svg class="ms-product__qty-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M4 6L8 10L12 6" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      {elseif $group.group_type == 'color'}
         <ul id="group_{$id_attribute_group}">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
             <li class="float-xs-left input-container">
@@ -71,6 +76,13 @@
           {/foreach}
         </ul>
       {elseif $group.group_type == 'radio'}
+      <span class="control-label">
+        <strong>{$group.name}</strong>{l s=' : ' d='Shop.Theme.Catalog'}<span class="control-label__value">
+          {foreach from=$group.attributes key=id_attribute item=group_attribute}
+            {if $group_attribute.selected}{$group_attribute.name}{/if}
+          {/foreach}
+        </span>
+      </span>
         <ul id="group_{$id_attribute_group}">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
             <li class="input-container float-xs-left">
