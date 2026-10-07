@@ -1103,7 +1103,11 @@ class Megaservice_microfiches extends Module
   var total  = parseInt(btn.dataset.total, 10) || 0;
 
   function setProgress(doneCount, label) {
-    var pct = total > 0 ? Math.round((doneCount / total) * 100) : 100;
+    // Plafonné à 100 : "total" vient du chargement de page, la BDD a pu
+    // changer entre-temps (réimport manuel concurrent, etc.) — sans ce clamp,
+    // un doneCount qui dépasse total affiche une largeur >100% et la barre
+    // paraît déjà "pleine"/figée alors que des lots continuent d'arriver.
+    var pct = total > 0 ? Math.min(100, Math.round((doneCount / total) * 100)) : 100;
     bar.style.width = pct + '%';
     bar.textContent = pct + '%';
     status.textContent = label;
@@ -1123,9 +1127,16 @@ class Megaservice_microfiches extends Module
         var batchErrors = data.processed.filter(function (p) { return p.errors > 0 || p.fatal; }).length;
         var newDone = doneSoFar + data.processed.length;
         var newErrors = errorsSoFar + batchErrors;
+        // Statique, jamais rebouclé : ce sont des fichiers que ce lot a
+        // explicitement exclus du périmètre (moto absente de la base), pas
+        // des fichiers en attente du prochain appel.
+        var unresolvableNote = data.unresolvable_count > 0
+          ? (' · ' + data.unresolvable_count + ' fichier(s) ignoré(s) sans moto correspondante')
+          : '';
 
         setProgress(newDone, newDone + ' / ' + total + ' fichiers traités'
-          + (newErrors > 0 ? ' — ' + newErrors + ' en erreur' : ''));
+          + (newErrors > 0 ? ' — ' + newErrors + ' en erreur' : '')
+          + unresolvableNote);
 
         if (!data.done && data.processed.length > 0) {
           // Un lot a progressé : on continue tant qu'il en reste.
@@ -1133,7 +1144,10 @@ class Megaservice_microfiches extends Module
         } else {
           status.textContent = 'Terminé : ' + newDone + ' fichier(s) traité(s)'
             + (newErrors > 0 ? ', ' + newErrors + ' en erreur (voir la colonne Statut après rechargement)' : '')
+            + unresolvableNote
             + '. Rechargement...';
+          bar.style.width = '100%';
+          bar.textContent = '100%';
           bar.classList.remove('active');
           setTimeout(function () { window.location.reload(); }, 1200);
         }
@@ -1172,7 +1186,21 @@ HTML;
 
         $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
         $newCsvs = array_filter($microficheCsvs, static fn($info) => ($info['nb_microfiches'] ?? 0) === 0);
-        $remainingBefore = count($newCsvs);
+
+        // "nouveau" (nb_microfiches=0) n'est PAS la même chose que "traitable
+        // par ce lot". Un fichier dont la moto n'existe pas en base reste à
+        // nb_microfiches=0 pour toujours — il ne peut jamais réussir. Sans ce
+        // tri, la boucle le recompte comme "restant" à chaque appel, sans fin
+        // (constaté le 07/10 : compteur passé largement au-delà du total de
+        // départ, la page n'atteignait jamais "terminé").
+        //
+        // On ne retire PAS ces fichiers de la liste "nouveau" affichée dans le
+        // tableau (ils y restent, utile pour voir lesquels manquent de moto) :
+        // on les exclut seulement du PÉRIMÈTRE QUE CE LOT BOUCLE.
+        $resolvable = $this->filterResolvableMotoSerials(array_keys($newCsvs));
+        $loopableCsvs = array_intersect_key($newCsvs, array_flip($resolvable));
+        $unresolvableCount = count($newCsvs) - count($loopableCsvs);
+        $remainingBefore = count($loopableCsvs);
 
         $importer = new MicrofichesImporter();
         $processed = [];
@@ -1181,7 +1209,7 @@ HTML;
         // L'ordre (alphabétique du serial, hérité de scanMicrofichesCsvs) est
         // CONSERVÉ : un lot traite toujours le début de la même liste triée
         // que le précédent aurait continué, jamais un sous-ensemble arbitraire.
-        foreach ($newCsvs as $serial => $csv) {
+        foreach ($loopableCsvs as $serial => $csv) {
             try {
                 $report = $importer->importFile($csv['path'], $serial);
                 $arr = $report->toArray();
@@ -1199,11 +1227,33 @@ HTML;
         }
 
         die(json_encode([
-            'remaining_before' => $remainingBefore,
-            'remaining_after'  => max(0, $remainingBefore - count($processed)),
-            'processed'        => $processed,
-            'done'             => $remainingBefore - count($processed) <= 0,
+            'remaining_before'   => $remainingBefore,
+            'remaining_after'    => max(0, $remainingBefore - count($processed)),
+            'processed'          => $processed,
+            'unresolvable_count' => $unresolvableCount,
+            'done'               => $remainingBefore - count($processed) <= 0,
         ]));
+    }
+
+    /**
+     * Parmi une liste de serials, lesquels ont une moto correspondante en
+     * base ? Une seule requête batch (pas une par fichier).
+     *
+     * @param array<int,string> $serials
+     * @return array<int,string>
+     */
+    private function filterResolvableMotoSerials(array $serials): array
+    {
+        if ($serials === []) {
+            return [];
+        }
+        $list = "'" . implode("','", array_map('pSQL', $serials)) . "'";
+        $rows = Db::getInstance()->executeS(
+            'SELECT `serial_constructeur` FROM `' . _DB_PREFIX_ . 'ms_moto` '
+            . "WHERE `serial_constructeur` IN ($list)"
+        );
+
+        return array_column((array) $rows, 'serial_constructeur');
     }
 
     private function runMicrofichesImports(array $csvs): string
@@ -1278,12 +1328,20 @@ HTML;
         }
 
         // Compte les CSV jamais importés pour informer le bouton "Tout importer".
-        $newCount = 0;
-        foreach ($csvs as $c) {
+        // Le total affiché/utilisé par la barre de progression DOIT être le
+        // même que celui que la boucle AJAX va réellement traiter (resolvable
+        // uniquement) — sinon le compteur de fichiers traités dépasse le total
+        // affiché et la barre semble "terminée" (100%+) alors que ça continue
+        // encore (constaté le 07/10, avant ce correctif).
+        $newSerials = [];
+        foreach ($csvs as $serial => $c) {
             if (($c['nb_microfiches'] ?? 0) === 0) {
-                $newCount++;
+                $newSerials[] = $serial;
             }
         }
+        $resolvableSerials = $this->filterResolvableMotoSerials($newSerials);
+        $newCount = count($resolvableSerials);
+        $unresolvableNewCount = count($newSerials) - $newCount;
 
         $rows = '';
         foreach ($csvs as $serial => $c) {
@@ -1342,7 +1400,14 @@ HTML;
             . '<div class="col-md-6" style="text-align:right">'
             . sprintf(
                 '<button type="button" id="ms-mf-import-new-btn" class="btn btn-primary" data-total="%d" %s>'
-                . 'Tout importer ce qui est nouveau (%d)</button>',
+                . 'Tout importer ce qui est nouveau (%d)</button>'
+                . ($unresolvableNewCount > 0
+                    ? sprintf(
+                        ' <span class="help-block" style="display:inline-block;margin:4px 0 0">'
+                        . '%d fichier(s) ignoré(s) : moto absente de la base, import impossible.</span>',
+                        $unresolvableNewCount
+                    )
+                    : ''),
                 $newCount,
                 $newCount === 0 ? 'disabled' : '',
                 $newCount
