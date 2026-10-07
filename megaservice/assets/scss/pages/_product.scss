@@ -253,12 +253,15 @@
     transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
 
-  // Le select de déclinaison réutilise maintenant .ms-product__qty-control /
-  // __qty-select / __qty-chevron (cf. product-variants.tpl) — même design que le
-  // sélecteur de quantité. Seule largeur à ajuster : 100% au lieu des 174px pensés
-  // pour un chiffre (le libellé d'une déclinaison peut être bien plus long).
+  // Le select de déclinaison réutilise .ms-product__qty-control / __qty-select /
+  // __qty-chevron (cf. product-variants.tpl) — même design ET même rangée
+  // label + select que le sélecteur de quantité ("Taille" à côté du select,
+  // plus de valeur répétée au-dessus : REC — doublon Taille/select).
+  // Largeur à ajuster : le composant de base est pensé pour un chiffre (174px),
+  // ici il doit remplir le reste de la rangée à côté de son label.
   .ms-product__qty-control--variant {
-    width: 100%;
+    flex: 1;
+    width: auto;
   }
 }
 
@@ -428,6 +431,10 @@
   align-items: center;
   justify-content: space-between;
   align-self: stretch;
+  // Garantit un écart même quand le contrôle est flex:1 (select de déclinaison,
+  // qui remplit le reste de la rangée) : space-between seul ne laisse alors
+  // aucun espace libre à répartir.
+  gap: 16px;
 }
 
 .ms-product__qty-label {
@@ -435,6 +442,10 @@
   font-size: 14px;
   font-weight: 700;
   color: $color-black;
+  // Un nom de groupe de déclinaison peut être plus long que "Quantité"
+  // (ex. "Type de pratique") : il garde sa ligne, c'est le select qui cède.
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ms-product__qty-control {
