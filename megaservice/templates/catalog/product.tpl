@@ -54,7 +54,10 @@
         <h1 class="ms-product__name">{$product.name}</h1>
 
         {if isset($product.reference_to_display) && $product.reference_to_display neq ''}
-          <p class="ms-product__reference">{l s='Référence' d='Shop.Theme.Catalog'} : {$product.reference_to_display}</p>
+          {* La valeur est dans son propre span : changer de déclinaison (Taille,
+             Couleur...) ne doit mettre à jour QUE la référence, jamais retraduire
+             le libellé. Cf. product.js pour la mise à jour au changement. *}
+          <p class="ms-product__reference">{l s='Référence' d='Shop.Theme.Catalog'} : <span class="js-product-reference-value">{$product.reference_to_display}</span></p>
         {/if}
 
         {if $product.description_short}
