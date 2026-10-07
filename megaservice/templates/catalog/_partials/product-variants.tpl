@@ -34,16 +34,25 @@
         </span>
       </span>
       {if $group.group_type == 'select'}
-        <select
-          class="form-control form-control-select"
-          id="group_{$id_attribute_group}"
-          aria-label="{$group.name}"
-          data-product-attribute="{$id_attribute_group}"
-          name="group[{$id_attribute_group}]">
-          {foreach from=$group.attributes key=id_attribute item=group_attribute}
-            <option value="{$id_attribute}" title="{$group_attribute.name}"{if $group_attribute.selected} selected="selected"{/if}>{$group_attribute.name}</option>
-          {/foreach}
-        </select>
+        {* Même design que le sélecteur de quantité (REC — Design des listes
+           déroulantes) : select en overlay plein cadre, chevron par-dessus.
+           Classes form-control / form-control-select conservées pour ne rien
+           casser côté JS natif PrestaShop (product.js cible ces sélecteurs). *}
+        <div class="ms-product__qty-control ms-product__qty-control--variant">
+          <select
+            class="form-control form-control-select ms-product__qty-select"
+            id="group_{$id_attribute_group}"
+            aria-label="{$group.name}"
+            data-product-attribute="{$id_attribute_group}"
+            name="group[{$id_attribute_group}]">
+            {foreach from=$group.attributes key=id_attribute item=group_attribute}
+              <option value="{$id_attribute}" title="{$group_attribute.name}"{if $group_attribute.selected} selected="selected"{/if}>{$group_attribute.name}</option>
+            {/foreach}
+          </select>
+          <svg class="ms-product__qty-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M4 6L8 10L12 6" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
       {elseif $group.group_type == 'color'}
         <ul id="group_{$id_attribute_group}">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
