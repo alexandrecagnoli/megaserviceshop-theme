@@ -749,3 +749,38 @@ Appelé avec deux propriétés — `@include transition(background, color)` — 
 **Reste à faire** : la recherche native `/recherche?s=<référence>` existe déjà côté PrestaShop (friendly URL `recherche`), mais rien dans le header ne pointe dessus — le bouton `.ms-search-widget__toggle` de `ps_searchbar.tpl` n'a aucun JS ni formulaire associé. À implémenter si le client veut une recherche utilisable depuis le site, pas seulement par URL directe.
 
 **Statut** : 🟠 actif — reindexation manuelle tant que l'import ne marque pas les produits comme non indexés lui-même.
+
+---
+
+## 🔴 Push GitHub bloqué (erreur 500 serveur) — commit en attente sur `main`
+
+**Contexte** : le 07/10 vers 16:56-17:00, `git push` sur `main` échoue systématiquement avec
+`! [remote rejected] main -> main (Internal Server Error)`. Confirmé pas lié à cette session :
+Alex a eu la même erreur 500 en déclenchant un run de workflow GitHub Actions sur la branche
+`feat/microfiches-skeleton`, depuis son propre compte/poste.
+
+**Écarté comme cause** :
+- Pas de règle de protection sur `main` (`gh api .../branches/main/protection` → 404, non protégée).
+- Aucun webhook configuré sur le dépôt (`gh api .../hooks` → `[]`).
+- Statut public GitHub tout vert, composant par composant (Git Operations, Actions, API Requests).
+- L'historique Actions est sain : le dernier push réussi date de 16:23 le même jour, juste avant
+  que les échecs commencent.
+
+**Request IDs collectés** (pour un ticket support GitHub) :
+```
+CFD4:862B7:4707BC2:43D1DC3:6AC679B3
+CFEC:376D9A:453E944:4215565:6AC679EE
+D05E:862B7:47B639D:446C56D:6AC67ABF
+```
+
+**Commit en attente, resté local, pas encore sur le `main` distant** :
+`753a64b fix(exploitation): import microfiches par lots AJAX avec barre de progression`
+
+**Reprise dans une autre session** :
+1. Vérifier d'abord si `git push` passe à nouveau (`cd ~/dev/megaservice-theme && git pull --rebase && git push`).
+2. Si ça passe : supprimer cette entrée, le commit ci-dessus est déployé normalement.
+3. Si ça échoue encore pareil : demander à Alex où en est le ticket support GitHub (recommandé le 07/10,
+   pas confirmé ouvert à cette date) avant de retenter en boucle sans raison.
+
+**Statut** : 🔴 bloquant pour le déploiement de ce commit précis, sans impact sur le site en
+production (le dernier déploiement réussi reste en ligne).
