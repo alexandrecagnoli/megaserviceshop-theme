@@ -35,8 +35,32 @@
             {hook h='displayHome' mod='ps_imageslider'}
             {hook h='displayHome' mod='ps_newproducts'}
             {include file='_partials/parts-search.tpl'}
+
+            {* Flux de catalogue par catégorie — alimentés par IndexController,
+               les modules PrestaShop ne sachant remonter que des listes
+               globales. Même habillage et même règle « aucun produit sans
+               photo » que les sections de modules (home-products-section). *}
+            {foreach from=['lifestyle', 'rider'] item='ms_key'}
+              {if !empty($ms_home_sections[$ms_key].products)}
+                {include file='_partials/home-products-section.tpl'
+                         products=$ms_home_sections[$ms_key].products
+                         title=$ms_home_sections[$ms_key].title
+                         more_url=$ms_home_sections[$ms_key].url
+                         more_label={l s='Voir tout' d='Shop.Theme.Actions'}}
+              {/if}
+            {/foreach}
+
             {hook h='displayHome' mod='ps_specials'}
             {include file='_partials/mosaic.tpl'}
+
+            {if !empty($ms_home_sections.new_motos.products)}
+              {include file='_partials/home-products-section.tpl'
+                       products=$ms_home_sections.new_motos.products
+                       title=$ms_home_sections.new_motos.title
+                       more_url=$ms_home_sections.new_motos.url
+                       more_label={l s='Voir tout' d='Shop.Theme.Actions'}}
+            {/if}
+
             {hook h='displayHome' mod='ps_featuredproducts'}
           {/block}
         {/block}
