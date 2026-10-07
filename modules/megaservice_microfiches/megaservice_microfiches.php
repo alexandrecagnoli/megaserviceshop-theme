@@ -340,10 +340,38 @@ class Megaservice_microfiches extends Module
     //   - import des CSV déjà présents dans data/imports/ (SCP/SSH)
     // =====================================================================
 
+    /**
+     * Budget de temps par lot AJAX (secondes). Volontairement loin en-deçà des
+     * limites web les plus courantes (30s), pour qu'un lot termine toujours
+     * largement avant une coupure serveur.
+     */
+    const MICROFICHES_BATCH_TIME_BUDGET = 15;
+
+    /** Garde-fou dur, au cas où des fichiers minuscules rendraient le budget de temps inopérant. */
+    const MICROFICHES_BATCH_MAX_FILES = 200;
+
     public function getContent(): string
     {
         $importsDir = _PS_ROOT_DIR_ . '/data/imports';
-        $output     = '';
+
+        // ── AJAX : un lot de l'import "Tout importer ce qui est nouveau" ──
+        //
+        // Un clic unique traitait TOUT le backlog dans une seule requête HTTP,
+        // sans limite de temps gérée : au-delà de quelques dizaines de fichiers,
+        // le serveur coupe la requête en plein milieu de la liste (triée par
+        // ordre alphabétique de serial), sans erreur ni trace. Tout ce qui suit
+        // alphabétiquement le point de coupure reste indéfiniment "à importer".
+        //
+        // La coupure ne se fait JAMAIS en plein milieu d'un fichier : un fichier
+        // est entièrement traité ou pas du tout, jamais partiellement (sans quoi
+        // il ne serait plus "nouveau" au prochain lot — nb_microfiches=0 est le
+        // seul critère — alors que son import serait resté incomplet).
+        if (Tools::isSubmit('ajaxImportNewMicrofichesBatch')) {
+            $this->ajaxImportNewMicrofichesBatch($importsDir);
+            // ajaxImportNewMicrofichesBatch() se termine toujours par exit().
+        }
+
+        $output = '';
 
         // Idempotent : crée les Tabs ajoutés via mise à jour du module sans
         // exiger un désinstall/réinstall manuel (utile quand on ajoute un
@@ -1051,6 +1079,133 @@ class Megaservice_microfiches extends Module
     /**
      * @param array<string, array{path: string, size_ko: float, modified: string}> $csvs
      */
+    /**
+     * JS du bouton "Tout importer ce qui est nouveau" : appels AJAX répétés à
+     * ajaxImportNewMicrofichesBatch() jusqu'à épuisement du backlog, avec
+     * barre de progression. Remplace l'ancien clic bloquant qui traitait tout
+     * en une seule requête HTTP sans limite de temps (REC — diagnostic KTM
+     * motocross/enduro 2022 du 07/10 : le serveur coupait la requête en plein
+     * milieu de la liste, sans erreur, laissant le reste indéfiniment "à
+     * importer"). Inline, comme le reste de cet écran (pas de fichier JS
+     * séparé pour cette page).
+     */
+    private function microfichesImportBatchScript(): string
+    {
+        return <<<'HTML'
+<script>
+(function () {
+  var btn = document.getElementById('ms-mf-import-new-btn');
+  if (!btn) { return; }
+
+  var wrap   = document.getElementById('ms-mf-import-progress');
+  var bar    = document.getElementById('ms-mf-import-bar');
+  var status = document.getElementById('ms-mf-import-status');
+  var total  = parseInt(btn.dataset.total, 10) || 0;
+
+  function setProgress(doneCount, label) {
+    var pct = total > 0 ? Math.round((doneCount / total) * 100) : 100;
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+    status.textContent = label;
+  }
+
+  function nextBatch(doneSoFar, errorsSoFar) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('ajaxImportNewMicrofichesBatch', '1');
+
+    fetch(url.toString(), {
+      method: 'GET',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var batchErrors = data.processed.filter(function (p) { return p.errors > 0 || p.fatal; }).length;
+        var newDone = doneSoFar + data.processed.length;
+        var newErrors = errorsSoFar + batchErrors;
+
+        setProgress(newDone, newDone + ' / ' + total + ' fichiers traités'
+          + (newErrors > 0 ? ' — ' + newErrors + ' en erreur' : ''));
+
+        if (!data.done && data.processed.length > 0) {
+          // Un lot a progressé : on continue tant qu'il en reste.
+          nextBatch(newDone, newErrors);
+        } else {
+          status.textContent = 'Terminé : ' + newDone + ' fichier(s) traité(s)'
+            + (newErrors > 0 ? ', ' + newErrors + ' en erreur (voir la colonne Statut après rechargement)' : '')
+            + '. Rechargement...';
+          bar.classList.remove('active');
+          setTimeout(function () { window.location.reload(); }, 1200);
+        }
+      })
+      .catch(function () {
+        status.textContent = 'Erreur réseau — relance le bouton pour continuer (reprend où ça s\'est arrêté).';
+        bar.classList.remove('active');
+        btn.disabled = false;
+      });
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    wrap.style.display = '';
+    setProgress(0, 'Démarrage…');
+    nextBatch(0, 0);
+  });
+})();
+</script>
+HTML;
+    }
+
+    /**
+     * Un lot de l'import "Tout importer ce qui est nouveau", appelé en AJAX
+     * répété par le JS de la page jusqu'à épuisement du backlog. Répond en
+     * JSON et quitte — jamais de rendu de page.
+     *
+     * Sans état côté serveur entre deux appels : "nouveau" (nb_microfiches=0)
+     * est recalculé à chaque appel depuis la BDD, donc reprendre après une
+     * page rechargée, un onglet fermé ou une coupure réseau ne perd rien et
+     * ne duplique rien (idempotent, comme l'import lui-même).
+     */
+    private function ajaxImportNewMicrofichesBatch(string $importsDir): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $microficheCsvs = $this->scanMicrofichesCsvs($importsDir);
+        $newCsvs = array_filter($microficheCsvs, static fn($info) => ($info['nb_microfiches'] ?? 0) === 0);
+        $remainingBefore = count($newCsvs);
+
+        $importer = new MicrofichesImporter();
+        $processed = [];
+        $start = microtime(true);
+
+        // L'ordre (alphabétique du serial, hérité de scanMicrofichesCsvs) est
+        // CONSERVÉ : un lot traite toujours le début de la même liste triée
+        // que le précédent aurait continué, jamais un sous-ensemble arbitraire.
+        foreach ($newCsvs as $serial => $csv) {
+            try {
+                $report = $importer->importFile($csv['path'], $serial);
+                $arr = $report->toArray();
+                $processed[] = ['serial' => $serial, 'errors' => $arr['errors'], 'microfiches' => $arr['microfiches_inserted']];
+            } catch (Throwable $e) {
+                $processed[] = ['serial' => $serial, 'errors' => 1, 'fatal' => $e->getMessage()];
+            }
+
+            // Vérifié APRÈS un fichier complet, jamais en cours de fichier :
+            // un fichier est entièrement traité ou pas du tout.
+            if ((microtime(true) - $start) >= self::MICROFICHES_BATCH_TIME_BUDGET
+                || count($processed) >= self::MICROFICHES_BATCH_MAX_FILES) {
+                break;
+            }
+        }
+
+        die(json_encode([
+            'remaining_before' => $remainingBefore,
+            'remaining_after'  => max(0, $remainingBefore - count($processed)),
+            'processed'        => $processed,
+            'done'             => $remainingBefore - count($processed) <= 0,
+        ]));
+    }
+
     private function runMicrofichesImports(array $csvs): string
     {
         $importer = new MicrofichesImporter();
@@ -1186,12 +1341,20 @@ class Megaservice_microfiches extends Module
             . '</div>'
             . '<div class="col-md-6" style="text-align:right">'
             . sprintf(
-                '<button type="submit" name="submitImportNewMicrofiches" value="1" class="btn btn-primary" %s>'
+                '<button type="button" id="ms-mf-import-new-btn" class="btn btn-primary" data-total="%d" %s>'
                 . 'Tout importer ce qui est nouveau (%d)</button>',
+                $newCount,
                 $newCount === 0 ? 'disabled' : '',
                 $newCount
             )
             . '</div>'
+            . '</div>'
+            . '<div id="ms-mf-import-progress" style="display:none;margin-bottom:10px">'
+            . '<div class="progress" style="height:20px;margin-bottom:4px">'
+            . '<div id="ms-mf-import-bar" class="progress-bar progress-bar-striped active" role="progressbar" '
+            . 'style="width:0%;min-width:2em">0%</div>'
+            . '</div>'
+            . '<p id="ms-mf-import-status" class="help-block" style="margin:0"></p>'
             . '</div>'
             . '<table id="ms-microfiches-csv-table" class="table">'
             . '<thead><tr>'
@@ -1209,9 +1372,12 @@ class Megaservice_microfiches extends Module
             . '<p class="help-block"><em>Idempotent : un réimport met à jour les microfiches '
             . 'et hotspots existants (clés : (moto+catégorie+nom) et (microfiche+article+sequence)). '
             . '<strong>Tout importer ce qui est nouveau</strong> traite uniquement les CSV avec '
-            . '0 microfiche en BDD (statut "À importer") — utile après un upload batch ZIP ou multi-file.</em></p>'
+            . '0 microfiche en BDD (statut "À importer") — utile après un upload batch ZIP ou multi-file. '
+            . 'Traité par petits lots (requêtes répétées) : un gros backlog ne bloque plus le navigateur '
+            . 'ni le serveur sur une seule requête sans fin.</em></p>'
             . '</form>'
-            . '</div>';
+            . '</div>'
+            . $this->microfichesImportBatchScript();
 
         return $out;
     }
