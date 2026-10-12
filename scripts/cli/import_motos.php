@@ -21,8 +21,18 @@
  * fichier. Nécessaire depuis que l'export est passé au marché européen seul —
  * sans lui, les modèles des autres marchés restent actifs et proposés au client.
  * On désactive sans supprimer : microfiches et montabilité pointent sur
- * `id_moto`. Un garde-fou refuse de désactiver plus de la moitié du parc sans
- * `--force`, pour qu'un fichier tronqué ne vide pas le catalogue en silence.
+ * `id_moto`.
+ *
+ * ⚠️  **À N'UTILISER QUE SUR UN EXPORT COMPLET.** Le fichier devient la liste de
+ * référence de la marque : tout ce qui n'y figure pas est retiré du front. Un
+ * fichier INCRÉMENTAL — par exemple « les motos 2028 » livrées seules l'an
+ * prochain — doit s'importer SANS ce drapeau, sinon il désactiverait tout le
+ * reste du catalogue.
+ *
+ * Garde-fou : au-delà de la moitié du parc de la marque, le script refuse et
+ * demande `--force`. Il rattrape donc le cas ci-dessus — un fichier 2028 seul
+ * serait rejeté — mais pas un fichier partiel à 60 % : le drapeau reste une
+ * décision humaine, prise à chaque import.
  *
  * Usage (en SSH) :
  *   /opt/plesk/php/8.2/bin/php scripts/cli/import_motos.php data/imports/KTM_MOTORCYCLES.csv
