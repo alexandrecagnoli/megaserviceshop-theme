@@ -180,7 +180,13 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             // Images propres à la moto (BO → Motos). Vides tant qu'on ne les a pas :
             // le template affiche alors l'image par défaut de la partie. Powerparts
             // et Kits n'ont pas d'image par moto, seulement une image par défaut.
-            'ms_cycle_img'   => $this->partieImageUrl('cycle'),
+            // La carte « Partie cycle » montre le CHÂSSIS, donc la moto elle-même :
+            // à défaut d'une photo de partie cycle (2 motos sur 1 422 en ont une),
+            // la photo du modèle vaut infiniment mieux que la réserve du thème,
+            // qui affichait une sportive sur un motocross.
+            // « Partie moteur » garde sa réserve générique : un moteur illustre la
+            // section, une moto entière n'y dirait rien de plus.
+            'ms_cycle_img'   => $this->partieImageUrl('cycle') ?: $this->mainImageUrl(),
             'ms_moteur_img'  => $this->partieImageUrl('moteur'),
             // Photo de la moto pour le hero — même source que la page partie.
             'ms_moto_img'    => $this->motoImageUrl(),
@@ -205,16 +211,54 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     /**
      * Photo de la moto, pour le bandeau des pages moto (hub et partie).
      *
-     * Le bandeau représente le VÉHICULE, pas la section consultée : on prend la
-     * première image disponible, partie cycle d'abord. Sans ça, consulter la
-     * partie moteur d'une moto qui n'a qu'une photo de partie cycle affichait
-     * l'image générique du thème.
+     * Le bandeau représente le VÉHICULE, pas la section consultée.
+     *
+     * `picture_main` passe DEVANT : c'est la photo constructeur du modèle, et
+     * elle existe maintenant pour les 1 422 motos actives (1 324 détourées en
+     * webp, 98 en original). `picture_cycle` et `picture_moteur`, eux, ne sont
+     * renseignés que sur 2 motos — des dépôts manuels. Le bandeau tombait donc
+     * presque toujours sur la réserve générique du thème : une sportive
+     * s'affichait sur une 125 SX, qui est un motocross.
      */
     protected function motoImageUrl(): string
     {
+        $url = $this->mainImageUrl();
+        if ($url !== '') {
+            return $url;
+        }
+
         $url = $this->partieImageUrl('cycle');
 
         return $url !== '' ? $url : $this->partieImageUrl('moteur');
+    }
+
+    /**
+     * Photo constructeur du modèle, détourée si elle existe.
+     *
+     * Même règle que CategoryController::motoPictureUrl : le détouré
+     * (`detoures/<nom>.webp`, fond transparent, bien plus léger) d'abord,
+     * l'original ensuite. La base ne stocke que le nom d'origine, on dérive donc
+     * le détouré en remplaçant l'extension.
+     */
+    protected function mainImageUrl(): string
+    {
+        $rel = trim((string) $this->moto->picture_main);
+        if ($rel === '' || strpos($rel, '..') !== false || strpos($rel, '/') !== false) {
+            return '';
+        }
+
+        $candidates = [
+            'detoures/' . pathinfo($rel, PATHINFO_FILENAME) . '.webp',
+            $rel,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $candidate)) {
+                return __PS_BASE_URI__ . 'img/ms_moto/' . $candidate;
+            }
+        }
+
+        return '';
     }
 
     /**
