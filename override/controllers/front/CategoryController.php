@@ -376,22 +376,43 @@ class CategoryController extends CategoryControllerCore
     }
 
     /**
-     * URL publique d'une photo de moto, ou '' si le fichier manque sur le disque.
+     * URL publique d'une photo de moto, ou '' si rien n'est disponible.
      *
-     * Même garde-fou que MotoController::partieImageUrl : une image cassée est
-     * pire que pas d'image, le template a sa réserve.
+     * Deux jeux coexistent, et on prend le meilleur disponible :
+     *
+     *   1. le DÉTOURÉ — `img/ms_moto/detoures/<nom>.webp`. Fond transparent, ce
+     *      qui compte sur les cartes sombres du hub, et bien plus léger (113 Mo
+     *      pour 1 755 fichiers, contre 375 Mo pour les originaux).
+     *   2. l'ORIGINAL — `img/ms_moto/<picture_main>`, nom et extension exacts.
+     *
+     * Le repli n'est pas une précaution de principe : 103 visuels n'ont pas de
+     * version détourée (déjà transparents à la source, ou écartés du traitement).
+     * Sans lui, autant de motos perdraient leur image.
+     *
+     * L'extension change entre les deux jeux (.png/.jpg → .webp) : la base ne
+     * stocke que le nom d'origine, on dérive donc le détouré en remplaçant
+     * l'extension plutôt qu'en l'attendant du CSV.
+     *
+     * Même garde-fou que MotoController::partieImageUrl : un fichier absent rend
+     * '' plutôt qu'une image cassée, le template a sa réserve.
      */
     private function motoPictureUrl($relative)
     {
         $rel = trim((string) $relative);
-        if ($rel === '' || strpos($rel, '..') !== false) {
-            return '';
-        }
-        if (!is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $rel)) {
+        if ($rel === '' || strpos($rel, '..') !== false || strpos($rel, '/') !== false) {
             return '';
         }
 
-        return __PS_BASE_URI__ . 'img/ms_moto/' . $rel;
+        $base    = pathinfo($rel, PATHINFO_FILENAME);
+        $detoure = 'detoures/' . $base . '.webp';
+
+        foreach ([$detoure, $rel] as $candidate) {
+            if (is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $candidate)) {
+                return __PS_BASE_URI__ . 'img/ms_moto/' . $candidate;
+            }
+        }
+
+        return '';
     }
 
     // ─────────────────────────────────────────────────────────────────────────
