@@ -742,6 +742,10 @@ Appelé avec deux propriétés — `@include transition(background, color)` — 
 
 **Contexte** : constaté le 30/09 en regardant comment exposer une recherche par référence. Seuls 38 produits sur 47 918 actifs figuraient dans `ps_search_index`, malgré un réglage de poids correct (`PS_SEARCH_WEIGHT_REF=10`, le plus haut — une référence exacte remonterait en tête si elle était indexée).
 
+> **Index reconstruit depuis.** Mesuré le 08/10 : **47 950 produits indexés**, 73 133 mots, et aucun produit marqué non indexé. La recherche par référence a été validée en préprod sur `00050000024` (poids 10) et sur un libellé. L'écart de 32 au-dessus des 47 918 actifs vient de produits indexés puis désactivés — entrées orphelines sans effet, les résultats étant filtrés sur `active`.
+>
+> **L'entrée reste ouverte** : la cause n'est pas traitée. Le prochain import catalogue recréera le trou, puisqu'il écrit toujours en SQL sans passer par `Product::save()`.
+
 **Cause** : même famille que les taxes ([entrée dédiée](#-r%C3%A8gle-de-taxe-fr-20--appliqu%C3%A9e-en-sql-hors-import--les-nouveaux-produits-repartent-%C3%A0-0)) et les relations en attente : l'import catalogue écrit directement en SQL et ne déclenche jamais `Product::save()`, le seul point qui réindexe automatiquement un produit pour la recherche.
 
 **Fix appliqué** : [scripts/cli/reindex_search.php](scripts/cli/reindex_search.php) — `Search::indexation(true)`, à relancer après chaque import. Ne modifie aucune donnée produit, seulement l'index (`ps_search_index` / `ps_search_word`).
