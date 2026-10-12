@@ -79,6 +79,7 @@ class MotosImporter
                 continue;
             }
             $seen[$mn] = true;
+            $report->addModelnumber($mn);
 
             if ($built['type'] === MotosTaxonomy::TYPE_AUTRES) {
                 $report->addAutres($mn, $built['core_name']);
