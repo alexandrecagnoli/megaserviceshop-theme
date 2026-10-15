@@ -203,17 +203,24 @@ body#category {
   text-decoration: none !important;
   // Pas de fond : les PNG sont détourés, le noir du hero doit se voir au travers.
   // Au repos l'image reste petite (icône posée sur le noir) ; au survol elle
-  // remplit la case — même courbe que le Ken Burns de la mosaïque (_mosaic.scss).
+  // remplit la case. Les deux miniatures (360×220) ont EXACTEMENT le ratio de
+  // la case (180×110 = 1,636:1) : "cover" y équivaut à "100%", donc on écrit
+  // 100% directement — deux pourcentages s'animent en douceur, un pourcentage
+  // vers le mot-clé "cover" ne s'anime pas du tout (valeurs non interpolables).
   background-size: 80%;
   background-position: center;
   background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 rgba($color-ktm, 0);
   transition:
     transform 0.3s ease,
-    background-size 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-size 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.5s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    background-size: cover;
+    transform: translateY(-4px);
+    background-size: 100%;
+    // Halo interne — feu arrière qui s'allume, contenu par l'overflow:hidden.
+    box-shadow: inset 0 0 36px rgba($color-ktm, 0.45);
   }
 
   // Overlay sombre — nécessaire à la lisibilité du libellé sur une image claire.
@@ -228,6 +235,23 @@ body#category {
 
   // Survol discret : l'overlay s'éclaircit légèrement, pas de lavis de couleur.
   &:hover::before { background: rgba($color-black, 0.25); }
+
+  // Liseré d'accent qui se trace de gauche à droite au survol.
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: $color-ktm;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 3;
+  }
+
+  &:hover::after { transform: scaleX(1); }
 }
 
 .ms-subcat-nav__label {
