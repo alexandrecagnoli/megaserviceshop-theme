@@ -3,6 +3,10 @@
     <h1 class="ms-catalog-hero__title">
       {$category.name}{if isset($ms_moto_filter) && $ms_moto_filter}<span class="ms-catalog-hero__title-suffix"> {l s='compatibles avec' d='Shop.Theme.Catalog'} <span>{$ms_moto_filter.label|escape:'html'}</span></span>{/if}
     </h1>
+
+    {if isset($ms_show_subcat_nav) && $ms_show_subcat_nav}
+      {include file='catalog/_partials/subcat-nav.tpl'}
+    {/if}
   </div>
 
   {* Bandeau moto — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
