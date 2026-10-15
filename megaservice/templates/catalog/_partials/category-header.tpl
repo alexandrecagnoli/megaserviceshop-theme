@@ -8,7 +8,12 @@
   {* Bandeau moto — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
   {if isset($ms_show_moto_context) && $ms_show_moto_context}
   <div class="ms-catalog-context">
-    <img src="{$urls.theme_assets}img/moto-context.png" alt="" class="ms-catalog-context__moto-img">
+    {* La photo de la moto filtrée, détourée si elle existe (cf. MsMoto). L'image
+       générique était codée en dur ici : le bandeau montrait la même moto quelle
+       que soit celle du garage, alors que le hub affichait déjà la bonne. Elle
+       reste la réserve pour les modèles sans photo. *}
+    <img src="{if !empty($ms_moto_filter.picture_url)}{$ms_moto_filter.picture_url|escape:'html':'UTF-8'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
+         alt="" class="ms-catalog-context__moto-img">
     <div class="ms-catalog-context__inner">
 
       <span class="ms-catalog-context__brand" aria-hidden="true">

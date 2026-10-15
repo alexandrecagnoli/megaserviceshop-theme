@@ -508,7 +508,7 @@ class CategoryController extends CategoryControllerCore
         }
 
         $row = Db::getInstance()->getRow(
-            'SELECT `marque`, `annee`, `core_name`, `nom_fr`
+            'SELECT `marque`, `annee`, `core_name`, `nom_fr`, `picture_main`
              FROM `' . _DB_PREFIX_ . 'ms_moto`
              WHERE `id_moto` = ' . (int) $idMoto . ' AND `active` = 1'
         );
@@ -528,6 +528,11 @@ class CategoryController extends CategoryControllerCore
             'crumb'     => trim($name . ' ' . $row['annee']),
             'hub_url'   => $this->motoHubUrl((int) $idMoto),
             'clear_url' => $clear,
+            // Photo du modèle, détourée d'abord. Le gabarit affichait l'image
+            // générique du thème EN DUR : le bandeau montrait donc la même moto
+            // quelle que soit celle du garage, alors que le hub, lui, affichait
+            // la bonne. Même réserve qu'ailleurs si le fichier manque.
+            'picture_url' => $this->motoPictureUrl((string) $row['picture_main']),
         ];
     }
 
