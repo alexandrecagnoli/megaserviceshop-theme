@@ -18,11 +18,53 @@ class IndexController extends IndexControllerCore
         'new_motos'  => [10, 8], // Motos neuves
     ];
 
+    /**
+     * Tuiles de la mosaïque d'accueil. Libellé → [id_category, image].
+     *
+     * Les libellés "Powerwear" et "Sportswear" d'origine ne correspondent à
+     * aucune catégorie du site : le catalogue a depuis été réorganisé en
+     * "Équipement du motard" (15) et "Sportswear et accessoires" (14), les
+     * deux mêmes catégories déjà utilisées par $HOME_SECTIONS ci-dessus.
+     */
+    private static $MOSAIC_ITEMS = [
+        ['id_category' => 10,  'image' => 'motos-neuves.jpg',   'label' => 'Motos neuves'],
+        ['id_category' => 11,  'image' => 'motos-occasion.jpg', 'label' => "Motos d'occasion"],
+        ['id_category' => 12,  'image' => 'pieces-origine.jpg', 'label' => "Pièces d'origine"],
+        ['id_category' => 41,  'image' => 'powerparts.jpg',     'label' => 'Powerparts'],
+        ['id_category' => 15,  'image' => 'powerwear.jpg',      'label' => 'Équipement du motard'],
+        ['id_category' => 14,  'image' => 'sportswear.jpg',     'label' => 'Sportswear et accessoires'],
+    ];
+
     public function initContent()
     {
         parent::initContent();
 
         $this->context->smarty->assign('ms_home_sections', $this->homeSections());
+        $this->context->smarty->assign('ms_mosaic', $this->mosaicItems());
+    }
+
+    /**
+     * @return array<int, array{url:string, image:string, label:string}>
+     */
+    private function mosaicItems()
+    {
+        $out = [];
+        foreach (self::$MOSAIC_ITEMS as $item) {
+            $category = new Category((int) $item['id_category'], (int) $this->context->language->id);
+            // Catégorie supprimée/désactivée : la tuile disparaît plutôt que
+            // de pointer vers une page morte.
+            if (!$category->id || !$category->active) {
+                continue;
+            }
+
+            $out[] = [
+                'url'   => $this->context->link->getCategoryLink($category),
+                'image' => $item['image'],
+                'label' => $item['label'],
+            ];
+        }
+
+        return $out;
     }
 
     /**
