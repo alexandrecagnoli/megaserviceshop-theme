@@ -202,12 +202,19 @@ body#category {
   overflow: hidden;
   text-decoration: none !important;
   // Pas de fond : les PNG sont détourés, le noir du hero doit se voir au travers.
-  background-size: cover;
+  // Au repos l'image reste petite (icône posée sur le noir) ; au survol elle
+  // remplit la case — même courbe que le Ken Burns de la mosaïque (_mosaic.scss).
+  background-size: 80%;
   background-position: center;
   background-repeat: no-repeat;
-  @include transition(transform);
+  transition:
+    transform 0.3s ease,
+    background-size 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  &:hover { transform: translateY(-2px); }
+  &:hover {
+    transform: translateY(-2px);
+    background-size: cover;
+  }
 
   // Overlay sombre — nécessaire à la lisibilité du libellé sur une image claire.
   &::before {
