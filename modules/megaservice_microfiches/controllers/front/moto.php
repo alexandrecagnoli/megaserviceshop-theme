@@ -87,7 +87,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_partie'      => $partie,
             // Image de la moto pour cette partie ; vide → le template retombe sur
             // l'image par défaut du thème.
-            'ms_partie_img'  => $this->partieImageUrl($partie),
+            // Même logique que la carte « Partie cycle » du hub : la partie cycle
+            // montre le CHÂSSIS, donc la moto elle-même. À défaut d'une photo de
+            // partie (2 motos sur 1 422 en ont une), la photo du modèle vaut mieux
+            // que la réserve du thème, qui affiche une sportive générique.
+            // La partie moteur garde sa réserve : un moteur illustre la section.
+            'ms_partie_img'  => $partie === 'cycle'
+                ? ($this->partieImageUrl($partie) ?: $this->mainImageUrl())
+                : $this->partieImageUrl($partie),
             // Photo de la MOTO pour le hero, distincte de l'image de la partie :
             // le bandeau représente le véhicule, pas la section consultée. Une
             // moto peut n'avoir que l'une des deux (GASGAS EC 300 2024 : cycle
@@ -180,7 +187,13 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             // Images propres à la moto (BO → Motos). Vides tant qu'on ne les a pas :
             // le template affiche alors l'image par défaut de la partie. Powerparts
             // et Kits n'ont pas d'image par moto, seulement une image par défaut.
-            'ms_cycle_img'   => $this->partieImageUrl('cycle'),
+            // La carte « Partie cycle » montre le CHÂSSIS, donc la moto elle-même :
+            // à défaut d'une photo de partie cycle (2 motos sur 1 422 en ont une),
+            // la photo du modèle vaut infiniment mieux que la réserve du thème,
+            // qui affichait une sportive sur un motocross.
+            // « Partie moteur » garde sa réserve générique : un moteur illustre la
+            // section, une moto entière n'y dirait rien de plus.
+            'ms_cycle_img'   => $this->partieImageUrl('cycle') ?: $this->mainImageUrl(),
             'ms_moteur_img'  => $this->partieImageUrl('moteur'),
             // Photo de la moto pour le hero — même source que la page partie.
             'ms_moto_img'    => $this->motoImageUrl(),
@@ -205,16 +218,31 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
     /**
      * Photo de la moto, pour le bandeau des pages moto (hub et partie).
      *
-     * Le bandeau représente le VÉHICULE, pas la section consultée : on prend la
-     * première image disponible, partie cycle d'abord. Sans ça, consulter la
-     * partie moteur d'une moto qui n'a qu'une photo de partie cycle affichait
-     * l'image générique du thème.
+     * Le bandeau représente le VÉHICULE, pas la section consultée.
+     *
+     * `picture_main` passe DEVANT : c'est la photo constructeur du modèle, et
+     * elle existe maintenant pour les 1 422 motos actives (1 324 détourées en
+     * webp, 98 en original). `picture_cycle` et `picture_moteur`, eux, ne sont
+     * renseignés que sur 2 motos — des dépôts manuels. Le bandeau tombait donc
+     * presque toujours sur la réserve générique du thème : une sportive
+     * s'affichait sur une 125 SX, qui est un motocross.
      */
     protected function motoImageUrl(): string
     {
+        $url = $this->mainImageUrl();
+        if ($url !== '') {
+            return $url;
+        }
+
         $url = $this->partieImageUrl('cycle');
 
         return $url !== '' ? $url : $this->partieImageUrl('moteur');
+    }
+
+    /** Photo constructeur du modèle, détourée d'abord. Cf. MsMoto. */
+    protected function mainImageUrl(): string
+    {
+        return $this->moto->mainPictureUrl();
     }
 
     /**

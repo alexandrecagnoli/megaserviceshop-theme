@@ -88,6 +88,55 @@ class MsMoto extends ObjectModel
      * (cookie ms_moto). Partagé par le sélecteur en cascade et la recherche par VIN :
      * deux copies de cette règle finiraient par diverger.
      */
+    /**
+     * URL publique de la photo du modèle, détourée si elle existe.
+     *
+     * Deux jeux de visuels coexistent sous img/ms_moto/ :
+     *   1. `detoures/<nom>.webp` — fond transparent, indispensable sur les
+     *      cartes et bandeaux sombres, et bien plus léger (113 Mo pour 1 755
+     *      fichiers contre 375 Mo pour les originaux) ;
+     *   2. `<picture_main>` — le fichier constructeur, nom et extension exacts.
+     *
+     * Le repli n'est pas une précaution de principe : 98 motos actives n'ont pas
+     * de version détourée (déjà transparentes à la source, ou écartées du
+     * traitement). Sans lui, autant de motos perdraient leur image.
+     *
+     * L'extension diffère entre les deux jeux (.png/.jpg → .webp) alors que la
+     * base ne stocke que le nom d'origine : le détouré est dérivé en remplaçant
+     * l'extension, jamais attendu du CSV.
+     *
+     * Rend '' si rien n'est disponible — l'appelant a sa réserve. Un fichier
+     * absent doit donner une image par défaut, pas une image cassée.
+     *
+     * @param string $filename valeur de `picture_main`, nom de fichier nu
+     */
+    public static function pictureUrlFromFilename($filename)
+    {
+        $rel = trim((string) $filename);
+        if ($rel === '' || strpos($rel, '..') !== false || strpos($rel, '/') !== false) {
+            return '';
+        }
+
+        $candidates = [
+            'detoures/' . pathinfo($rel, PATHINFO_FILENAME) . '.webp',
+            $rel,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $candidate)) {
+                return __PS_BASE_URI__ . 'img/ms_moto/' . $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    /** Photo du modèle pour CETTE moto. Cf. pictureUrlFromFilename(). */
+    public function mainPictureUrl()
+    {
+        return self::pictureUrlFromFilename($this->picture_main);
+    }
+
     public static function hubUrl(Context $context, $idMoto, $marque, $coreName, $annee, $type)
     {
         $idMoto = (int) $idMoto;

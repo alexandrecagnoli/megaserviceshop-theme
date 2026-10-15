@@ -17,8 +17,26 @@
  * La marque est déduite du nom de fichier (KTM_*, HQV_*, GASGAS_*) sauf si
  * elle est passée en second argument.
  *
+ * `--replace` : après l'import, DÉSACTIVE les motos de la marque absentes du
+ * fichier. Nécessaire depuis que l'export est passé au marché européen seul —
+ * sans lui, les modèles des autres marchés restent actifs et proposés au client.
+ * On désactive sans supprimer : microfiches et montabilité pointent sur
+ * `id_moto`.
+ *
+ * ⚠️  **À N'UTILISER QUE SUR UN EXPORT COMPLET.** Le fichier devient la liste de
+ * référence de la marque : tout ce qui n'y figure pas est retiré du front. Un
+ * fichier INCRÉMENTAL — par exemple « les motos 2028 » livrées seules l'an
+ * prochain — doit s'importer SANS ce drapeau, sinon il désactiverait tout le
+ * reste du catalogue.
+ *
+ * Garde-fou : au-delà de la moitié du parc de la marque, le script refuse et
+ * demande `--force`. Il rattrape donc le cas ci-dessus — un fichier 2028 seul
+ * serait rejeté — mais pas un fichier partiel à 60 % : le drapeau reste une
+ * décision humaine, prise à chaque import.
+ *
  * Usage (en SSH) :
  *   /opt/plesk/php/8.2/bin/php scripts/cli/import_motos.php data/imports/KTM_MOTORCYCLES.csv
+ *   /opt/plesk/php/8.2/bin/php scripts/cli/import_motos.php data/imports/KTM_MOTORCYCLES.csv --replace
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -26,11 +44,18 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-$file   = $argv[1] ?? null;
-$marque = $argv[2] ?? null;
+$args    = array_slice($argv, 1);
+$replace = in_array('--replace', $args, true);
+$force   = in_array('--force', $args, true);
+$args    = array_values(array_filter($args, function ($a) {
+    return strpos($a, '--') !== 0;
+}));
+
+$file   = $args[0] ?? null;
+$marque = $args[1] ?? null;
 
 if (!$file) {
-    fwrite(STDERR, "Usage : php import_motos.php <fichier.csv> [KTM|HQV|GASGAS]\n");
+    fwrite(STDERR, "Usage : php import_motos.php <fichier.csv> [KTM|HQV|GASGAS] [--replace] [--force]\n");
     exit(1);
 }
 if (!is_file($file) || !is_readable($file)) {
@@ -106,6 +131,63 @@ if (count($report->errors) > 0) {
         printf("  %s : %s\n", $e['modelnumber'], $e['error']);
     }
     exit(1);
+}
+
+// ── Mode remplacement ───────────────────────────────────────────────────────
+//
+// L'import seul est un upsert : il ne retire jamais rien. Quand l'export est
+// passé au marché européen seulement, les ~450 modèles des autres marchés sont
+// restés en base, actifs, et toujours proposés dans les sélecteurs.
+//
+// On DÉSACTIVE, on ne supprime pas : les microfiches et la montabilité pointent
+// sur `id_moto`, et une suppression casserait ces liens. Une moto désactivée
+// disparaît du front tout en gardant son identifiant.
+if ($replace) {
+    $seen = array_keys($report->modelnumbers);
+    if (!$seen) {
+        fwrite(STDERR, "\nAucun MODELNUMBER retenu : remplacement annulé.\n");
+        exit(1);
+    }
+
+    $in = implode(',', array_map(function ($m) { return '"' . pSQL($m) . '"'; }, $seen));
+
+    $obsolete = (int) Db::getInstance()->getValue(
+        'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'ms_moto`
+          WHERE `marque` = "' . pSQL($a['marque']) . '" AND `active` = 1
+            AND `modelnumber` NOT IN (' . $in . ')'
+    );
+
+    $actives = (int) Db::getInstance()->getValue(
+        'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'ms_moto`
+          WHERE `marque` = "' . pSQL($a['marque']) . '" AND `active` = 1'
+    );
+
+    printf("\nRemplacement — %s\n", $a['marque']);
+    printf("  actives en base : %d\n", $actives);
+    printf("  absentes du fichier : %d\n", $obsolete);
+
+    // Garde-fou : un fichier tronqué ou mal généré désactiverait le catalogue
+    // entier sans que rien ne le signale. Au-delà de la moitié, on exige --force.
+    if ($actives > 0 && $obsolete > $actives / 2 && !$force) {
+        fwrite(STDERR, sprintf(
+            "\nREFUS : %d désactivations sur %d motos actives (plus de la moitié).\n"
+            . "Le fichier est-il complet ? Relancer avec --force si c'est voulu.\n",
+            $obsolete, $actives
+        ));
+        exit(1);
+    }
+
+    if ($obsolete > 0) {
+        Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'ms_moto`
+                SET `active` = 0, `date_upd` = NOW()
+              WHERE `marque` = "' . pSQL($a['marque']) . '" AND `active` = 1
+                AND `modelnumber` NOT IN (' . $in . ')'
+        );
+        printf("  désactivées : %d\n", $obsolete);
+    } else {
+        echo "  rien à désactiver\n";
+    }
 }
 
 exit(0);

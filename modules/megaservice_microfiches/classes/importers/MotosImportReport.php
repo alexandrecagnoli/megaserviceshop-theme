@@ -38,6 +38,17 @@ class MotosImportReport
      */
     public $yearMismatches = [];
 
+    /**
+     * MODELNUMBER retenus par cet import, dédupliqués.
+     *
+     * Permet au mode remplacement de savoir ce que le fichier NE contient pas :
+     * un export devenu européen seulement laisse sinon en base les modèles des
+     * autres marchés, toujours actifs et toujours proposés au client.
+     *
+     * @var array<string, true>
+     */
+    public $modelnumbers = [];
+
     /** @var float */
     private $startedAt;
     /** @var float|null */
@@ -64,6 +75,11 @@ class MotosImportReport
     public function addAutres(string $modelnumber, string $coreName): void
     {
         $this->autresFound[] = ['modelnumber' => $modelnumber, 'core_name' => $coreName];
+    }
+
+    public function addModelnumber(string $modelnumber): void
+    {
+        $this->modelnumbers[$modelnumber] = true;
     }
 
     public function addYearMismatch(string $modelnumber, int $annee, int $declared): void

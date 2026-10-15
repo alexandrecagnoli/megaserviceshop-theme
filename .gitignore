@@ -58,3 +58,8 @@ megaservice/assets/img/mosaique/[0-9]*_*.jpg
 # code — perimees au prochain export, et deja tracees ailleurs (le fichier
 # importe vit sur la preprod, les sources constructeur dans data/imports/).
 samples/*.csv
+
+# Sources constructeur pour les microfiches : 3 CSV motos et 1 858 photos, 742 Mo.
+# Depose a la main pour alimenter un import, jamais versionne — le depot est
+# public et ces fichiers viennent du constructeur.
+docs/microfiches/assets/
