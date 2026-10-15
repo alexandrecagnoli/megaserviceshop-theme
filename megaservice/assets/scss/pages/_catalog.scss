@@ -201,7 +201,7 @@ body#category {
   height: 110px;
   overflow: hidden;
   text-decoration: none !important;
-  background-color: $color-gray-20;
+  // Pas de fond : les PNG sont détourés, le noir du hero doit se voir au travers.
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -209,7 +209,7 @@ body#category {
 
   &:hover { transform: translateY(-2px); }
 
-  // Overlay sombre
+  // Overlay sombre — nécessaire à la lisibilité du libellé sur une image claire.
   &::before {
     content: '';
     position: absolute;
@@ -219,7 +219,8 @@ body#category {
     @include transition(background);
   }
 
-  &:hover::before { background: rgba($color-ktm, 0.55); }
+  // Survol discret : l'overlay s'éclaircit légèrement, pas de lavis de couleur.
+  &:hover::before { background: rgba($color-black, 0.25); }
 }
 
 .ms-subcat-nav__label {
