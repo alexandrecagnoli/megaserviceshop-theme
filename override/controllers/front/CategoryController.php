@@ -3,16 +3,17 @@
 class CategoryController extends CategoryControllerCore
 {
     /**
-     * Mapping ID catégorie => template
+     * Racines dont TOUT le sous-arbre (racine + dossiers + feuilles, 3 niveaux)
+     * utilise le template plein-largeur avec la ligne d'icônes de navigation.
      *
      * Templates disponibles :
      *   'default' — 3 colonnes + sidebar filtres
-     *   'full'    — 4 colonnes pleine largeur, sous-catégories en cards
+     *   'full'    — 4 colonnes pleine largeur, ligne d'icônes + sous-catégories en cards
+     *
+     *   14  Sportswear et accessoires (Lifestyle, vêtements)
+     *   15  Équipement du motard (Équipements pilotes)
      */
-    private static $CATEGORY_TEMPLATES = [
-        14 => 'full', // Lifestyle (vêtements)
-        15 => 'full', // Équipements pilotes
-    ];
+    private static $FULL_WIDTH_ROOT_IDS = [14, 15];
 
     /**
      * Catégories racines qui affichent le contexte "moto sélectionnée"
@@ -105,10 +106,7 @@ class CategoryController extends CategoryControllerCore
      */
     private function assignMotoContext()
     {
-        $category_id = (int) $this->category->id;
-        $template = isset(self::$CATEGORY_TEMPLATES[$category_id])
-            ? self::$CATEGORY_TEMPLATES[$category_id]
-            : 'default';
+        $template = $this->fullWidthRoot() ? 'full' : 'default';
 
         $motoFilter = $this->motoFilterBanner();
 
@@ -133,6 +131,70 @@ class CategoryController extends CategoryControllerCore
         ]);
 
         $this->assignPartsHub();
+    }
+
+    /**
+     * Racine (14/15) dont dépend la catégorie courante — racine elle-même,
+     * dossier de niveau 3 (ex. "T-shirts - Polos - Chemises") ou feuille de
+     * niveau 4 en-dessous. Null hors de ces deux branches.
+     *
+     * @return Category|null
+     */
+    private function fullWidthRoot()
+    {
+        if (!$this->category->id) {
+            return null;
+        }
+
+        foreach (self::$FULL_WIDTH_ROOT_IDS as $rootId) {
+            $root = new Category((int) $rootId, (int) $this->context->language->id);
+            if (!$root->id) {
+                continue;
+            }
+            if ($this->category->nleft >= $root->nleft && $this->category->nright <= $root->nright) {
+                return $root;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * La ligne d'icônes du hero montre toujours les catégories de NIVEAU 3
+     * (celles juste sous la racine 14/15), jamais les enfants de la page
+     * courante : sur une feuille (ex. "Casques", qui n'a pas d'enfants), le
+     * getSubCategories() natif renverrait un tableau vide et la ligne
+     * disparaîtrait. On affiche donc systématiquement la fratrie de niveau 3,
+     * avec celle qui contient la page courante marquée 'active' — qu'on soit
+     * dessus directement ou sur une de ses feuilles de niveau 4 (ex. "T-shirt"
+     * sous "T-shirts - Polos - Chemises").
+     *
+     * Hors des branches 14/15 : comportement natif inchangé.
+     */
+    protected function getTemplateVarSubCategories()
+    {
+        $root = $this->fullWidthRoot();
+        if (!$root) {
+            return parent::getTemplateVarSubCategories();
+        }
+
+        $currentNleft  = $this->category->nleft;
+        $currentNright = $this->category->nright;
+
+        return array_map(function (array $category) use ($currentNleft, $currentNright) {
+            $object = new Category((int) $category['id_category'], (int) $this->context->language->id);
+
+            $category['image'] = $this->getImage($object, $object->id_image);
+            $category['url']   = $this->context->link->getCategoryLink(
+                $category['id_category'],
+                $category['link_rewrite']
+            );
+            // Page courante = ce niveau 3 lui-même, ou une de ses feuilles de
+            // niveau 4 (imbriquée dans son intervalle nleft/nright).
+            $category['active'] = ($currentNleft >= $object->nleft && $currentNright <= $object->nright);
+
+            return $category;
+        }, $root->getSubCategories($this->context->language->id));
     }
 
     /**
