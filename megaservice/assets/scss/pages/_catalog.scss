@@ -197,16 +197,20 @@ body#category {
   flex-shrink: 0;
   position: relative;
   display: block;
-  width: 180px;
+  width: 140px;
   height: 110px;
   overflow: hidden;
   text-decoration: none !important;
   // Pas de fond : les PNG sont détourés, le noir du hero doit se voir au travers.
-  // Au repos l'image reste petite (icône posée sur le noir) ; au survol elle
-  // remplit la case. Les deux miniatures (360×220) ont EXACTEMENT le ratio de
-  // la case (180×110 = 1,636:1) : "cover" y équivaut à "100%", donc on écrit
-  // 100% directement — deux pourcentages s'animent en douceur, un pourcentage
-  // vers le mot-clé "cover" ne s'anime pas du tout (valeurs non interpolables).
+  // Au repos l'image reste petite (icône posée sur le noir) ; au survol/actif
+  // elle remplit la case. La case (140×110, ratio 1,273:1) n'a plus le même
+  // ratio que les miniatures (360×220, ratio 1,636:1) depuis la réduction de
+  // largeur : un seul pourcentage se cale sur la LARGEUR de la case et déduit
+  // la hauteur du ratio de l'image, donc "cover" ne vaut plus 100% mais 130%
+  // (130% × 140px / 1,636 ≈ 111px, soit la hauteur de la case) — recalculer
+  // si la taille de la case ou des miniatures change à nouveau. Toujours un
+  // pourcentage, jamais le mot-clé "cover" : un pourcentage vers "cover" ne
+  // s'anime pas (valeurs non interpolables), deux pourcentages s'animent bien.
   background-color: transparent;
   background-size: 80%;
   background-position: center;
@@ -216,9 +220,14 @@ body#category {
     background-size 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background-color 0.4s ease;
 
-  &:hover {
-    transform: translateY(-4px);
-    background-size: 100%;
+  &:hover { transform: translateY(-4px); }
+
+  // Survol ET catégorie active (on est dessus ou sur une de ses feuilles,
+  // cf. category-header-full.tpl) partagent le même état "allumé" — seul le
+  // survol ajoute le soulèvement, l'état actif reste posé en permanence.
+  &:hover,
+  &--active {
+    background-size: 130%;
     // Juste assez plus clair que le noir du hero pour percevoir le contraste.
     background-color: $color-gray-85;
   }
@@ -233,10 +242,14 @@ body#category {
     @include transition(background);
   }
 
-  // Survol discret : l'overlay s'éclaircit légèrement, pas de lavis de couleur.
-  &:hover::before { background: rgba($color-black, 0.25); }
+  // Survol/actif discret : l'overlay s'éclaircit légèrement, pas de lavis de couleur.
+  &:hover::before,
+  &--active::before {
+    background: rgba($color-black, 0.25);
+  }
 
-  // Liseré d'accent qui se trace de gauche à droite au survol.
+  // Liseré d'accent — tracé en permanence sur la catégorie active, et au
+  // survol de n'importe quelle autre.
   &::after {
     content: '';
     position: absolute;
@@ -251,7 +264,10 @@ body#category {
     z-index: 3;
   }
 
-  &:hover::after { transform: scaleX(1); }
+  &:hover::after,
+  &--active::after {
+    transform: scaleX(1);
+  }
 }
 
 .ms-subcat-nav__label {
