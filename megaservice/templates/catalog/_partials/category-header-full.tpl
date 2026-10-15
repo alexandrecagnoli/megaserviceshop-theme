@@ -21,8 +21,9 @@
             {assign var='_subcat_img' value="/img/c/`$subcat.id_category`-small_default.jpg"}
           {/if}
           <a href="{$subcat.url}"
-             class="ms-subcat-nav__item"
+             class="ms-subcat-nav__item{if !empty($subcat.active)} ms-subcat-nav__item--active{/if}"
              aria-label="{$subcat.name|escape:'html':'UTF-8'}"
+             {if !empty($subcat.active)}aria-current="page"{/if}
              {if $_subcat_img}style="background-image:url('{$_subcat_img}');"{/if}>
             <span class="ms-subcat-nav__label">{$subcat.name}</span>
           </a>
