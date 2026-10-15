@@ -3,12 +3,23 @@
 class CategoryController extends CategoryControllerCore
 {
     /**
-     * Racines dont TOUT le sous-arbre (racine + dossiers + feuilles, 3 niveaux)
-     * utilise le template plein-largeur avec la ligne d'icônes de navigation.
+     * Racines 14/15. Deux usages bien distincts, à ne pas refusionner :
+     *
+     *   - le LAYOUT plein-largeur sans sidebar ('full') ne vaut QUE sur ces
+     *     deux pages exactement — ce sont des pages de présentation sans
+     *     produits propres à filtrer. Toute sous-catégorie EN DESSOUS garde
+     *     le layout 'default' (3 colonnes + sidebar filtres) : elle a de
+     *     vrais produits, donc de vrais filtres à proposer.
+     *   - la ligne d'ICÔNES de navigation (ms_show_subcat_nav), elle,
+     *     s'affiche sur TOUT le sous-arbre (cf. fullWidthRoot()) : une
+     *     sous-catégorie en a besoin pour naviguer vers ses soeurs — c'est
+     *     justement là qu'il n'y a plus de layout plein-largeur pour la
+     *     porter, elle est donc injectée dans les DEUX variantes de hero
+     *     (cf. category-header.tpl et category-header-full.tpl).
      *
      * Templates disponibles :
      *   'default' — 3 colonnes + sidebar filtres
-     *   'full'    — 4 colonnes pleine largeur, ligne d'icônes + sous-catégories en cards
+     *   'full'    — 4 colonnes pleine largeur, pas de sidebar
      *
      *   14  Sportswear et accessoires (Lifestyle, vêtements)
      *   15  Équipement du motard (Équipements pilotes)
@@ -106,13 +117,19 @@ class CategoryController extends CategoryControllerCore
      */
     private function assignMotoContext()
     {
-        $template = $this->fullWidthRoot() ? 'full' : 'default';
+        // Exact — pas le sous-arbre : cf. commentaire de $FULL_WIDTH_ROOT_IDS.
+        $template = in_array((int) $this->category->id, self::$FULL_WIDTH_ROOT_IDS, true)
+            ? 'full'
+            : 'default';
 
         $motoFilter = $this->motoFilterBanner();
 
         $this->context->smarty->assign([
             'ms_category_template'  => $template,
             'ms_is_full_width'      => $template === 'full',
+            // Ligne d'icônes : tout le sous-arbre 14/15, layout ou pas (cf.
+            // commentaire de $FULL_WIDTH_ROOT_IDS et fullWidthRoot()).
+            'ms_show_subcat_nav'    => (bool) $this->fullWidthRoot(),
             // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF.
             'ms_show_moto_context'  => (bool) $motoFilter,
             'ms_moto_filter'        => $motoFilter,
