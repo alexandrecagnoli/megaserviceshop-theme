@@ -202,15 +202,16 @@ body#category {
   overflow: hidden;
   text-decoration: none !important;
   // Pas de fond : les PNG sont détourés, le noir du hero doit se voir au travers.
-  // Au repos l'image reste petite (icône posée sur le noir) ; au survol/actif
-  // elle remplit la case. La case (140×110, ratio 1,273:1) n'a plus le même
-  // ratio que les miniatures (360×220, ratio 1,636:1) depuis la réduction de
-  // largeur : un seul pourcentage se cale sur la LARGEUR de la case et déduit
-  // la hauteur du ratio de l'image, donc "cover" ne vaut plus 100% mais 130%
-  // (130% × 140px / 1,636 ≈ 111px, soit la hauteur de la case) — recalculer
-  // si la taille de la case ou des miniatures change à nouveau. Toujours un
-  // pourcentage, jamais le mot-clé "cover" : un pourcentage vers "cover" ne
-  // s'anime pas (valeurs non interpolables), deux pourcentages s'animent bien.
+  // Au repos l'image est petite (icône posée sur le noir) ; au survol/actif
+  // elle grandit, mais SANS jamais rogner : un pourcentage fixe la LARGEUR
+  // rendue (la hauteur suit le ratio propre de l'image), donc à 100% l'image
+  // occupe toute la largeur de la case (140px) sans jamais dépasser sa hauteur
+  // (140px / 1,636 ≈ 86px < 110px) — l'équivalent de background-size:contain,
+  // jamais de "cover" qui rognerait les côtés dès que le produit n'est pas
+  // parfaitement centré dans son propre cadre 720×440. Toujours un
+  // pourcentage, jamais le mot-clé "contain"/"cover" : un pourcentage vers un
+  // mot-clé ne s'anime pas (valeurs non interpolables), deux pourcentages
+  // s'animent bien.
   background-color: transparent;
   background-size: 80%;
   background-position: center;
@@ -227,7 +228,7 @@ body#category {
   // survol ajoute le soulèvement, l'état actif reste posé en permanence.
   &:hover,
   &--active {
-    background-size: 130%;
+    background-size: 100%;
     // Juste assez plus clair que le noir du hero pour percevoir le contraste.
     background-color: $color-gray-85;
   }
@@ -272,10 +273,11 @@ body#category {
 
 .ms-subcat-nav__label {
   position: absolute;
-  bottom: 0;
+  top: 50%;
   left: 0;
   right: 0;
-  padding: 8px 6px;
+  transform: translateY(-50%);
+  padding: 8px 10px;
   text-align: center;
   color: $color-white;
   font-family: $font-heading;
@@ -284,7 +286,8 @@ body#category {
   text-transform: uppercase;
   line-height: 1.2;
   z-index: 2;
-  background: linear-gradient(transparent, rgba($color-black, 0.6));
+  // Le dégradé n'avait de sens que calé en bas avec le libellé : centré, la
+  // lisibilité tient déjà de l'overlay plein-cadre de .ms-subcat-nav__item.
 }
 
 // ── Sidebar filtres ──────────────────────────
