@@ -20,12 +20,36 @@
 // une comparaison stricte laisserait la flèche active en bout de course.
 const EPSILON = 2;
 
+// La catégorie active (cf. ms-subcat-nav__item--active, posée par
+// CategoryController::getTemplateVarSubCategories) peut tomber hors du cadre
+// visible si elle est loin dans la ligne : sans ça, rien ne dit à l'utilisateur
+// où il se trouve. On centre sa carte d'entrée de jeu, sans animation — un
+// positionnement initial, pas un geste de l'utilisateur qu'on voudrait montrer.
+// Les cartes ont une largeur fixe en CSS (140px) : ce calcul ne dépend pas du
+// chargement des polices, contrairement à celui des flèches plus bas.
+function scrollActiveIntoView(track) {
+  const active = track.querySelector('.ms-subcat-nav__item--active');
+  if (!active) {
+    return;
+  }
+
+  const target = active.offsetLeft - (track.clientWidth - active.offsetWidth) / 2;
+  const max = track.scrollWidth - track.clientWidth;
+  track.scrollLeft = Math.max(0, Math.min(target, max));
+}
+
 function initScroller(scroller) {
   const track = scroller.querySelector('.js-subcat-track');
   const prev = scroller.querySelector('.js-subcat-prev');
   const next = scroller.querySelector('.js-subcat-next');
 
-  if (!track || !prev || !next) {
+  if (!track) {
+    return;
+  }
+
+  scrollActiveIntoView(track);
+
+  if (!prev || !next) {
     return;
   }
 
