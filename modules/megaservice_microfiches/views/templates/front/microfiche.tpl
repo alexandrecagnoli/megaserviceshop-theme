@@ -15,8 +15,12 @@
     </div>
 
     <div class="ms-catalog-context">
-      {* Image générique (comme le bloc natif) — vraies photos via PR-Visuels. *}
-      <img src="{$urls.theme_assets}img/moto-context.png" alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
+      {* La photo du modèle, détourée si elle existe (cf. MsMoto::pictureUrlFromFilename).
+         L'image générique du thème était codée en dur ici, quelle que soit la moto —
+         un reliquat d'avant la livraison des visuels constructeur. Elle reste la
+         réserve pour les rares modèles sans photo. *}
+      <img src="{if !empty($ms_moto.picture_url)}{$ms_moto.picture_url|escape:'html'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
+           alt="{$ms_moto.nom_fr|escape:'html'}" class="ms-catalog-context__moto-img" loading="lazy">
       <div class="ms-catalog-context__inner">
         <div class="ms-catalog-context__text">
           <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Modules.Megaservicemicrofiches.Shop'}</span>

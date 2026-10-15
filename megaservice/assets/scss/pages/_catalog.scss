@@ -1059,12 +1059,22 @@ body#category {
   bottom: 0;
   height: 110px;
   width: auto;
+  // La largeur n'était pas bornée : à hauteur fixe, un visuel large devenait
+  // plus large que la gouttière réservée par le padding-left de __inner, et
+  // recouvrait le texte — en z-index 2, donc PAR-DESSUS « Catalogue filtré sur ».
+  // Visible sur les 98 motos servies en original (fond opaque, cadrage large),
+  // les détourées étant plus serrées autour du véhicule.
+  // Bornée à la gouttière : object-fit:contain réduit l'image au lieu de la
+  // rogner, donc la moto reste entière, simplement plus petite.
+  max-width: 170px;
   z-index: 2;
   pointer-events: none;
   object-fit: contain;
+  object-position: left bottom;
 
   @include media-md() {
     height: 90px;
+    max-width: 120px;
   }
 }
 

@@ -87,7 +87,14 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
             'ms_partie'      => $partie,
             // Image de la moto pour cette partie ; vide → le template retombe sur
             // l'image par défaut du thème.
-            'ms_partie_img'  => $this->partieImageUrl($partie),
+            // Même logique que la carte « Partie cycle » du hub : la partie cycle
+            // montre le CHÂSSIS, donc la moto elle-même. À défaut d'une photo de
+            // partie (2 motos sur 1 422 en ont une), la photo du modèle vaut mieux
+            // que la réserve du thème, qui affiche une sportive générique.
+            // La partie moteur garde sa réserve : un moteur illustre la section.
+            'ms_partie_img'  => $partie === 'cycle'
+                ? ($this->partieImageUrl($partie) ?: $this->mainImageUrl())
+                : $this->partieImageUrl($partie),
             // Photo de la MOTO pour le hero, distincte de l'image de la partie :
             // le bandeau représente le véhicule, pas la section consultée. Une
             // moto peut n'avoir que l'une des deux (GASGAS EC 300 2024 : cycle
@@ -232,33 +239,10 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         return $url !== '' ? $url : $this->partieImageUrl('moteur');
     }
 
-    /**
-     * Photo constructeur du modèle, détourée si elle existe.
-     *
-     * Même règle que CategoryController::motoPictureUrl : le détouré
-     * (`detoures/<nom>.webp`, fond transparent, bien plus léger) d'abord,
-     * l'original ensuite. La base ne stocke que le nom d'origine, on dérive donc
-     * le détouré en remplaçant l'extension.
-     */
+    /** Photo constructeur du modèle, détourée d'abord. Cf. MsMoto. */
     protected function mainImageUrl(): string
     {
-        $rel = trim((string) $this->moto->picture_main);
-        if ($rel === '' || strpos($rel, '..') !== false || strpos($rel, '/') !== false) {
-            return '';
-        }
-
-        $candidates = [
-            'detoures/' . pathinfo($rel, PATHINFO_FILENAME) . '.webp',
-            $rel,
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (is_file(_PS_ROOT_DIR_ . '/img/ms_moto/' . $candidate)) {
-                return __PS_BASE_URI__ . 'img/ms_moto/' . $candidate;
-            }
-        }
-
-        return '';
+        return $this->moto->mainPictureUrl();
     }
 
     /**

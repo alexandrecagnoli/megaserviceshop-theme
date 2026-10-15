@@ -271,7 +271,12 @@ class Megaservice_microfichesMicroficheModuleFrontController extends ModuleFront
             'annee'     => (int) $this->moto->annee,
             'nom_fr'    => $this->moto->nom_fr,
             'core_name' => $this->moto->core_name,
+            // Nom de fichier brut : conservé pour les appelants qui le veulent tel quel.
             'picture'   => $this->moto->picture_main,
+            // URL prête à l'emploi, détourée d'abord (cf. MsMoto). Le bandeau du
+            // hero affichait l'image générique du thème en dur, quelle que soit
+            // la moto — un reliquat d'avant la livraison des visuels.
+            'picture_url' => $this->moto->mainPictureUrl(),
             'url'       => $this->context->link->getModuleLink(
                 'megaservice_microfiches', 'moto',
                 ['id_moto' => (int) $this->moto->id, 'slug' => $this->moto->slug()]
