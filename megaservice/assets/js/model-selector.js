@@ -155,6 +155,17 @@ document.addEventListener('DOMContentLoaded', function () {
     clearGarage(CLEAR_ENDPOINT, function () {
       forgetStoredMoto();
       applyEmpty();
+
+      // Les quatre niveaux reviennent à leur placeholder. applyEmpty() ne
+      // touche qu'aux classes du header : les listes gardaient donc la moto
+      // affichée après « Réinitialiser ». Le rechargement qui suivait le
+      // masquait, mais il ne survient plus là où rien n'est filtré (cf.
+      // moto-garage) — et il refermait le formulaire en cours d'usage.
+      // La marque conserve ses options, seuls les niveaux dépendants sont vidés.
+      resetSelect(selectAnnee);
+      resetSelect(selectGamme);
+      resetSelect(selectModele);
+      if (selectMarque) { selectMarque.selectedIndex = 0; }
     });
   }
 

@@ -59,6 +59,18 @@ export function clearMotoFilter(endpoint, onBefore) {
         return;
       }
 
+      // On ne recharge QUE si la page affiche un contenu filtré par la moto —
+      // sinon le rechargement ne corrige rien et referme le formulaire que le
+      // client était en train de remplir.
+      //
+      // Le bandeau de contexte est le marqueur fiable : le serveur ne le rend
+      // que là où le filtre s'applique réellement aux produits (cf.
+      // CategoryController::motoFilterBanner). Sur l'accueil, il n'y en a pas,
+      // et rien d'affiché ne dépend du garage.
+      if (!document.querySelector('.ms-catalog-context')) {
+        return;
+      }
+
       // PAS reload() : l'URL courante peut porter ?moto=…, que le serveur relit
       // pour ARMER le garage. On viderait le cookie puis on le réarmerait dans
       // la foulée — le filtre « se désactivait un instant et revenait ».

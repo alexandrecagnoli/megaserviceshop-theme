@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initial = JSON.parse(section.getAttribute('data-garage-sel') || 'null');
     } catch (err) { initial = null; }
 
-    initMotoCascade(section, {
+    const cascade = initMotoCascade(section, {
       form: section.querySelector('[data-form="model"]'),
       submit: '[data-form="model"] .ms-parts-search__submit',
       initial: initial,
@@ -48,8 +48,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // s'en défaire, alors que la page affichait bien un catalogue filtré.
     const clearEndpoint = section.getAttribute('data-clear-endpoint') || '';
 
+    // Vide les champs en plus de purger le garage. Sans ça, sur une page dont
+    // le contenu ne dépend pas du filtre — l'accueil — « Réinitialiser » ne
+    // produisait aucun effet visible : la moto restait affichée dans les listes
+    // déroulantes, et le rechargement qui les remettait à zéro refermait le
+    // formulaire.
     function resetGarage() {
-      clearMotoFilter(clearEndpoint, forgetStoredMoto);
+      clearMotoFilter(clearEndpoint, function () {
+        forgetStoredMoto();
+        if (cascade && typeof cascade.clear === 'function') {
+          cascade.clear();
+        }
+      });
     }
 
     const modelReset = section.querySelector('.js-model-reset');

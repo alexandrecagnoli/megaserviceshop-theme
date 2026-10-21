@@ -143,4 +143,18 @@ export function initMotoCascade(root, options) {
       if (modele.value) { window.location.href = modele.value; }
     });
   }
+
+  // API rendue à l'appelant : « Réinitialiser » doit pouvoir vider les quatre
+  // niveaux SANS recharger la page. Jusqu'ici le seul moyen de remettre la
+  // cascade à zéro était le rechargement déclenché par la purge du garage — ce
+  // qui refermait le formulaire que le client était en train d'utiliser.
+  return {
+    clear: function () {
+      reset(annee);
+      reset(gamme);
+      reset(modele);
+      marque.selectedIndex = 0;
+      refreshSubmit();
+    }
+  };
 }
