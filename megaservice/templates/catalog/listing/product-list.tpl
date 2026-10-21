@@ -91,20 +91,18 @@
 
     </div>
 
-    {* Les filtres sont rendus quel que soit le layout.
-       Le plein-largeur est une décision de mise en page DESKTOP — pas de colonne
-       de gauche. Or sur mobile il n'y a jamais de colonne : les filtres sont une
-       surcouche fixe par-dessus la page. Conditionner le panneau au layout
-       desktop confondait les deux, et le bouton « Filtrer » s'affichait sur
-       Équipement du motard (1 054 produits) et Sportswear (820) sans rien ouvrir
-       — le JS sortait aussitôt, faute de panneau dans le DOM.
-       En plein-largeur la colonne reste masquée sur desktop, via le modificateur. *}
-    {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
-    {if $sidebar_content|trim}
+    {* Aucun filtre sur les grandes pages catégorie (14, 15), ni desktop ni
+       mobile — décision Alex du 21/10. Ce sont des pages d'entrée : on y choisit
+       une sous-catégorie, et c'est là que les filtres prennent leur sens.
+       Le bouton « Filtrer » est masqué en conséquence (cf. products-top.tpl) :
+       le laisser sans panneau donnait un bouton qui n'ouvrait rien. *}
+    {if !$ms_is_full_width}
+      {capture assign='sidebar_content'}{hook h="displayLeftColumn"}{/capture}
+      {if $sidebar_content|trim}
         {* Overlay du bottom sheet — mobile uniquement *}
         <div class="ms-filters-overlay js-filters-overlay" hidden aria-hidden="true"></div>
 
-        <aside class="ms-catalog__sidebar js-filters-sheet{if $ms_is_full_width} ms-catalog__sidebar--sheet-only{/if}">
+        <aside class="ms-catalog__sidebar js-filters-sheet">
 
           {* Header sheet — mobile uniquement *}
           <header class="ms-catalog__sidebar-head">
@@ -139,6 +137,7 @@
           </footer>
 
         </aside>
+      {/if}
     {/if}
 
   </div>

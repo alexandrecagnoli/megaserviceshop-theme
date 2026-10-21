@@ -291,18 +291,6 @@ body#category {
 }
 
 // ── Sidebar filtres ──────────────────────────
-// Pages en layout plein-largeur (14 et 15) : pas de colonne de filtres sur
-// desktop, mais le bottom sheet mobile reste nécessaire — ces pages listent
-// 820 et 1 054 produits, et le bouton « Filtrer » y est rendu.
-// Le panneau est donc toujours dans le DOM, seule la colonne desktop est
-// masquée : les règles de @include media-md() ci-dessous le rouvrent en
-// surcouche fixe, où la notion de colonne n'a plus cours.
-.ms-catalog__sidebar--sheet-only {
-  display: none;
-
-  @include media-md() { display: flex; }
-}
-
 .ms-catalog__sidebar {
   width: 290px;
   flex-shrink: 0;
