@@ -23,7 +23,14 @@ class Megaservice_microfichesDownloadModuleFrontController extends ModuleFrontCo
 {
     const ALLOWED_HOSTS = [
         'www.ktmdealer.net',
+        // Les vues éclatées Husqvarna ont migré de husqvarnadealer.net vers
+        // husqvarna-motorcyclesdealer.net (correction des chemins du 15/10).
+        // L'ancien domaine restait seul dans cette liste blanche : le
+        // téléchargement des microfiches Husqvarna tombait donc sur fail() et
+        // redirigeait vers l'accueil. On garde les deux, l'ancien ne coûtant
+        // rien et couvrant d'éventuelles lignes non migrées.
         'www.husqvarnadealer.net',
+        'www.husqvarna-motorcyclesdealer.net',
         'www.gasgasdealer.net',
     ];
 
