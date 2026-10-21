@@ -123,6 +123,13 @@
 // ============================================
 .ms-menu__nav {
   flex: 1;
+  // Critique : sans min-height, un élément flex garde `min-height: auto` et
+  // refuse de rétrécir sous la taille de son contenu. `overflow-y: auto` ne
+  // s'enclenche donc jamais, la liste déborde du panneau et se fait rogner par
+  // l'`overflow: hidden` de .ms-menu — les dernières catégories devenaient
+  // inatteignables, le pied de panneau recouvrant la fin de la liste.
+  // Même piège que dans le bottom sheet des filtres (cf. _catalog.scss).
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px;
