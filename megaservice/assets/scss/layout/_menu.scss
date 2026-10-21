@@ -132,13 +132,9 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  // Le pied de panneau est en position: absolute (cf. .ms-menu__footer) : il
-  // flotte PAR-DESSUS la liste au lieu d'occuper sa place dans le flux. Sans
-  // réserve en bas, les dernières catégories restaient masquées même une fois
-  // le défilement arrivé en butée.
-  // Hauteur réservée = service client (56) + bouton compte (56) + marges et
-  // bordure, arrondie au supérieur pour laisser respirer le dernier élément.
-  padding: 0 16px 180px;
+  // Pas de réserve en bas : le pied occupe désormais sa place dans le flux
+  // (cf. .ms-menu__footer), la liste s'arrête donc naturellement au-dessus.
+  padding: 0 16px 16px;
   background: $color-white;
 }
 
@@ -271,11 +267,19 @@
 // ============================================
 // MENU FOOTER
 // ============================================
+// Frère en flux du panneau, et non élément flottant : .ms-menu est une colonne
+// flex dont .ms-menu__nav porte le flex: 1. Le pied se place donc tout seul en
+// bas, sans position: absolute.
+//
+// Il l'était auparavant et flottait PAR-DESSUS la liste : les dernières
+// catégories passaient dessous, invisibles même une fois le défilement en
+// butée. On compensait par une réserve chiffrée en bas de la zone défilante —
+// un nombre magique à refaire à chaque changement de hauteur du pied.
+//
+// flex-shrink: 0 est ce qui compte : sans lui, le pied se comprimerait au lieu
+// de forcer la liste à défiler.
 .ms-menu__footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   padding: $spacing-lg;
   border-top: 1px solid $color-border;
   background: #ffffff;
