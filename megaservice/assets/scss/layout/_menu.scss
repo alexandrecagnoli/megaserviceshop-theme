@@ -132,7 +132,13 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 16px;
+  // Le pied de panneau est en position: absolute (cf. .ms-menu__footer) : il
+  // flotte PAR-DESSUS la liste au lieu d'occuper sa place dans le flux. Sans
+  // réserve en bas, les dernières catégories restaient masquées même une fois
+  // le défilement arrivé en butée.
+  // Hauteur réservée = service client (56) + bouton compte (56) + marges et
+  // bordure, arrondie au supérieur pour laisser respirer le dernier élément.
+  padding: 0 16px 180px;
   background: $color-white;
 }
 
