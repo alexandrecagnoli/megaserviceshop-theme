@@ -78,8 +78,19 @@ class Megaservice_microfichesDownloadModuleFrontController extends ModuleFrontCo
         if (preg_match('#\.([a-z0-9]+)$#i', parse_url($url, PHP_URL_PATH) ?: '', $m)) {
             $ext = strtolower($m[1]);
         }
-        $filename = ($microfiche->nom_fr !== '' ? $microfiche->nom_fr : $microfiche->nom_constructeur) . '.' . $ext;
-        $filename = preg_replace('/[^A-Za-z0-9_\-. ]/', '', $filename);
+        // nom_fr peut être NULL, pas seulement '' : un test `!== ''` le laissait
+        // passer (NULL !== '' est vrai), et le fichier se téléchargeait nommé
+        // « .png » au lieu de reprendre le nom constructeur. On normalise avant
+        // de choisir le repli.
+        $name = trim((string) $microfiche->nom_fr);
+        if ($name === '') {
+            $name = trim((string) $microfiche->nom_constructeur);
+        }
+        $filename = $name . '.' . $ext;
+        $filename = trim(preg_replace('/[^A-Za-z0-9_\-. ]/', '', $filename));
+        if ($filename === '' || $filename === '.' . $ext) {
+            $filename = 'microfiche-' . $idMicrofiche . '.' . $ext;
+        }
 
         header('Content-Type: ' . ($contentType !== '' ? $contentType : 'application/octet-stream'));
         header('Content-Disposition: attachment; filename="' . $filename . '"');
