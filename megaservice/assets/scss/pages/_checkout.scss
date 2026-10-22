@@ -927,20 +927,7 @@
   }
 }
 
-// ── Notifications / alerts ─────────────────
-.ms-checkout .alert,
-.checkout-step .alert {
-  margin-top: 12px;
-  padding: 12px 16px;
-  border-radius: $border-radius;
-  font-family: $font-main;
-  font-size: $font-size-sm;
-  border-left: 3px solid;
-
-  &.alert-danger { background: #fdecea; border-color: #d93025; color: #5f2120; }
-  &.alert-warning { background: #fff8e1; border-color: #f9a825; color: #5d4037; }
-  &.alert-info { background: $color-gray-5; border-color: $color-ktm; color: $color-black; }
-}
+// Notifications / alerts : cf. components/_alerts.scss (info boxes, REC-39).
 
 // ── Address selector (étape addresses) ────
 .ms-checkout {
@@ -1113,6 +1100,205 @@
     text-decoration: underline;
 
     &:hover { color: $color-ktm; }
+  }
+}
+
+// ── Étape 1 « Informations personnelles » — mise en forme du formulaire ──
+// Reprise de l'UI : onglets propres (plus de puces), cases à cocher et radios
+// visibles, mot de passe sur une ligne, espacement entre les champs.
+.ms-checkout {
+  // Onglets Invité / Connexion (le JS bascule .active, cf. checkout.js)
+  .nav-inline {
+    display: flex;
+    gap: 4px;
+    margin: 8px 0 28px;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid $color-gray-20;
+
+    .nav-item { margin: 0; padding: 0; list-style: none; }
+    .nav-item:has(.nav-separator), .nav-separator { display: none; }
+
+    .nav-link {
+      display: block;
+      margin-bottom: -1px;
+      padding: 12px 20px;
+      border-bottom: 3px solid transparent;
+      color: $color-gray-60;
+      font-family: $font-heading;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      @include transition(color, border-color);
+
+      &:hover { color: $color-black; }
+      &.active { color: $color-black; border-bottom-color: $color-ktm; }
+    }
+  }
+
+  .tab-content > .tab-pane { display: none; }
+  .tab-content > .tab-pane.active { display: block; }
+
+  // Espace entre les champs : les commentaires ne collent plus au label suivant
+  .checkout-step form .form-group { margin-bottom: 20px; }
+  .checkout-step form .form-group:last-child { margin-bottom: 0; }
+
+  // Bloc « Créez votre compte (optionnel) »
+  .form-informations {
+    margin: 12px 0 20px;
+    padding-top: 24px;
+    border-top: 1px solid $color-gray-20;
+    line-height: 1.5;
+  }
+  .form-informations-title {
+    font-family: $font-heading;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .form-informations-option,
+  .form-informations-subtitle {
+    color: $color-gray-60;
+    font-size: $font-size-sm;
+    font-style: normal;
+  }
+
+  // Mot de passe + bouton Afficher sur une seule ligne
+  .input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+
+    .form-control {
+      flex: 1;
+      min-width: 0;
+      border-right: 0;
+      border-radius: $border-radius 0 0 $border-radius;
+    }
+
+    .input-group-btn { display: flex; }
+
+    .input-group-btn .btn {
+      height: 42px;
+      padding: 0 16px;
+      background: $color-gray-5;
+      border: 1px solid $color-gray-20;
+      border-left: 0;
+      border-radius: 0 $border-radius $border-radius 0;
+      color: $color-black;
+      font-family: $font-heading;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      @include transition(background);
+
+      &:hover { background: $color-gray-20; }
+    }
+  }
+
+  // Cases à cocher : PS place l'input ET le visuel DANS le label
+  // (.custom-checkbox > label > input + span) — d'où des cases invisibles.
+  .custom-checkbox { display: flex; }
+
+  .custom-checkbox > label {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+
+    input[type="checkbox"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    > span {
+      position: relative;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      margin-top: 1px;
+      border: 2px solid $color-gray-35;
+      background: $color-white;
+      box-sizing: border-box;
+      pointer-events: none;
+      @include transition(border-color, background);
+
+      .material-icons { display: none !important; }
+    }
+
+    input:checked + span {
+      border-color: $color-ktm;
+      background: $color-ktm;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+      }
+    }
+
+    input:focus-visible + span { @include focus-ring; }
+  }
+
+  // Mentions sous une case (newsletter, confidentialité) : alignées sur le texte
+  .custom-checkbox ~ .form-control-comment {
+    display: block;
+    margin: 6px 0 0 32px;
+    font-size: 12px;
+    font-style: normal;
+    line-height: 1.45;
+  }
+
+  // Radios (Titre : M. / Mme) : ronds, sur une ligne
+  .radio-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 24px 0 0;
+    padding: 0;
+    font-family: $font-main;
+    font-size: $font-size-base;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+
+    .custom-radio > span { border-radius: 50%; }
+
+    .custom-radio input:checked ~ span {
+      border-color: $color-ktm;
+      background: $color-white;
+
+      &::after {
+        inset: 4px;
+        border-radius: 50%;
+        background: $color-ktm;
+      }
+    }
+  }
+
+  // Pied de formulaire : bouton aligné à droite, lien « mot de passe oublié » discret
+  .form-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+
+  .forgot-password {
+    margin: 12px 0 0;
+    font-size: $font-size-sm;
+
+    a { color: $color-gray-60; text-decoration: underline; &:hover { color: $color-ktm; } }
   }
 }
 
