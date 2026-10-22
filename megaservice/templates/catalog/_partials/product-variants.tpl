@@ -59,6 +59,10 @@
           {/foreach}
         </span>
       </span>
+        {* Couleur à valeur unique : ce n'est plus une variante (une couleur = un produit),
+           on garde le libellé « Couleur : Rouge » sans pastille. La pastille ne revient
+           que s'il reste un vrai choix entre plusieurs couleurs (REC-64). *}
+        {if $group.attributes|count > 1}
         <ul id="group_{$id_attribute_group}">
           {foreach from=$group.attributes key=id_attribute item=group_attribute}
             <li class="float-xs-left input-container">
@@ -75,6 +79,12 @@
             </li>
           {/foreach}
         </ul>
+        {else}
+          {* Valeur unique : l'input reste dans le formulaire (déclinaison sélectionnée), masqué. *}
+          {foreach from=$group.attributes key=id_attribute item=group_attribute}
+            <input type="hidden" data-product-attribute="{$id_attribute_group}" name="group[{$id_attribute_group}]" value="{$id_attribute}">
+          {/foreach}
+        {/if}
       {elseif $group.group_type == 'radio'}
       <span class="control-label">
         <strong>{$group.name}</strong>{l s=' : ' d='Shop.Theme.Catalog'}<span class="control-label__value">
