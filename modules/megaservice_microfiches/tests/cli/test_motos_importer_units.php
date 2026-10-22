@@ -74,12 +74,12 @@ $happy = MotosImporter::buildRow([
 check('buildRow modelnumber',         $happy['modelnumber'],         '$M-125DUKE2026');
 check('buildRow marque',              $happy['marque'],              'KTM');
 check('buildRow annee',               $happy['annee'],               2026);
-check('buildRow category_fr',         $happy['category_fr'],         '125 Duke 2026');
-check('buildRow core_name',           $happy['core_name'],           '125 Duke');
+check('buildRow category_fr',         $happy['category_fr'],         '125 DUKE 2026');
+check('buildRow core_name',           $happy['core_name'],           '125 DUKE');
 check('buildRow type=Naked (Duke)',   $happy['type'],                'Naked');
 check('buildRow cylindree',           $happy['cylindree'],           125);
 check('buildRow is_electric=0',       $happy['is_electric'],         0);
-check('buildRow nom_fr',              $happy['nom_fr'],              'KTM 125 Duke 2026');
+check('buildRow nom_fr',              $happy['nom_fr'],              'KTM 125 DUKE 2026');
 check('buildRow description_fr',      $happy['description_fr'],      'Description longue...');
 check('buildRow picture_main',        $happy['picture_main'],        'pho_bike.png');
 check('buildRow serial_constructeur', $happy['serial_constructeur'], '00JG457B');
@@ -184,6 +184,19 @@ check('buildRow rejette nom_fr vide', MotosImporter::buildRow([
 // =====================================================================
 // buildRow() — robustesse aux espaces (trim)
 // =====================================================================
+
+// Couleur après une virgule, en minuscules (CSV KTM) → majuscules, sans virgule.
+$couleur = MotosImporter::buildRow([
+    'modelnumber'   => '$M-1390SUPERDUKER2026',
+    'annee'         => '2026',
+    'category_fr'   => '1390 SUPER DUKE R, black 2026',
+    'model_name_fr' => '1390 SUPER DUKE R, black',
+], 'KTM');
+check('buildRow sans virgule ni minuscule : category_fr', $couleur['category_fr'], '1390 SUPER DUKE R BLACK 2026');
+check('buildRow sans virgule ni minuscule : core_name',   $couleur['core_name'],   '1390 SUPER DUKE R BLACK');
+check('buildRow sans virgule ni minuscule : nom_fr',      $couleur['nom_fr'],      '1390 SUPER DUKE R BLACK');
+check('normalizeLabel accents',  MotosImporter::normalizeLabel('Élan, vert'), 'ÉLAN VERT');
+check('normalizeLabel espaces',  MotosImporter::normalizeLabel('A,B ,  c'),   'A B C');
 
 $trimmed = MotosImporter::buildRow([
     'modelnumber'   => '  $M-X 2024  ',
