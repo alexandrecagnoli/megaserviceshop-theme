@@ -753,3 +753,23 @@ Appelé avec deux propriétés — `@include transition(background, color)` — 
 **Reste à faire** : la recherche native `/recherche?s=<référence>` existe déjà côté PrestaShop (friendly URL `recherche`), mais rien dans le header ne pointe dessus — le bouton `.ms-search-widget__toggle` de `ps_searchbar.tpl` n'a aucun JS ni formulaire associé. À implémenter si le client veut une recherche utilisable depuis le site, pas seulement par URL directe.
 
 **Statut** : 🟠 actif — reindexation manuelle tant que l'import ne marque pas les produits comme non indexés lui-même.
+
+---
+
+## 🟠 Montabilité — serials écartés par la déduplication de l'import motos (table fille ajoutée, non déployée)
+
+**Fichiers** : [modules/megaservice_microfiches/sql/migrations/006_moto_serial_table.sql](modules/megaservice_microfiches/sql/migrations/006_moto_serial_table.sql), [modules/megaservice_microfiches/classes/importers/MotosImporter.php](modules/megaservice_microfiches/classes/importers/MotosImporter.php), [modules/megaservice_mountability/classes/MsMountability.php](modules/megaservice_mountability/classes/MsMountability.php)
+
+**Contexte** : `ms_moto` est dédupliquée par `modelnumber` et ne garde qu'un `serial_constructeur` par modèle. Le fichier de montabilité désigne les motos par serial exact, et le constructeur émet un serial par variante (couleur, assemblage moteur). Mesuré le 22/10 sur la préprod : 1 471 serials pour 971 modèles dans le CSV KTM, soit **500 serials écartés** ; sur **64 modèles** le serial conservé porte moins de références que ses frères (**3 168 références perdues** ; `$M-350EXCFSD` : 14 au lieu de 650, `$M-400EXC2010` : 381 au lieu de 730).
+
+**Ce qui n'était PAS la cause du ticket F9903Z2** : la moto était bien résolue, mais la montabilité KTM chargée le 28/07 ne contenait ni Z2 ni Z9 (rechargée le 22/10 depuis les nouveaux fichiers constructeur, 298 lignes chacune).
+
+**Fix** : table `ms_moto_serial` (serial → id_moto), alimentée par `MotosImporter` pour chaque serial du CSV, dédupliqué ou non. Les jointures de montabilité et du sitemap passent par elle.
+
+**Ordre de mise en prod** : migration 006 (crée la table et la remplit avec les serials déjà en `ms_moto`, donc comportement identique) → déploiement du code → réimport du CSV motos (`scripts/cli/import_motos.php`, non déployé par la CI) pour rattacher les serials frères.
+
+**Limites** :
+- Les serials de montabilité absents du CSV motos (≈ 3 865 en KTM) restent non résolus : modèles d'autres marchés ou anciens millésimes, hors portée d'une table fille.
+- Non migrés vers la table fille : le pivot des microfiches par nom de fichier (`MicrofichesImporter::resolveMotoId`, `megaservice_microfiches.php`) et le rapprochement VIN (`vinlookup.php`), qui lisent encore `ms_moto.serial_constructeur`.
+
+**Statut** : 🟠 code commité, migration et réimport à passer sur la préprod.
