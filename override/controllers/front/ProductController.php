@@ -10,6 +10,18 @@ class ProductController extends ProductControllerCore
     private static $POWERPARTS_ROOT_IDS = [41]; // Accessoires Powerparts
 
     /**
+     * Racines « powerwear » : Équipement du motard (15) et Sportswear et
+     * accessoires (14). Leurs fiches reçoivent les onglets « Pièces
+     * recommandées » et « Pièces de rechange » SEULEMENT (REC-66) — « obligatoires »
+     * et « exclues » n'ont de sens que pour une pièce montée sur une moto.
+     */
+    private static $POWERWEAR_ROOT_IDS = [14, 15];
+
+    /** Types d'onglets affichés pour un produit powerwear. */
+    private static $POWERWEAR_TAB_TYPES = ['recommended', 'spare'];
+    private static $ALL_TAB_TYPES = ['mandatory', 'excluded', 'recommended', 'spare'];
+
+    /**
      * Racine « Motos neuves ». Seuls ses produits affichent « Réserver un essai ».
      * Les motos d'occasion (catégorie 11) en sont exclues — demande du client.
      */
@@ -88,8 +100,9 @@ class ProductController extends ProductControllerCore
     private function assignPowerpartsTabs()
     {
         $isPowerparts = $this->isProductInPowerpartsSubtree();
+        $isPowerwear  = !$isPowerparts && $this->isProductInSubtreeOf(self::$POWERWEAR_ROOT_IDS);
 
-        if (!$isPowerparts) {
+        if (!$isPowerparts && !$isPowerwear) {
             $this->context->smarty->assign([
                 'ms_show_powerparts_tabs' => false,
                 'ms_mandatory_products'   => [],
@@ -130,11 +143,14 @@ class ProductController extends ProductControllerCore
 
         $this->context->smarty->assign([
             'ms_show_powerparts_tabs' => true,
-            'ms_mandatory_products'   => $mandatory,
-            'ms_excluded_products'    => $excluded,
+            // Onglets rendus par product-related-tabs.tpl.
+            'ms_related_tab_types'    => $isPowerwear ? self::$POWERWEAR_TAB_TYPES : self::$ALL_TAB_TYPES,
+            'ms_mandatory_products'   => $isPowerwear ? [] : $mandatory,
+            'ms_excluded_products'    => $isPowerwear ? [] : $excluded,
             'ms_recommended_products' => $recommended,
             'ms_spare_products'       => $spare,
-            'ms_moto_compatible'      => $this->isCompatibleWithGarage(),
+            // Un vêtement n'est pas « compatible » avec une moto du garage.
+            'ms_moto_compatible'      => $isPowerwear ? false : $this->isCompatibleWithGarage(),
         ]);
     }
 
