@@ -17,8 +17,15 @@
       <span class="ms-product-card__overlay-btn">{l s='VOIR LA FICHE PRODUIT' d='Shop.Theme.Actions'}</span>
     </div>
 
-    {if $product.has_discount && $product.discount_type === 'percentage'}
-      <span class="ms-product-card__badge">{$product.discount_percentage}</span>
+    {* Badge % sur TOUTES les promos : PrestaShop ne fournit discount_percentage
+       que pour une remise de type pourcentage ; une remise en montant n'avait que
+       le prix barré. On le recalcule alors depuis les prix (REC-30). *}
+    {if $product.has_discount}
+      {if $product.discount_type === 'percentage' && $product.discount_percentage}
+        <span class="ms-product-card__badge">{$product.discount_percentage}</span>
+      {elseif $product.regular_price_amount > 0 && $product.price_amount < $product.regular_price_amount}
+        <span class="ms-product-card__badge">-{((($product.regular_price_amount - $product.price_amount) / $product.regular_price_amount) * 100)|round}%</span>
+      {/if}
     {/if}
 
     {* Badge "Compatible" — affiché seulement si CE produit est dans la liste de
