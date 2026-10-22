@@ -41,6 +41,13 @@ class Megaservice_relations extends Module
      */
     private static $POWERPARTS_ROOT_IDS = [41];
 
+    /**
+     * Racines « powerwear » (Équipement du motard 15, Sportswear 14) : le panneau n'y
+     * propose que « recommandées » et « de rechange » (REC-66). À tenir synchronisé
+     * avec le ProductController override.
+     */
+    private static $POWERWEAR_ROOT_IDS = [14, 15];
+
     public function install()
     {
         return parent::install()
@@ -134,12 +141,18 @@ class Megaservice_relations extends Module
     public function buildPanelState($idProduct)
     {
         $idProduct = (int) $idProduct;
-        if (!$idProduct || !$this->isProductInPowerpartsSubtree($idProduct)) {
-            return ['is_powerparts' => false];
+        $isPowerparts = $idProduct && $this->isProductInSubtreeOf($idProduct, self::$POWERPARTS_ROOT_IDS);
+        $isPowerwear  = $idProduct && !$isPowerparts && $this->isProductInSubtreeOf($idProduct, self::$POWERWEAR_ROOT_IDS);
+        if (!$isPowerparts && !$isPowerwear) {
+            return ['is_powerparts' => false, 'types' => []];
         }
 
+        $types = $isPowerwear
+            ? [MsProductRelationService::TYPE_RECOMMENDED, MsProductRelationService::TYPE_SPARE]
+            : MsProductRelationService::allTypes();
+
         $relations = [];
-        foreach (MsProductRelationService::allTypes() as $type) {
+        foreach ($types as $type) {
             $rows = MsProductRelationService::getRelations($idProduct, $type);
             $items = [];
             foreach ($rows as $r) {
@@ -156,25 +169,29 @@ class Megaservice_relations extends Module
         }
 
         return [
-            'is_powerparts' => true,
+            'is_powerparts' => $isPowerparts,
+            'types'         => $types,
             'relations'     => $relations,
         ];
     }
 
     /**
-     * Vérifie si le produit appartient à la sous-arborescence Powerparts
-     * (mêmes critères que le ProductController override).
+     * Le produit est-il rattaché à l'une de ces racines, ou à un de leurs
+     * descendants ? (mêmes critères que le ProductController override)
+     *
+     * @param int   $idProduct
+     * @param int[] $rootIds
      */
-    private function isProductInPowerpartsSubtree($idProduct)
+    private function isProductInSubtreeOf($idProduct, array $rootIds)
     {
-        if (empty(self::$POWERPARTS_ROOT_IDS)) {
+        if (empty($rootIds)) {
             return false;
         }
         $productCategories = Product::getProductCategories((int) $idProduct);
         if (empty($productCategories)) {
             return false;
         }
-        foreach (self::$POWERPARTS_ROOT_IDS as $rootId) {
+        foreach ($rootIds as $rootId) {
             $root = new Category((int) $rootId);
             if (!$root->id) continue;
             foreach ($productCategories as $catId) {
