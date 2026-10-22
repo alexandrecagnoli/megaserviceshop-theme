@@ -16,7 +16,7 @@
 -- ps_ms_moto_serial, sinon le front de montabilite renvoie une erreur SQL.
 --
 -- Application : phpMyAdmin (Plesk > Bases > megaserviceshop > SQL), prefixe ps_.
--- Idempotente (CREATE IF NOT EXISTS + INSERT IGNORE).
+-- Idempotente (CREATE IF NOT EXISTS + INSERT ... ON DUPLICATE KEY UPDATE).
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS `ps_ms_moto_serial` (
@@ -29,7 +29,13 @@ CREATE TABLE IF NOT EXISTS `ps_ms_moto_serial` (
   CONSTRAINT `fk_moto_serial_moto` FOREIGN KEY (`id_moto`) REFERENCES `ps_ms_moto`(`id_moto`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT IGNORE INTO `ps_ms_moto_serial` (`serial`, `id_moto`, `marque`, `date_add`)
+-- Quatre serials (713163, 939091, 939094, 939096) existent sur deux lignes
+-- ms_moto : un ancien modelnumber au nom mal encode (desactive) et sa version
+-- corrigee (active). Le tri place les motos actives en dernier et ON DUPLICATE
+-- KEY UPDATE laisse la derniere gagner : le serial pointe vers la moto active.
+INSERT INTO `ps_ms_moto_serial` (`serial`, `id_moto`, `marque`, `date_add`)
 SELECT `serial_constructeur`, `id_moto`, `marque`, NOW()
 FROM `ps_ms_moto`
-WHERE `serial_constructeur` IS NOT NULL AND `serial_constructeur` <> '';
+WHERE `serial_constructeur` IS NOT NULL AND `serial_constructeur` <> ''
+ORDER BY `active` ASC, `id_moto` ASC
+ON DUPLICATE KEY UPDATE `id_moto` = VALUES(`id_moto`), `marque` = VALUES(`marque`);
