@@ -37,8 +37,12 @@ export function forgetStoredMoto() {
  * @param {Function} onBefore  purge locale de l'appelant (cache, état d'UI),
  *                             jouée avant l'appel réseau pour que l'interface
  *                             réponde tout de suite.
+ * @param {string}   redirect  page où aller une fois le garage vidé. Pour les
+ *                             pages d'UNE moto (hub, microfiche) : recharger la
+ *                             même URL ré-armerait aussitôt le garage, le
+ *                             contrôleur y posant le cookie à chaque affichage.
  */
-export function clearMotoFilter(endpoint, onBefore) {
+export function clearMotoFilter(endpoint, onBefore, redirect) {
   if (typeof onBefore === 'function') {
     onBefore();
   }
@@ -47,12 +51,21 @@ export function clearMotoFilter(endpoint, onBefore) {
     return;
   }
 
+  // keepalive : la requête survit à une navigation. Sans lui, un clic sur le
+  // menu juste après « Réinitialiser » annulait l'appel en vol — le cookie
+  // n'était jamais vidé et le header réaffichait l'ancienne moto (REC-48).
   fetch(endpoint, {
     headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    credentials: 'same-origin'
+    credentials: 'same-origin',
+    keepalive: true
   })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (data) {
+      if (redirect && data) {
+        window.location.href = redirect;
+        return;
+      }
+
       // Rechargement UNIQUEMENT si un filtre était réellement armé : le contenu
       // affiché était alors filtré et ment désormais. Sinon on ne touche à rien.
       if (!data || !data.cleared) {

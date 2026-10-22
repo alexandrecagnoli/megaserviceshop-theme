@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var clear = e.target.closest('.js-model-clear');
     if (!clear) return;
     e.preventDefault();
-    clearMotoFilter();
+    clearMotoFilter(clear.getAttribute('data-clear-redirect') || '');
   });
 
   if (mobileBarEl) {
@@ -151,7 +151,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Corps déplacé dans moto-garage.js : la section « Recherche de pièces »
   // a désormais le même bouton, et une seconde copie aurait divergé.
-  function clearMotoFilter() {
+  function clearMotoFilter(redirect) {
+    // onReset des autres composants peut rappeler cette fonction avec un
+    // événement : seule une URL (chaîne) vaut redirection.
+    redirect = typeof redirect === 'string' ? redirect : '';
     clearGarage(CLEAR_ENDPOINT, function () {
       forgetStoredMoto();
       applyEmpty();
@@ -166,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
       resetSelect(selectGamme);
       resetSelect(selectModele);
       if (selectMarque) { selectMarque.selectedIndex = 0; }
-    });
+    }, redirect);
   }
 
   // État « moto sélectionnée » du header et de la barre mobile.
