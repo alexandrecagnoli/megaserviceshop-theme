@@ -245,22 +245,19 @@ class MsMountabilityImporter
     /**
      * Diagnostic post-import.
      *
-     * L'indicateur qui compte est `motos_resolues` : le nombre de MOTOS
-     * distinctes qui s'allument. Le nombre de serials non résolus n'est PAS un
-     * indicateur d'échec en soi : le constructeur émet un serial par variante
-     * (couleur, assemblage moteur, CKD/export) alors que ms_moto ne garde qu'une
-     * ligne par moto-année. Un serial non résolu dont la moto-année est déjà
-     * allumée par un serial frère est sans conséquence sur l'affichage.
-     *
-     * On expose donc : serials distincts, serials résolus, motos allumées, et le
-     * détail des non-résolus (plafonné à 200) pour repérer un vrai trou.
+     * Un serial est « résolu » s'il figure dans ms_moto_serial. L'indicateur qui
+     * compte reste `motos_resolues` : le nombre de MOTOS distinctes qui
+     * s'allument. Depuis que la table fille porte tous les serials d'un modèle,
+     * un serial non résolu n'est plus une variante écartée par la déduplication :
+     * c'est un serial absent du CSV motos (modèle d'un autre marché, ancien
+     * millésime, export motos plus ancien que le fichier de montabilité). Le
+     * détail (plafonné à 200) sert à repérer un vrai trou.
      */
     private static function countUnresolved(Db $db, $marque, array &$report)
     {
         $m    = pSQL($marque);
-        $col  = bqSQL(MsMountability::MOTO_JOIN_COLUMN);
         $cTbl = _DB_PREFIX_ . 'ms_mountability';
-        $mTbl = _DB_PREFIX_ . 'ms_moto';
+        $sTbl = _DB_PREFIX_ . MsMountability::SERIAL_TABLE;
 
         $report['unresolved_refs'] = (int) $db->getValue(
             'SELECT COUNT(DISTINCT c.`reference`)
@@ -276,19 +273,19 @@ class MsMountabilityImporter
              WHERE `marque` = "' . $m . '"'
         );
 
-        // Serials du fichier ayant une ligne ms_moto (numérateur du taux).
+        // Serials du fichier rattachés à une moto via ms_moto_serial (numérateur du taux).
         $report['resolved_serials'] = (int) $db->getValue(
             'SELECT COUNT(DISTINCT c.`id_moto_constructeur`)
              FROM `' . $cTbl . '` c
-             INNER JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
+             INNER JOIN `' . $sTbl . '` s ON s.`serial` = c.`id_moto_constructeur`
              WHERE c.`marque` = "' . $m . '"'
         );
 
         // Le vrai indicateur : motos distinctes réellement allumées.
         $report['motos_resolues'] = (int) $db->getValue(
-            'SELECT COUNT(DISTINCT mo.`id_moto`)
+            'SELECT COUNT(DISTINCT s.`id_moto`)
              FROM `' . $cTbl . '` c
-             INNER JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
+             INNER JOIN `' . $sTbl . '` s ON s.`serial` = c.`id_moto_constructeur`
              WHERE c.`marque` = "' . $m . '"'
         );
 
@@ -299,8 +296,8 @@ class MsMountabilityImporter
         $report['unresolved_moto_list'] = $db->executeS(
             'SELECT c.`id_moto_constructeur`, COUNT(*) AS nb
              FROM `' . $cTbl . '` c
-             LEFT JOIN `' . $mTbl . '` mo ON mo.`' . $col . '` = c.`id_moto_constructeur`
-             WHERE c.`marque` = "' . $m . '" AND mo.`id_moto` IS NULL
+             LEFT JOIN `' . $sTbl . '` s ON s.`serial` = c.`id_moto_constructeur`
+             WHERE c.`marque` = "' . $m . '" AND s.`id_moto` IS NULL
              GROUP BY c.`id_moto_constructeur`
              ORDER BY nb DESC
              LIMIT 200'
