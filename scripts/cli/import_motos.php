@@ -108,6 +108,7 @@ printf("Lues          : %d\n", $a['read']);
 printf("Insérées      : %d\n", $a['inserted']);
 printf("Mises à jour  : %d\n", $a['updated']);
 printf("Dédupliquées  : %d\n", $a['deduped']);
+printf("Serials liés  : %d\n", $a['serials']);
 printf("Skippées      : %d\n", $a['skipped']);
 printf("Classées Autres : %d\n", $a['autres']);
 printf("Durée         : %d ms\n", $a['duration_ms']);
