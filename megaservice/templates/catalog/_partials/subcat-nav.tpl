@@ -26,7 +26,10 @@
            class="ms-subcat-nav__item{if !empty($subcat.active)} ms-subcat-nav__item--active{/if}"
            aria-label="{$subcat.name|escape:'html':'UTF-8'}"
            {if !empty($subcat.active)}aria-current="page"{/if}
-           {if $_subcat_img}style="background-image:url('{$_subcat_img}');"{/if}>
+           {* Deux couches : subcat_thumb (360×220) d'abord, le chemin historique en repli
+              si ce fichier n'existe pas pour la catégorie. Les types large/medium/small
+              (141×180, 98×98) étaient étirés sur 140×110 : flou, surtout en retina. *}
+           {if $_subcat_img}style="background-image:url('{$urls.base_url}img/c/{$subcat.id_category}-subcat_thumb.jpg'),url('{$_subcat_img}');"{/if}>
           <span class="ms-subcat-nav__label">{$subcat.name}</span>
         </a>
       {/foreach}
