@@ -13,13 +13,19 @@
   <div class="ms-container">
 
     {* ── Nav onglets ───────────────────────── *}
+    {* Types d'onglets à afficher : 4 pour Powerparts, 2 pour le powerwear (REC-66). *}
+    {assign var='_related_tab_types' value=$ms_related_tab_types|default:['mandatory','excluded','recommended','spare']}
     <nav class="ms-related-tabs__nav" role="tablist">
+      {if in_array('mandatory', $_related_tab_types)}
       <button class="ms-related-tabs__btn js-related-tab-btn" type="button" role="tab" data-tab="mandatory">
         {l s='Pièces obligatoires' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_mandatory_products|count})</span>
       </button>
+      {/if}
+      {if in_array('excluded', $_related_tab_types)}
       <button class="ms-related-tabs__btn js-related-tab-btn" type="button" role="tab" data-tab="excluded">
         {l s='Pièces exclues' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_excluded_products|count})</span>
       </button>
+      {/if}
       <button class="ms-related-tabs__btn js-related-tab-btn is-active" type="button" role="tab" data-tab="recommended">
         {l s='Pièces recommandées' d='Shop.Theme.Catalog'} <span class="ms-related-tabs__count">({$ms_recommended_products|count})</span>
       </button>
@@ -31,6 +37,7 @@
     {* ── Panels ──────────────────────────── *}
     <div class="ms-related-tabs__panels">
 
+      {if in_array('mandatory', $_related_tab_types)}
       {* ── PIÈCES OBLIGATOIRES ── *}
       <div class="ms-related-tabs__panel js-related-tab-panel" data-panel="mandatory">
         <div class="ms-related-tabs__alert" role="alert">
@@ -72,6 +79,7 @@
           <p class="ms-related-tabs__empty">{l s='Aucune incompatibilité connue' d='Shop.Theme.Catalog'}</p>
         {/if}
       </div>
+      {/if}
 
       {* ── PIÈCES RECOMMANDÉES ── *}
       <div class="ms-related-tabs__panel js-related-tab-panel is-active" data-panel="recommended">
