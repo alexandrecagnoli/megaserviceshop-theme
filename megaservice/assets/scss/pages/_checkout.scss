@@ -182,8 +182,11 @@
   }
 }
 
-// État complete : numéro devient cercle vert avec check
-.checkout-step.-complete {
+// État complete : numéro devient cercle vert avec check.
+// :not(.-current) — l'étape 1 est complète ET courante à la fois quand le client
+// revient la modifier : le check se superposait alors au numéro (REC-35). Dans ce
+// cas c'est l'état courant (numéro sur fond noir) qui s'affiche.
+.checkout-step.-complete:not(.-current) {
   .step-title .step-number {
     background: $color-ktm;
     border-color: $color-ktm;
@@ -219,7 +222,10 @@
 .checkout-step:not(.-current) .content { display: none; }
 
 // ── Forms (alias depuis _customer.scss styles) ──
-.ms-checkout {
+// Partagés avec l'espace client (.ms-account) : identité, adresses… n'avaient
+// aucun style de formulaire, d'où les champs sans marges (REC-34).
+.ms-checkout,
+.ms-account {
   .form-group {
     display: flex;
     flex-direction: column;
@@ -349,7 +355,8 @@
 //      → label DANS le wrapper
 //   B) <span class="custom-checkbox"><input><span></span></span> + <label> séparé
 //      → label HORS du wrapper, géré au niveau du parent (cf. #conditions-to-approve)
-.ms-checkout {
+.ms-checkout,
+.ms-account {
   .custom-radio,
   .custom-checkbox {
     position: relative;
@@ -1106,7 +1113,9 @@
 // ── Étape 1 « Informations personnelles » — mise en forme du formulaire ──
 // Reprise de l'UI : onglets propres (plus de puces), cases à cocher et radios
 // visibles, mot de passe sur une ligne, espacement entre les champs.
-.ms-checkout {
+// Aussi appliqué à l'espace client (.ms-account), cf. REC-34.
+.ms-checkout,
+.ms-account {
   // Onglets Invité / Connexion (le JS bascule .active, cf. checkout.js)
   .nav-inline {
     display: flex;
