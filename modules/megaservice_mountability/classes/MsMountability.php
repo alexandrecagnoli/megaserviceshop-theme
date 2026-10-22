@@ -47,22 +47,22 @@ class MsMountability extends ObjectModel
     ];
 
     /**
-     * Colonne de ms_moto sur laquelle se résout `id_moto_constructeur`.
+     * Résolution serial constructeur → moto : table ms_moto_serial.
      *
      * CONFIRMÉ sur échantillon réel (montabilite_ktm) : la colonne « id_moto »
      * du fichier contient des SERIALS constructeur (F8401W5, 6301H0, F9903N2…),
-     * pas le modelnumber d'enrichissement ($M-…). C'est le même identifiant que
-     * `ms_moto.serial_constructeur` (cf. importer microfiches, qui pivote lui
-     * aussi les microfiches sur cette colonne).
+     * pas le modelnumber d'enrichissement ($M-…).
      *
-     * ⚠️ Cardinalité : le constructeur émet un serial par variante
-     * moteur/couleur, plus fin que ms_moto (1 ligne = 1 modèle/année, 1 serial
-     * représentatif). Certains serials du fichier n'ont donc pas de ligne
-     * ms_moto → comptés dans `unresolved_motos` du rapport d'import. C'est
-     * attendu ; le SELECT DISTINCT allume la moto dès qu'UN serial de la famille
-     * produit matche.
+     * ms_moto ne garde qu'une ligne (donc un serial_constructeur) par modèle,
+     * alors que le constructeur émet un serial par variante moteur/couleur et
+     * que ses références peuvent différer d'un serial à l'autre (ex. $M-350EXCFSD :
+     * 14 références sur le serial retenu, 650 sur l'ensemble des serials frères).
+     * Joindre sur ms_moto.serial_constructeur les rendait invisibles ; la table
+     * fille ms_moto_serial porte TOUS les serials d'un modèle. Un serial du
+     * fichier sans entrée dans cette table reste non résolu (compté dans
+     * `unresolved_motos` du rapport d'import).
      */
-    const MOTO_JOIN_COLUMN = 'serial_constructeur';
+    const SERIAL_TABLE = 'ms_moto_serial';
 
     /**
      * Le fichier de montabilité couvre-t-il cette moto ?
@@ -88,8 +88,10 @@ class MsMountability extends ObjectModel
             'SELECT EXISTS (
                  SELECT 1
                  FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+                 INNER JOIN `' . _DB_PREFIX_ . self::SERIAL_TABLE . '` s
+                         ON s.`serial` = c.`id_moto_constructeur`
                  INNER JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
-                         ON mo.`' . bqSQL(self::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+                         ON mo.`id_moto` = s.`id_moto`
                  WHERE mo.`id_moto` = ' . $idMoto . '
              )'
         );
@@ -123,8 +125,10 @@ class MsMountability extends ObjectModel
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT mo.`id_moto`, mo.`nom_fr`, mo.`core_name`, mo.`marque`
              FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+             INNER JOIN `' . _DB_PREFIX_ . self::SERIAL_TABLE . '` s
+                     ON s.`serial` = c.`id_moto_constructeur`
              INNER JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
-                     ON mo.`' . bqSQL(self::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+                     ON mo.`id_moto` = s.`id_moto`
              WHERE c.`reference` IN (' . $in . ')
                AND mo.`active` = 1
              ORDER BY mo.`marque` ASC, mo.`core_name` ASC'
@@ -173,8 +177,10 @@ class MsMountability extends ObjectModel
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT mo.`id_moto`, mo.`marque`, mo.`core_name`, mo.`nom_fr`, mo.`type`, mo.`annee`
              FROM `' . _DB_PREFIX_ . 'ms_mountability` c
+             INNER JOIN `' . _DB_PREFIX_ . self::SERIAL_TABLE . '` s
+                     ON s.`serial` = c.`id_moto_constructeur`
              INNER JOIN `' . _DB_PREFIX_ . 'ms_moto` mo
-                     ON mo.`' . bqSQL(self::MOTO_JOIN_COLUMN) . '` = c.`id_moto_constructeur`
+                     ON mo.`id_moto` = s.`id_moto`
              WHERE c.`reference` IN (' . $in . ')
                AND mo.`active` = 1'
         ) ?: [];
@@ -239,27 +245,22 @@ class MsMountability extends ObjectModel
             return [];
         }
 
-        // Notre PK → identifiant constructeur (clé du fichier de montabilité).
-        $motoRef = Db::getInstance()->getValue(
-            'SELECT `' . bqSQL(self::MOTO_JOIN_COLUMN) . '`
-             FROM `' . _DB_PREFIX_ . 'ms_moto`
-             WHERE `id_moto` = ' . $idMoto
-        );
-        if ($motoRef === false || $motoRef === null || $motoRef === '') {
-            return [];
-        }
+        // Tous les serials de la moto (variantes couleur / moteur comprises) :
+        // les références du fichier sont rattachées au serial exact.
+        $serials = '(SELECT `serial` FROM `' . _DB_PREFIX_ . self::SERIAL_TABLE . '`
+                     WHERE `id_moto` = ' . $idMoto . ')';
 
         // Références compatibles → id_product (produit OU déclinaison).
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT p.`id_product`
              FROM `' . _DB_PREFIX_ . 'ms_mountability` c
              INNER JOIN `' . _DB_PREFIX_ . 'product` p ON p.`reference` = c.`reference`
-             WHERE c.`id_moto_constructeur` = "' . pSQL($motoRef) . '"
+             WHERE c.`id_moto_constructeur` IN ' . $serials . '
              UNION
              SELECT DISTINCT pa.`id_product`
              FROM `' . _DB_PREFIX_ . 'ms_mountability` c
              INNER JOIN `' . _DB_PREFIX_ . 'product_attribute` pa ON pa.`reference` = c.`reference`
-             WHERE c.`id_moto_constructeur` = "' . pSQL($motoRef) . '"'
+             WHERE c.`id_moto_constructeur` IN ' . $serials
         ) ?: [];
 
         return array_map('intval', array_column($rows, 'id_product'));
