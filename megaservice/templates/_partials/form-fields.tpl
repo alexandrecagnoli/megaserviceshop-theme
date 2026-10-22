@@ -187,7 +187,7 @@
       {/if}
 
       {block name='form_field_errors'}
-        {include file='_partials/form-errors.tpl' errors=$field.errors}
+        {include file='_partials/form-errors.tpl' errors=$field.errors inline=true}
       {/block}
 
     </div>
