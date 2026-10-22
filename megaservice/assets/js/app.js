@@ -13,6 +13,7 @@ import './wishlist.js';
 import './filters.js';
 import './per-page.js';
 import './checkout.js';
+import './password-toggle.js';
 import './microfiches-plp.js';
 import './microfiches-pdp.js';
 import './subcat-nav.js';
