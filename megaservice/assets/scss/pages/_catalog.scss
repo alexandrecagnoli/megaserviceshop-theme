@@ -1201,6 +1201,54 @@ body#category {
   &:hover { color: $color-white; }
 }
 
+// ── Bandeau d'invitation « Choisir ma moto » (PowerParts sans filtre) ─────
+// Remplace le grand sélecteur : la liste de pièces reste visible dessous.
+.ms-moto-prompt {
+  max-width: $container-width;
+  margin: 24px auto 0;
+  background: #252525;
+  border-radius: 0 8px 0 0;
+}
+
+.ms-moto-prompt__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px $container-padding;
+
+  @include media-md() {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
+
+.ms-moto-prompt__text {
+  margin: 0;
+  color: rgba($color-white, 0.80);
+  font-family: $font-main;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.ms-moto-prompt__btn {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 24px;
+  background: $color-ktm;
+  border: 0;
+  color: $color-white;
+  font-family: $font-heading;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  @include transition(background-color);
+
+  &:hover { background: darken($color-ktm, 8%); }
+  &:focus-visible { @include focus-ring; }
+}
+
 // ── Sidebar : bloc parent catégorie ───────────
 .ms-catalog__cat-card {
   @include visual-card;
