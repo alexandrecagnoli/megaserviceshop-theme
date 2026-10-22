@@ -182,6 +182,9 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
 
         $this->context->smarty->assign([
             'ms_moto'        => $this->motoToTemplate($this->moto),
+            // Où atterrir après « Retirer le filtre » : ce hub ré-armerait le
+            // garage à chaque affichage (cf. initContent), il faut donc le quitter.
+            'ms_clear_redirect' => $this->context->link->getCategoryLink(12),
             'ms_cycle_url'   => $partieLink('cycle'),
             'ms_moteur_url'  => $partieLink('moteur'),
             // Images propres à la moto (BO → Motos). Vides tant qu'on ne les a pas :

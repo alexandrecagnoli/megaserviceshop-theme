@@ -41,7 +41,7 @@
              localStorage ET le cookie serveur (cf. model-selector.js).
              Pas de href de repli : ?ms_clear_moto=1 n'est traité que par l'override
              CategoryController, donc sans effet sur cette page. *}
-          <a href="#" class="ms-catalog-context__link js-model-clear">{l s='Retirer le filtre' d='Modules.Megaservicemicrofiches.Shop'}</a>
+          <a href="#" class="ms-catalog-context__link js-model-clear"{if !empty($ms_clear_redirect)} data-clear-redirect="{$ms_clear_redirect|escape:'html':'UTF-8'}"{/if}>{l s='Retirer le filtre' d='Modules.Megaservicemicrofiches.Shop'}</a>
         </div>
       </div>
     </div>
