@@ -56,6 +56,16 @@ class CategoryController extends CategoryControllerCore
     private static $MOTO_FINDER_ROOT_IDS = [12, 41];
 
     /**
+     * Racines où le grand sélecteur cède la place à un bandeau discret quand
+     * AUCUNE moto n'est choisie (décision COPROJ du 01/10, REC-48).
+     *
+     * Sur Pièces d'origine le choix de la moto reste imposé par le grand
+     * sélecteur ; sur PowerParts, il masquait la liste de pièces qu'on vient
+     * précisément chercher. Les Kits (488) ne sont pas concernés pour l'instant.
+     */
+    private static $MOTO_PROMPT_ROOT_IDS = [41];
+
+    /**
      * Catégories dont la page devient un hub d'orientation au lieu d'une liste.
      *
      *   12  Pièces détachées d'origine
@@ -140,6 +150,8 @@ class CategoryController extends CategoryControllerCore
             'ms_moto_no_data'       => $this->motoHasNoMountabilityData(),
             // Grand sélecteur moto (section de la home) quand aucun filtre n'est actif.
             'ms_show_moto_finder'   => $this->showMotoFinder(),
+            // Bandeau discret « Choisir ma moto » (PowerParts, sans filtre actif).
+            'ms_show_moto_prompt'   => $this->showMotoPrompt(),
             // Racine de branche pour le bloc « parent catégorie » de la sidebar.
             'ms_moto_context_root'  => $this->motoContextRoot(),
             // Produits réellement compatibles : le badge « Compatible » de la
@@ -796,7 +808,23 @@ class CategoryController extends CategoryControllerCore
             return false;
         }
 
+        // PowerParts : le bandeau discret remplace le grand sélecteur, la liste
+        // de pièces reste visible dessous (cf. showMotoPrompt).
+        if ($this->isInSubtreeOf(self::$MOTO_PROMPT_ROOT_IDS)) {
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * Invitation discrète à choisir sa moto : sous-arbre PowerParts, aucun
+     * filtre actif. Dès qu'une moto est en garage, le bandeau de contexte
+     * prend le relais — les deux ne coexistent jamais.
+     */
+    private function showMotoPrompt()
+    {
+        return $this->isInSubtreeOf(self::$MOTO_PROMPT_ROOT_IDS) && !$this->getMotoFilterId();
     }
 
     /**
