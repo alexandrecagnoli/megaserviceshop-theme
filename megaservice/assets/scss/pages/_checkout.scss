@@ -1151,8 +1151,10 @@
   .tab-content > .tab-pane.active { display: block; }
 
   // Espace entre les champs : les commentaires ne collent plus au label suivant
+  // Pas de « :last-child { margin: 0 } » : PrestaShop enveloppe certains champs (mot
+  // de passe) dans un <div>, ils y sont donc « derniers » sans l'être du formulaire —
+  // « Optionnel » collait alors au libellé suivant.
   .checkout-step form .form-group { margin-bottom: 20px; }
-  .checkout-step form .form-group:last-child { margin-bottom: 0; }
 
   // Bloc « Créez votre compte (optionnel) »
   .form-informations {
@@ -1223,10 +1225,14 @@
     padding-left: 32px !important;
     line-height: 1.45;
 
+    // !important : la règle native `input[type=checkbox]:not(.ps-shown-by-js):not(.binary)`
+    // plus haut dans ce fichier pèse plus lourd et remettait l'input dans le flux
+    // (position: relative) — le texte se retrouvait décalé de 24 px.
     input[type="checkbox"] {
-      position: absolute;
+      position: absolute !important;
       top: 0;
       left: 0;
+      transform: none;
       width: 20px;
       height: 20px;
       margin: 0;
@@ -1297,6 +1303,10 @@
     letter-spacing: 0;
     cursor: pointer;
 
+    // Même raison que pour les cases : l'input du radio doit rester hors flux,
+    // sinon le rond est décalé de 30 px par rapport au libellé.
+    .custom-radio input[type="radio"] { position: absolute !important; }
+
     .custom-radio > span { border-radius: 50%; }
 
     .custom-radio input:checked ~ span {
@@ -1312,7 +1322,7 @@
   }
 
   // Pied de formulaire : bouton aligné à droite, lien « mot de passe oublié » discret
-  .form-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+  .form-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
 
   .forgot-password {
     margin: 12px 0 0;
