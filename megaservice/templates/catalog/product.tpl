@@ -255,18 +255,26 @@
           {if $product.features}
             <div class="ms-product__features">
               <table class="ms-product__feature-group is-active">
+                {* Une caractéristique n'est affichée qu'une fois par couple nom/valeur :
+                   l'import en recréait des copies à chaque passage (REC-18). *}
+                {assign var='_seen_features' value=[]}
                 {foreach from=$product.features item=f}
-                  <tr>
-                    <td class="ms-product__feature-name">{$f.name}</td>
-                    <td class="ms-product__feature-value">{$f.value|escape:'htmlall'|nl2br nofilter}</td>
-                  </tr>
+                  {assign var='_feature_key' value=$f.name|cat:'|'|cat:$f.value}
+                  {if !isset($_seen_features[$_feature_key])}
+                    {$_seen_features[$_feature_key] = true}
+                    <tr>
+                      <td class="ms-product__feature-name">{$f.name}</td>
+                      <td class="ms-product__feature-value">{$f.value|escape:'htmlall'|nl2br nofilter}</td>
+                    </tr>
+                  {/if}
                 {/foreach}
               </table>
             </div>
           {else}
-            {block name='product_details'}
-              {include file='catalog/_partials/product-details.tpl'}
-            {/block}
+            {* Pas de caractéristique : on le dit. Le repli sur product-details.tpl
+               faisait apparaître « En stock » et la référence dans la fiche
+               technique, déjà affichés dans le bloc d'achat (REC-24). *}
+            <p class="ms-product__no-features">{l s='Aucune caractéristique technique renseignée pour ce produit.' d='Shop.Theme.Catalog'}</p>
           {/if}
         </div>
 
