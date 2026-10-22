@@ -82,3 +82,15 @@
     --ms-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E");
   }
 }
+
+// Erreur d'un champ de formulaire (form-errors.tpl, inline) : même boîte, en plus compact.
+.help-block { margin: 0; }
+
+.ms-alert.alert.ms-alert--inline {
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  font-size: $font-size-sm;
+
+  &::before { width: 18px; height: 18px; margin-top: 0; }
+}
