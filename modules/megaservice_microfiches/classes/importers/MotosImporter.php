@@ -9,6 +9,8 @@
  *     → buildRow() : mapping + dérivations via MotosTaxonomy
  *     → dédup par MODELNUMBER (1ère occurrence)
  *     → INSERT ... ON DUPLICATE KEY UPDATE en SQL direct
+ *     → chaque serial du CSV (même dédupliqué) rattaché à sa moto dans
+ *       ms_moto_serial
  *
  * Idempotence : UNIQUE(modelnumber) + ON DUPLICATE KEY UPDATE → l'id_moto
  * reste stable (les microfiches qui pointent dessus ne cassent pas).
@@ -75,6 +77,9 @@ class MotosImporter
             }
             $mn = $built['modelnumber'];
             if (isset($seen[$mn])) {
+                // ms_moto garde une ligne par modèle, mais le serial écarté
+                // reste un identifiant valide pour la montabilité.
+                $this->registerSerial($built, $report);
                 $report->incRowsDeduped();
                 continue;
             }
@@ -95,6 +100,7 @@ class MotosImporter
             }
 
             $this->upsert($built, $report);
+            $this->registerSerial($built, $report);
         }
 
         $report->finish();
@@ -224,6 +230,34 @@ class MotosImporter
             "MotosImporter: marque indéterminable depuis le nom de fichier '%s' (attendu : KTM_*, HQV_* ou GASGAS_*)",
             basename($csvPath)
         ));
+    }
+
+    /**
+     * Rattache le serial d'une row à sa moto dans ms_moto_serial.
+     *
+     * L'id_moto se lit par modelnumber : l'upsert de la 1ère occurrence a déjà
+     * eu lieu, donc la ligne existe pour les occurrences dédupliquées aussi.
+     * Si l'upsert a échoué, le SELECT ne ramène rien et rien n'est inséré.
+     */
+    private function registerSerial(array $data, MotosImportReport $report): void
+    {
+        if ($data['serial_constructeur'] === null) {
+            return;
+        }
+
+        $db = Db::getInstance();
+        $ok = $db->execute(
+            'INSERT INTO `' . _DB_PREFIX_ . 'ms_moto_serial` (`serial`, `id_moto`, `marque`, `date_add`)
+             SELECT "' . pSQL($data['serial_constructeur']) . '", `id_moto`, `marque`, NOW()
+             FROM `' . _DB_PREFIX_ . 'ms_moto`
+             WHERE `modelnumber` = "' . pSQL($data['modelnumber']) . '"
+             ON DUPLICATE KEY UPDATE `id_moto` = VALUES(`id_moto`), `marque` = VALUES(`marque`)'
+        );
+        if (!$ok) {
+            $report->addError($data['modelnumber'], $db->getMsgError());
+            return;
+        }
+        $report->incSerialsLinked();
     }
 
     /**

@@ -24,6 +24,9 @@ class MotosImportReport
     /** @var int Motos existantes mises à jour. */
     public $rowsUpdated = 0;
 
+    /** @var int Serials rattachés à leur moto dans ms_moto_serial (dédupliqués inclus). */
+    public $serialsLinked = 0;
+
     /** @var array<int, array{modelnumber: string, error: string}> */
     public $errors = [];
 
@@ -66,6 +69,7 @@ class MotosImportReport
     public function incRowsDeduped(): void  { $this->rowsDeduped++; }
     public function incRowsInserted(): void { $this->rowsInserted++; }
     public function incRowsUpdated(): void  { $this->rowsUpdated++; }
+    public function incSerialsLinked(): void { $this->serialsLinked++; }
 
     public function addError(string $modelnumber, string $error): void
     {
@@ -112,6 +116,7 @@ class MotosImportReport
             'inserted'    => $this->rowsInserted,
             'updated'     => $this->rowsUpdated,
             'deduped'     => $this->rowsDeduped,
+            'serials'     => $this->serialsLinked,
             'skipped'     => $this->rowsSkipped,
             'errors'      => count($this->errors),
             'autres'      => count($this->autresFound),
