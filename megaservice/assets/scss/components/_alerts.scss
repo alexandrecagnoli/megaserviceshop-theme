@@ -1,0 +1,84 @@
+// ============================================
+// INFO BOXES — messages d'erreur, d'avertissement, de succès, d'information
+// ============================================
+// Rendues par templates/_partials/notifications.tpl (REC-39). Une boîte
+// classique dans le flux de la page — pas un toaster : le message reste lisible
+// et ne disparaît pas avant d'avoir été lu. Un message = un paragraphe, sans puce.
+//
+// Sélecteurs à 3 classes exprès : `.alert-info` / `.alert-warning` (_customer)
+// et `.ms-checkout .alert` (_checkout) ont leurs propres styles hérités.
+
+.notifications-container { padding-top: 0; padding-bottom: 0; }
+
+.ms-alert.alert {
+  --ms-alert-accent: #{$color-ktm};
+  --ms-alert-bg: #{$color-gray-5};
+  --ms-alert-text: #{$color-black};
+
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 14px 18px;
+  background: var(--ms-alert-bg);
+  border: 0;
+  border-left: 4px solid var(--ms-alert-accent);
+  border-radius: $border-radius;
+  color: var(--ms-alert-text);
+  font-family: $font-main;
+  font-size: $font-size-base;
+  line-height: 1.45;
+
+  // Icône : masque SVG teinté à la couleur d'accent (une seule règle, 4 pictos).
+  &::before {
+    content: '';
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    background-color: var(--ms-alert-accent);
+    -webkit-mask: var(--ms-alert-icon) no-repeat center / contain;
+            mask: var(--ms-alert-icon) no-repeat center / contain;
+  }
+
+  .ms-alert__body {
+    flex: 1;
+    min-width: 0;
+
+    p { margin: 0; }
+    p + p { margin-top: 6px; }
+  }
+
+  a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+
+    &:hover { color: var(--ms-alert-accent); }
+  }
+
+  // ── Variantes ───────────────────────────────
+  &.ms-alert--error {
+    --ms-alert-accent: #{$color-error};
+    --ms-alert-bg: #{$color-error-light};
+    --ms-alert-text: #{$color-error};
+    --ms-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
+  }
+
+  &.ms-alert--warning {
+    --ms-alert-accent: #{$color-ktm};
+    --ms-alert-bg: #{$color-ktm-light};
+    --ms-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E");
+  }
+
+  &.ms-alert--success {
+    --ms-alert-accent: #{$color-success};
+    --ms-alert-bg: #{$color-success-light};
+    --ms-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z'/%3E%3C/svg%3E");
+  }
+
+  &.ms-alert--info {
+    --ms-alert-accent: #{$color-ktm};
+    --ms-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E");
+  }
+}
