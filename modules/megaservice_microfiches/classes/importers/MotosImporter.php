@@ -160,20 +160,40 @@ class MotosImporter
         $picture    = trim((string) ($csvRow['picture'] ?? ''));
         $textFr     = trim((string) ($csvRow['text_fr'] ?? ''));
 
+        // Type, cylindrée et électrique sont déduits du libellé d'origine ci-dessus ;
+        // seuls les libellés STOCKÉS (donc affichés) sont normalisés.
         return [
             'modelnumber'         => $mn,
             'serial_constructeur' => $serial !== '' ? $serial : null,
             'marque'              => $marque,
             'annee'               => $annee,
-            'category_fr'         => $categoryFr,
-            'core_name'           => $coreName,
+            'category_fr'         => self::normalizeLabel($categoryFr),
+            'core_name'           => self::normalizeLabel($coreName),
             'type'                => $type,
             'cylindree'           => $cylindree,
             'is_electric'         => $isElectric ? 1 : 0,
-            'nom_fr'              => $nomFr,
+            'nom_fr'              => self::normalizeLabel($nomFr),
             'description_fr'      => $textFr !== '' ? $textFr : null,
             'picture_main'        => $picture !== '' ? $picture : null,
         ];
+    }
+
+    /**
+     * Libellé moto tel qu'affiché : majuscules, sans virgule.
+     *
+     * Le CSV KTM porte la couleur après une virgule et en minuscules
+     * (« 1390 Super Duke R, black 2026 »), ce qui sortait tel quel dans le fil
+     * d'ariane, le titre et le bandeau « Catalogue filtré sur ». On ramène tout
+     * au style des autres libellés : « 1390 SUPER DUKE R BLACK 2026 ».
+     *
+     * Pure : pas de dépendance Presta. Testable.
+     */
+    public static function normalizeLabel(string $label): string
+    {
+        $label = str_replace(',', ' ', $label);
+        $label = preg_replace('/\s+/u', ' ', $label) ?? $label;
+
+        return mb_strtoupper(trim($label), 'UTF-8');
     }
 
     /**
