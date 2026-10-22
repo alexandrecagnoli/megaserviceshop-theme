@@ -22,14 +22,19 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  *}
+{* Info box (REC-39) : même rendu que notifications.tpl. Sans `inline`, c'est une
+   erreur de FORMULAIRE (ex. « Échec d'authentification ») ; avec `inline`, une erreur
+   de CHAMP, sous le champ, en version compacte. Plus de liste à puces. *}
 {if $errors|count}
-  <div class="help-block">
+  <div class="help-block{if !empty($inline)} help-block--inline{/if}">
     {block name='form_errors'}
-      <ul>
-        {foreach $errors as $error}
-          <li class="alert alert-danger">{$error|nl2br nofilter}</li>
-        {/foreach}
-      </ul>
+      <div class="alert alert-danger ms-alert ms-alert--error{if !empty($inline)} ms-alert--inline{/if}" role="alert">
+        <div class="ms-alert__body">
+          {foreach $errors as $error}
+            <p>{$error|nl2br nofilter}</p>
+          {/foreach}
+        </div>
+      </div>
     {/block}
   </div>
 {/if}
