@@ -999,3 +999,11 @@
     padding: 24px 0;
   }
 }
+
+// Onglet « Fiche technique » sans caractéristique (REC-24)
+.ms-product__no-features {
+  margin: 0;
+  color: $color-gray-60;
+  font-family: $font-main;
+  font-size: $font-size-base;
+}
