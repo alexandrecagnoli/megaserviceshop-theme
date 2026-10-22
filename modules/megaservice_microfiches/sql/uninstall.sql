@@ -8,4 +8,5 @@
 DROP TABLE IF EXISTS `PREFIX_ms_microfiche_hotspot`;
 DROP TABLE IF EXISTS `PREFIX_ms_microfiche`;
 DROP TABLE IF EXISTS `PREFIX_ms_microfiche_categorie`;
+DROP TABLE IF EXISTS `PREFIX_ms_moto_serial`;
 DROP TABLE IF EXISTS `PREFIX_ms_moto`;

@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ms_moto` (
   KEY `idx_active` (`active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Serials constructeur -> moto. ms_moto garde UNE ligne par modelnumber (donc un
+-- seul serial_constructeur), alors que le constructeur emet un serial par
+-- variante (couleur, assemblage moteur) et que la montabilite designe les motos
+-- par serial exact. Cette table porte TOUS les serials d'un modele ; la jointure
+-- montabilite passe par elle (cf. migration 006).
+CREATE TABLE IF NOT EXISTS `PREFIX_ms_moto_serial` (
+  `serial`   VARCHAR(32) NOT NULL,
+  `id_moto`  INT UNSIGNED NOT NULL,
+  `marque`   ENUM('KTM','HQV','GASGAS') NOT NULL,
+  `date_add` DATETIME NOT NULL,
+  PRIMARY KEY (`serial`),
+  KEY `idx_id_moto` (`id_moto`),
+  CONSTRAINT `fk_moto_serial_moto` FOREIGN KEY (`id_moto`) REFERENCES `PREFIX_ms_moto`(`id_moto`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE IF NOT EXISTS `PREFIX_ms_microfiche_categorie` (
   `id_categorie`        INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `partie`              ENUM('cycle','moteur') NOT NULL,
