@@ -38,8 +38,11 @@
     // 2. Fetch state initial
     ajaxFetch(ajaxUrl, { action: 'getState', id_product: idProduct })
       .then(function (resp) {
-        if (!resp || !resp.success || !resp.is_powerparts) return;
-        injectPanel(idProduct, ajaxUrl, resp.relations || {});
+        // `types` : sections à proposer — 4 pour Powerparts, 2 (recommandées, de
+        // rechange) pour le powerwear. Absent d'un ancien serveur → Powerparts seul.
+        var types = resp && resp.types ? resp.types : (resp && resp.is_powerparts ? TYPES.map(function (t) { return t.key; }) : []);
+        if (!resp || !resp.success || !types.length) return;
+        injectPanel(idProduct, ajaxUrl, resp.relations || {}, types);
       })
       .catch(function (err) {
         console.error('[ms_relations] getState failed', err);
@@ -47,15 +50,15 @@
   }
 
   // 3. Construit le HTML du panneau et l'injecte dans la page
-  function injectPanel(idProduct, ajaxUrl, initialState) {
+  function injectPanel(idProduct, ajaxUrl, initialState, types) {
     if (document.querySelector('.ms-relations')) return; // déjà injecté
 
     var panelHTML =
       '<div class="form-wrapper ms-relations" data-ms-id-product="' + idProduct + '" data-ms-ajax-url="' + escapeAttr(ajaxUrl) + '">' +
-        '<h3>Relations Powerparts</h3>' +
+        '<h3>' + (types.length === TYPES.length ? 'Relations Powerparts' : 'Relations produit') + '</h3>' +
         '<p class="text-muted small">Glissez-déposez pour réordonner. Les modifications sont enregistrées automatiquement.</p>' +
         '<div class="ms-relations__panels">' +
-          TYPES.map(function (t) {
+          TYPES.filter(function (t) { return types.indexOf(t.key) !== -1; }).map(function (t) {
             return (
               '<div class="ms-relations__panel' + (t.withQty ? ' ms-relations__panel--with-qty' : '') + '" data-type="' + t.key + '">' +
                 '<h4>' + escapeHtml(t.label) + ' <span class="ms-relations__count badge">0</span></h4>' +
