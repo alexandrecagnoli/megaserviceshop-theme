@@ -1139,7 +1139,7 @@
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      text-decoration: none;
+      text-decoration: none !important;
       @include transition(color, border-color);
 
       &:hover { color: $color-black; }
@@ -1214,12 +1214,14 @@
   // (.custom-checkbox > label > input + span) — d'où des cases invisibles.
   .custom-checkbox { display: flex; }
 
+  // Case à gauche (absolue), texte ET mention <em> en colonne à droite : le label
+  // n'est pas un flex, sinon le texte et la mention se rangeaient côte à côte.
   .custom-checkbox > label {
     position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    display: block;
     width: 100%;
+    padding-left: 32px !important;
+    line-height: 1.45;
 
     input[type="checkbox"] {
       position: absolute;
@@ -1234,11 +1236,11 @@
     }
 
     > span {
-      position: relative;
-      flex-shrink: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 20px;
       height: 20px;
-      margin-top: 1px;
       border: 2px solid $color-gray-35;
       background: $color-white;
       box-sizing: border-box;
@@ -1246,6 +1248,15 @@
       @include transition(border-color, background);
 
       .material-icons { display: none !important; }
+    }
+
+    em {
+      display: block;
+      margin-top: 4px;
+      color: $color-gray-60;
+      font-size: 12px;
+      font-style: normal;
+      line-height: 1.45;
     }
 
     input:checked + span {
