@@ -71,7 +71,8 @@ class Megaservice_microfichesSitemapModuleFrontController extends ModuleFrontCon
             'powerparts'  => (int) $this->count(
                 'SELECT COUNT(DISTINCT mo.`id_moto`)
                  FROM `' . _DB_PREFIX_ . 'ms_moto` mo
-                 JOIN `' . _DB_PREFIX_ . 'ms_mountability` c ON c.`id_moto_constructeur` = mo.`serial_constructeur`
+                 JOIN `' . _DB_PREFIX_ . 'ms_moto_serial` s ON s.`id_moto` = mo.`id_moto`
+                 JOIN `' . _DB_PREFIX_ . 'ms_mountability` c ON c.`id_moto_constructeur` = s.`serial`
                  WHERE mo.`active`=1'
             ),
         ];
@@ -140,7 +141,8 @@ class Megaservice_microfichesSitemapModuleFrontController extends ModuleFrontCon
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT mo.`id_moto`, mo.`marque`, mo.`core_name`, mo.`annee`, mo.`type`, mo.`date_upd`
              FROM `' . _DB_PREFIX_ . 'ms_moto` mo
-             JOIN `' . _DB_PREFIX_ . 'ms_mountability` c ON c.`id_moto_constructeur` = mo.`serial_constructeur`
+             JOIN `' . _DB_PREFIX_ . 'ms_moto_serial` s ON s.`id_moto` = mo.`id_moto`
+             JOIN `' . _DB_PREFIX_ . 'ms_mountability` c ON c.`id_moto_constructeur` = s.`serial`
              WHERE mo.`active`=1
              ORDER BY mo.`id_moto` ' . $this->limit($page)
         ) ?: [];
