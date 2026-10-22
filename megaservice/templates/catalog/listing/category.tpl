@@ -40,6 +40,12 @@
   {if isset($ms_show_moto_finder) && $ms_show_moto_finder}
     {include file='_partials/parts-search.tpl'}
   {/if}
+
+  {* PowerParts sans moto : simple invitation, la liste reste visible dessous
+     (le grand sélecteur la repoussait hors de l'écran — REC-48). *}
+  {if isset($ms_show_moto_prompt) && $ms_show_moto_prompt}
+    {include file='catalog/_partials/moto-prompt.tpl'}
+  {/if}
 {/block}
 
 {block name='product_list_footer'}
