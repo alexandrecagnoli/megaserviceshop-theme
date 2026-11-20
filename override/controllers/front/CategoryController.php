@@ -55,9 +55,12 @@ class CategoryController extends CategoryControllerCore
      * module megaservice_mountability — pas ici.
      */
     private static $MOTO_CONTEXT_ROOT_IDS = [
-        41,  // Accessoires Powerparts
+        41,  // Accessoires Powerparts (ancienne branche, en cours de retrait)
         488, // Kits de pièces d'origine — les kits ne figurent sur aucune vue
              // éclatée, la compatibilité moto est leur seul filtre d'accès.
+        533, // Accessoires moto (PowerParts refondu) : reprend la compatibilité
+             // moto de 41. À tenir synchro avec MOUNTABILITY_ROOT_CATEGORIES du
+             // module megaservice_mountability (qui exécute le filtrage réel).
     ];
 
     /**
@@ -84,8 +87,13 @@ class CategoryController extends CategoryControllerCore
      * Sur Pièces d'origine le choix de la moto reste imposé par le grand
      * sélecteur ; sur PowerParts, il masquait la liste de pièces qu'on vient
      * précisément chercher. Les Kits (488) ne sont pas concernés pour l'instant.
+     *
+     *   41  Accessoires Powerparts (ancienne branche, en cours de retrait)
+     *   533 Accessoires moto (PowerParts refondu) : même bandeau discret, la
+     *       liste reste visible dessous. Pas besoin de 533 dans $MOTO_FINDER_ROOT_IDS :
+     *       le prompt prime déjà sur le grand sélecteur (cf. showMotoFinder).
      */
-    private static $MOTO_PROMPT_ROOT_IDS = [41];
+    private static $MOTO_PROMPT_ROOT_IDS = [41, 533];
 
     /**
      * Catégories dont la page devient un hub d'orientation au lieu d'une liste.
