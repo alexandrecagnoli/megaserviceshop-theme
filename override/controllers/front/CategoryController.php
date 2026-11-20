@@ -86,15 +86,18 @@ class CategoryController extends CategoryControllerCore
      * AUCUNE moto n'est choisie (décision COPROJ du 01/10, REC-48).
      *
      * Sur Pièces d'origine le choix de la moto reste imposé par le grand
-     * sélecteur ; sur PowerParts, il masquait la liste de pièces qu'on vient
-     * précisément chercher. Les Kits (488) ne sont pas concernés pour l'instant.
+     * sélecteur ; sur PowerParts et les Kits, il masquait la liste qu'on vient
+     * précisément chercher.
      *
      *   41  Accessoires Powerparts (ancienne branche, en cours de retrait)
      *   533 Accessoires moto (PowerParts refondu) : même bandeau discret, la
      *       liste reste visible dessous. Pas besoin de 533 dans $MOTO_FINDER_ROOT_IDS :
      *       le prompt prime déjà sur le grand sélecteur (cf. showMotoFinder).
+     *   560 Kits pièces de rechange d'origine : sous Pièces d'origine (12), donc
+     *       dans $MOTO_FINDER_ROOT_IDS — le prompt prime et remplace le grand
+     *       sélecteur, comme sur PowerParts.
      */
-    private static $MOTO_PROMPT_ROOT_IDS = [41, 533];
+    private static $MOTO_PROMPT_ROOT_IDS = [41, 533, 560];
 
     /**
      * Catégories dont la page devient un hub d'orientation au lieu d'une liste.
