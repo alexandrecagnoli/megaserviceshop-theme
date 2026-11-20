@@ -27,6 +27,24 @@ class CategoryController extends CategoryControllerCore
     private static $FULL_WIDTH_ROOT_IDS = [14, 15];
 
     /**
+     * Racines dont le sous-arbre affiche la LIGNE D'ICÔNES de navigation entre
+     * catégories (le « carousel » de catégories du hero). Superset de
+     * $FULL_WIDTH_ROOT_IDS, volontairement découplé :
+     *
+     *   14  Sportswear et accessoires (PowerWear)
+     *   15  Équipement du motard (PowerWear)
+     *   533 Accessoires moto (= PowerParts refondu, branche import COMPLET)
+     *
+     * 533 partage la ligne d'icônes mais GARDE son layout 'default' (3 colonnes +
+     * sidebar filtres) : seul le carousel est mutualisé, pas la mise en page
+     * plein-largeur — qui reste réservée à 14/15 exactement (cf. $FULL_WIDTH_ROOT_IDS
+     * et le choix de $template dans assignMotoContext).
+     * NB : l'ancienne branche « Accessoires powerparts » (41) est en cours de retrait ;
+     * le carousel a été déplacé de 41 vers 533, la vraie branche PowerParts.
+     */
+    private static $SUBCAT_NAV_ROOT_IDS = [14, 15, 533];
+
+    /**
      * Catégories racines qui affichent le contexte "moto sélectionnée"
      * (bandeau moto + badge "Compatible"). Le FILTRAGE réel des produits/facettes
      * se fait dans ps_facetedsearch via le hook actionFacetedSearchFilters du
@@ -137,9 +155,13 @@ class CategoryController extends CategoryControllerCore
         $this->context->smarty->assign([
             'ms_category_template'  => $template,
             'ms_is_full_width'      => $template === 'full',
-            // Ligne d'icônes : tout le sous-arbre 14/15, layout ou pas (cf.
-            // commentaire de $FULL_WIDTH_ROOT_IDS et fullWidthRoot()).
-            'ms_show_subcat_nav'    => (bool) $this->fullWidthRoot(),
+            // Ligne d'icônes (carousel de catégories) : tout le sous-arbre
+            // 14/15 ET 533, layout ou pas (cf. $SUBCAT_NAV_ROOT_IDS, subcatNavRoot()).
+            'ms_show_subcat_nav'    => (bool) $this->subcatNavRoot(),
+            // Suffixe de titre réservé à la racine PowerParts refondue (533) : le nom de
+            // catégorie reste « Accessoires moto » (menu + fil d'Ariane courts), mais le
+            // H1 (et le meta_title côté BO) affiche « Accessoires moto (Power Parts) ».
+            'ms_h1_suffix'          => ((int) $this->category->id === 533) ? ' (Power Parts)' : '',
             // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF.
             'ms_show_moto_context'  => (bool) $motoFilter,
             'ms_moto_filter'        => $motoFilter,
@@ -171,11 +193,36 @@ class CategoryController extends CategoryControllerCore
      */
     private function fullWidthRoot()
     {
+        return $this->rootContaining(self::$FULL_WIDTH_ROOT_IDS);
+    }
+
+    /**
+     * Racine (14/15/533) dont le sous-arbre porte la ligne d'icônes du hero, ou
+     * null hors de ces branches. Sert ms_show_subcat_nav et le choix des
+     * catégories affichées (cf. getTemplateVarSubCategories).
+     *
+     * @return Category|null
+     */
+    private function subcatNavRoot()
+    {
+        return $this->rootContaining(self::$SUBCAT_NAV_ROOT_IDS);
+    }
+
+    /**
+     * Première racine, parmi $rootIds, dont l'intervalle nleft/nright contient
+     * la catégorie courante (donc à n'importe quelle profondeur du sous-arbre),
+     * ou null. Mutualise le parcours de fullWidthRoot() et subcatNavRoot().
+     *
+     * @param  int[] $rootIds
+     * @return Category|null
+     */
+    private function rootContaining(array $rootIds)
+    {
         if (!$this->category->id) {
             return null;
         }
 
-        foreach (self::$FULL_WIDTH_ROOT_IDS as $rootId) {
+        foreach ($rootIds as $rootId) {
             $root = new Category((int) $rootId, (int) $this->context->language->id);
             if (!$root->id) {
                 continue;
@@ -189,8 +236,8 @@ class CategoryController extends CategoryControllerCore
     }
 
     /**
-     * La ligne d'icônes du hero montre toujours les catégories de NIVEAU 3
-     * (celles juste sous la racine 14/15), jamais les enfants de la page
+     * La ligne d'icônes du hero montre toujours les catégories juste sous la
+     * racine (14/15/533), jamais les enfants de la page
      * courante : sur une feuille (ex. "Casques", qui n'a pas d'enfants), le
      * getSubCategories() natif renverrait un tableau vide et la ligne
      * disparaîtrait. On affiche donc systématiquement la fratrie de niveau 3,
@@ -198,11 +245,11 @@ class CategoryController extends CategoryControllerCore
      * dessus directement ou sur une de ses feuilles de niveau 4 (ex. "T-shirt"
      * sous "T-shirts - Polos - Chemises").
      *
-     * Hors des branches 14/15 : comportement natif inchangé.
+     * Hors des branches 14/15/533 : comportement natif inchangé.
      */
     protected function getTemplateVarSubCategories()
     {
-        $root = $this->fullWidthRoot();
+        $root = $this->subcatNavRoot();
         if (!$root) {
             return parent::getTemplateVarSubCategories();
         }
