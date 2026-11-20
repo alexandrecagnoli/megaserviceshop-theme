@@ -39,7 +39,7 @@ class Megaservice_relations extends Module
      * Catégories racines Powerparts — la fiche du module ne s'affiche que pour
      * les produits dans cette sous-arborescence. Cohérent avec ProductController override.
      */
-    private static $POWERPARTS_ROOT_IDS = [41];
+    private static $POWERPARTS_ROOT_IDS = [41, 533]; // 41 ex-branche + 533 (PowerParts refondu) — synchro ProductController override
 
     /**
      * Racines « powerwear » (Équipement du motard 15, Sportswear 14) : le panneau n'y

@@ -306,8 +306,12 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
         }
     }
 
-    /** Catégorie "Accessoires Powerparts" (cf. CategoryController override). */
-    const POWERPARTS_CATEGORY_ID = 41;
+    /**
+     * Catégorie "Accessoires moto" (PowerParts refondu, ex-41) — cf. CategoryController
+     * override. Le hub moto liste les PowerParts compatibles et lie vers cette
+     * catégorie filtrée ; 41 étant vidée/retirée, il faut cibler 533.
+     */
+    const POWERPARTS_CATEGORY_ID = 533;
 
     /** Catégorie racine "Pièces détachées d'origine" — cf. fil d'Ariane ci-dessous. */
     const ORIGINE_CATEGORY_ID = 12;

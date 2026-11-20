@@ -7,7 +7,7 @@ class ProductController extends ProductControllerCore
      * (pièces obligatoires / exclues / recommandées / rechange).
      * S'applique à tous les produits descendants de ces catégories.
      */
-    private static $POWERPARTS_ROOT_IDS = [41]; // Accessoires Powerparts
+    private static $POWERPARTS_ROOT_IDS = [41, 533]; // Accessoires Powerparts (41 ex-branche) + Accessoires moto (533, PowerParts refondu)
 
     /**
      * Racines « powerwear » : Équipement du motard (15) et Sportswear et

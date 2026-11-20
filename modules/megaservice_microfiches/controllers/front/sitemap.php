@@ -23,7 +23,7 @@ require_once _PS_MODULE_DIR_ . 'megaservice_microfiches/classes/MsMoto.php';
 
 class Megaservice_microfichesSitemapModuleFrontController extends ModuleFrontController
 {
-    const POWERPARTS_CATEGORY_ID = 41;
+    const POWERPARTS_CATEGORY_ID = 533; // Accessoires moto (PowerParts refondu, ex-41)
     /** URLs par fichier (< 50 000, limite Google). */
     const CHUNK = 40000;
 

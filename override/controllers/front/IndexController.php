@@ -30,7 +30,7 @@ class IndexController extends IndexControllerCore
         ['id_category' => 10,  'image' => 'motos-neuves.jpg',   'label' => 'Motos neuves'],
         ['id_category' => 11,  'image' => 'motos-occasion.jpg', 'label' => "Motos d'occasion"],
         ['id_category' => 12,  'image' => 'pieces-origine.jpg', 'label' => "Pièces d'origine"],
-        ['id_category' => 41,  'image' => 'powerparts.jpg',     'label' => 'Powerparts'],
+        ['id_category' => 533, 'image' => 'powerparts.jpg',     'label' => 'Powerparts'], // ex-41 (PowerParts refondu)
         ['id_category' => 15,  'image' => 'powerwear.jpg',      'label' => 'Équipement du motard'],
         ['id_category' => 14,  'image' => 'sportswear.jpg',     'label' => 'Sportswear et accessoires'],
     ];
