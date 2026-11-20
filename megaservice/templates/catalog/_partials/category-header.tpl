@@ -9,36 +9,8 @@
     {/if}
   </div>
 
-  {* Bandeau moto — uniquement sur les pages de la branche Accessoires Powerparts (cf. CategoryController) *}
-  {if isset($ms_show_moto_context) && $ms_show_moto_context}
-  <div class="ms-catalog-context">
-    {* La photo de la moto filtrée, détourée si elle existe (cf. MsMoto). L'image
-       générique était codée en dur ici : le bandeau montrait la même moto quelle
-       que soit celle du garage, alors que le hub affichait déjà la bonne. Elle
-       reste la réserve pour les modèles sans photo. *}
-    <img src="{if !empty($ms_moto_filter.picture_url)}{$ms_moto_filter.picture_url|escape:'html':'UTF-8'}{else}{$urls.theme_assets}img/moto-context.png{/if}"
-         alt="" class="ms-catalog-context__moto-img">
-    <div class="ms-catalog-context__inner">
-
-      <span class="ms-catalog-context__brand" aria-hidden="true">
-        <img src="{$urls.theme_assets}img/brands/ktm-square.png" alt="">
-      </span>
-
-      <div class="ms-catalog-context__text">
-        <span class="ms-catalog-context__label">{l s='Catalogue filtré sur' d='Shop.Theme.Catalog'}</span>
-        <strong class="ms-catalog-context__moto-name">{if isset($ms_moto_filter) && $ms_moto_filter}{$ms_moto_filter.label|escape:'html'}{/if}</strong>
-      </div>
-
-      <div class="ms-catalog-context__actions">
-        <a href="#" class="ms-catalog-context__link js-model-trigger">{l s='Changer de modèle' d='Shop.Theme.Catalog'}</a>
-        {* js-model-clear : purge localStorage ET le cookie serveur (cf. model-selector.js).
-           Sans cette classe, seul le cookie partait et le sélecteur du header continuait
-           d'afficher la moto. Le href reste le repli sans JS. *}
-        {if isset($ms_moto_filter) && $ms_moto_filter}<a href="{$ms_moto_filter.clear_url|escape:'html'}" class="ms-catalog-context__link js-model-clear">{l s='Retirer le filtre' d='Shop.Theme.Catalog'}</a>{/if}
-      </div>
-
-    </div>
-  </div>
-  {/if}
+  {* Bandeau moto « Catalogue filtré sur <moto> » — partial partagé avec
+     category-header-full.tpl (cf. moto-context.tpl). Rendu si ms_show_moto_context. *}
+  {include file='catalog/_partials/moto-context.tpl'}
 
 </div>
