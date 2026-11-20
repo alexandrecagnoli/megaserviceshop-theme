@@ -3,28 +3,32 @@
 class CategoryController extends CategoryControllerCore
 {
     /**
-     * Racines 14/15. Deux usages bien distincts, à ne pas refusionner :
+     * Racines dont LA PAGE RACINE elle-même passe en layout plein-largeur sans
+     * sidebar ('full'). Test EXACT (cf. $template, ligne ~149) : seule la racine
+     * est concernée, JAMAIS son sous-arbre — toute sous-catégorie en dessous garde
+     * le layout 'default' (3 colonnes + sidebar filtres), car elle a de vrais
+     * produits et de vrais filtres à proposer.
      *
-     *   - le LAYOUT plein-largeur sans sidebar ('full') ne vaut QUE sur ces
-     *     deux pages exactement — ce sont des pages de présentation sans
-     *     produits propres à filtrer. Toute sous-catégorie EN DESSOUS garde
-     *     le layout 'default' (3 colonnes + sidebar filtres) : elle a de
-     *     vrais produits, donc de vrais filtres à proposer.
-     *   - la ligne d'ICÔNES de navigation (ms_show_subcat_nav), elle,
-     *     s'affiche sur TOUT le sous-arbre (cf. fullWidthRoot()) : une
-     *     sous-catégorie en a besoin pour naviguer vers ses soeurs — c'est
-     *     justement là qu'il n'y a plus de layout plein-largeur pour la
-     *     porter, elle est donc injectée dans les DEUX variantes de hero
-     *     (cf. category-header.tpl et category-header-full.tpl).
+     *   14  Sportswear et accessoires (Lifestyle) — page de présentation
+     *   15  Équipement du motard (Équipements pilotes) — page de présentation
+     *   533 Accessoires moto (PowerParts refondu) — la racine agrège 6 000+
+     *       produits de toutes les familles : une sidebar de filtres y est
+     *       illisible (toutes les valeurs de toutes les familles mélangées). On
+     *       présente donc la racine SANS colonne de filtres (comme Sportswear),
+     *       et on remplace le filtrage par un cocon sémantique « Type de pièce »
+     *       sous la liste (cf. ms_type_piece_cocon). Les FAMILLES de 533, elles,
+     *       gardent la sidebar + ses facettes (cf. configure_facets_533.php).
+     *
+     * À ne pas refusionner avec $SUBCAT_NAV_ROOT_IDS : la ligne d'ICÔNES de
+     * navigation (ms_show_subcat_nav) s'affiche sur TOUT le sous-arbre (14/15/533),
+     * layout plein-largeur ou pas — elle est injectée dans les DEUX variantes de
+     * hero (cf. category-header.tpl et category-header-full.tpl).
      *
      * Templates disponibles :
      *   'default' — 3 colonnes + sidebar filtres
      *   'full'    — 4 colonnes pleine largeur, pas de sidebar
-     *
-     *   14  Sportswear et accessoires (Lifestyle, vêtements)
-     *   15  Équipement du motard (Équipements pilotes)
      */
-    private static $FULL_WIDTH_ROOT_IDS = [14, 15];
+    private static $FULL_WIDTH_ROOT_IDS = [14, 15, 533];
 
     /**
      * Racines dont le sous-arbre affiche la LIGNE D'ICÔNES de navigation entre
@@ -35,10 +39,10 @@ class CategoryController extends CategoryControllerCore
      *   15  Équipement du motard (PowerWear)
      *   533 Accessoires moto (= PowerParts refondu, branche import COMPLET)
      *
-     * 533 partage la ligne d'icônes mais GARDE son layout 'default' (3 colonnes +
-     * sidebar filtres) : seul le carousel est mutualisé, pas la mise en page
-     * plein-largeur — qui reste réservée à 14/15 exactement (cf. $FULL_WIDTH_ROOT_IDS
-     * et le choix de $template dans assignMotoContext).
+     * 533 partage la ligne d'icônes sur tout son sous-arbre. Sa RACINE est aussi
+     * plein-largeur (cf. $FULL_WIDTH_ROOT_IDS), mais ses FAMILLES restent en layout
+     * 'default' (3 colonnes + sidebar) : le carousel et le plein-largeur sont deux
+     * réglages distincts, c'est pourquoi les deux listes sont découplées.
      * NB : l'ancienne branche « Accessoires powerparts » (41) est en cours de retrait ;
      * le carousel a été déplacé de 41 vers 533, la vraie branche PowerParts.
      */
@@ -113,6 +117,12 @@ class CategoryController extends CategoryControllerCore
     /** Garde-fou : une gamme très fournie ne doit pas rendre 300 cartes. */
     const HUB_MODELS_MAX = 60;
 
+    /** Racine PowerParts refondue : layout plein-largeur + cocon « Type de pièce ». */
+    const POWERPARTS_ROOT_ID = 533;
+
+    /** Caractéristique « Type de pièce » (ps_feature) — alimente le cocon sémantique. */
+    const TYPE_PIECE_FEATURE_ID = 62;
+
     /** @var int|null id_moto du "garage" (cookie), mémoïsé. */
     private $motoFilterId;
 
@@ -161,7 +171,10 @@ class CategoryController extends CategoryControllerCore
             // Suffixe de titre réservé à la racine PowerParts refondue (533) : le nom de
             // catégorie reste « Accessoires moto » (menu + fil d'Ariane courts), mais le
             // H1 (et le meta_title côté BO) affiche « Accessoires moto (Power Parts) ».
-            'ms_h1_suffix'          => ((int) $this->category->id === 533) ? ' (Power Parts)' : '',
+            'ms_h1_suffix'          => ((int) $this->category->id === self::POWERPARTS_ROOT_ID) ? ' (Power Parts)' : '',
+            // Cocon sémantique « Type de pièce » sous la liste, racine 533 seule
+            // (page plein-largeur sans facettes). [] ailleurs → bloc non rendu.
+            'ms_type_piece_cocon'   => $this->typePieceCocon(),
             // Badge "Compatible" + contexte : uniquement quand un filtre moto est ACTIF.
             'ms_show_moto_context'  => (bool) $motoFilter,
             'ms_moto_filter'        => $motoFilter,
@@ -551,6 +564,90 @@ class CategoryController extends CategoryControllerCore
         }
 
         return '';
+    }
+
+    /**
+     * Cocon sémantique « Type de pièce » affiché SOUS la liste, sur la seule
+     * racine PowerParts (533) — page plein-largeur sans facettes (cf.
+     * $FULL_WIDTH_ROOT_IDS). La racine agrège 6 000+ produits de toutes les
+     * familles : une sidebar de filtres y est illisible. On la remplace par un
+     * maillage interne vers chaque valeur de « Type de pièce », chaque lien
+     * pointant la vue filtrée par la facette correspondante.
+     *
+     * Rend [] partout ailleurs : le template ne sort le bloc que si la variable
+     * est non vide.
+     *
+     * L'URL de facette est produite par le sérialiseur NATIF de PrestaShop
+     * (URLFragmentSerializer), celui-là même que ps_facetedsearch utilise pour
+     * relire `q`. Il échappe les tirets internes des valeurs (« Protège-carter »
+     * → « Protège--carter ») : une concaténation à la main produirait des liens
+     * morts. On ne reproduit donc pas son format, on l'appelle.
+     *
+     * @return array<int, array{name:string,nb:int,url:string}>
+     */
+    private function typePieceCocon()
+    {
+        if ((int) $this->category->id !== self::POWERPARTS_ROOT_ID) {
+            return [];
+        }
+
+        $serializerClass = 'PrestaShop\\PrestaShop\\Core\\Product\\Search\\URLFragmentSerializer';
+        if (!class_exists($serializerClass)) {
+            return [];
+        }
+
+        $idLang = (int) $this->context->language->id;
+        $idShop = (int) $this->context->shop->id;
+
+        // Valeurs de « Type de pièce » portées par au moins un produit VISIBLE
+        // rattaché à la racine 533 (après rattachement chaîne complète, 533
+        // « direct » couvre toute la branche — cf. associate_full_path_533.php).
+        // Mêmes jointures que la magnitude d'une facette : le compteur colle à
+        // ce que la vue filtrée affiche.
+        $rows = Db::getInstance()->executeS(
+            'SELECT fvl.value, COUNT(DISTINCT fp.id_product) AS nb
+               FROM ' . _DB_PREFIX_ . 'feature_product fp
+               JOIN ' . _DB_PREFIX_ . 'feature_value_lang fvl
+                 ON fvl.id_feature_value = fp.id_feature_value AND fvl.id_lang = ' . $idLang . '
+               JOIN ' . _DB_PREFIX_ . 'category_product cp
+                 ON cp.id_product = fp.id_product AND cp.id_category = ' . self::POWERPARTS_ROOT_ID . '
+               JOIN ' . _DB_PREFIX_ . 'product_shop ps
+                 ON ps.id_product = fp.id_product AND ps.id_shop = ' . $idShop . '
+                AND ps.active = 1 AND ps.visibility IN ("both", "catalog")
+              WHERE fp.id_feature = ' . self::TYPE_PIECE_FEATURE_ID . '
+              GROUP BY fp.id_feature_value
+              ORDER BY fvl.value'
+        ) ?: [];
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Libellé de facette = nom de la caractéristique, exactement comme
+        // ps_facetedsearch l'affiche et le relit (aucun nom d'URL custom ici).
+        $facetLabel = (string) Db::getInstance()->getValue(
+            'SELECT name FROM ' . _DB_PREFIX_ . 'feature_lang
+              WHERE id_feature = ' . self::TYPE_PIECE_FEATURE_ID . ' AND id_lang = ' . $idLang
+        );
+        if ($facetLabel === '') {
+            return [];
+        }
+
+        $serializer = new $serializerClass();
+        $base = $this->context->link->getCategoryLink((int) $this->category->id);
+        $glue = (strpos($base, '?') === false) ? '?' : '&';
+
+        $out = [];
+        foreach ($rows as $row) {
+            $q = $serializer->serialize([$facetLabel => [(string) $row['value']]]);
+            $out[] = [
+                'name' => (string) $row['value'],
+                'nb'   => (int) $row['nb'],
+                'url'  => $base . $glue . 'q=' . rawurlencode($q),
+            ];
+        }
+
+        return $out;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
