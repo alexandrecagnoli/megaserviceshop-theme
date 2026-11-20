@@ -32,7 +32,8 @@ require_once $configPath;
 $db=Db::getInstance(); $pref=_DB_PREFIX_; $il=(int)Configuration::get('PS_LANG_DEFAULT');
 $HOME=(int)Configuration::get('PS_HOME_CATEGORY') ?: 2;
 
-const WP_ROOT=332; // Suspensions WP
+const WP_ROOT=332;        // Suspensions WP (+ 382/356/383/280/364)
+const TARGET_PARENT=533;  // enfant direct de « Accessoires moto » (décision export 1a)
 
 $cat=$db->getRow("SELECT c.id_category,c.id_parent,c.nleft,c.nright,c.active,c.position,
     (SELECT name FROM {$pref}category_lang WHERE id_category=c.id_category AND id_lang=$il) nm,
@@ -41,8 +42,9 @@ $cat=$db->getRow("SELECT c.id_category,c.id_parent,c.nleft,c.nright,c.active,c.p
 if(!$cat){ fwrite(STDERR,"Catégorie ".WP_ROOT." introuvable.\n"); exit(1); }
 
 echo ($apply?"=== APPLICATION ===":"=== DRY-RUN (aucune écriture) ===")."\n\n";
+$tgtName=$db->getValue("SELECT name FROM {$pref}category_lang WHERE id_category=".TARGET_PARENT." AND id_lang=$il");
 printf("Nœud à déplacer : %d « %s »\n", WP_ROOT, $cat['nm']);
-printf("  parent actuel : %d (%s)  →  cible : %d (Accueil)\n", $cat['id_parent'], $cat['pnm'], $HOME);
+printf("  parent actuel : %d (%s)  →  cible : %d (%s)\n", $cat['id_parent'], $cat['pnm'], TARGET_PARENT, $tgtName);
 echo "  état actif : ".$cat['active']." (conservé)\n\n";
 
 echo "Sous-arbre déplacé (suit automatiquement) + produits :\n";
@@ -60,7 +62,7 @@ $distinct=(int)$db->getValue("SELECT COUNT(DISTINCT id_product) FROM {$pref}cate
 echo "\nProduits distincts dans le sous-arbre WP : $distinct (inchangés — associations non touchées)\n";
 echo "link_rewrite de 332 : ".$db->getValue("SELECT link_rewrite FROM {$pref}category_lang WHERE id_category=".WP_ROOT." AND id_lang=$il")." (inchangé → URL valide)\n";
 
-if($cat['id_parent']==$HOME){ echo "\nDéjà sous Accueil — rien à faire.\n"; exit(0); }
+if($cat['id_parent']==TARGET_PARENT){ echo "\nDéjà sous la cible — rien à faire.\n"; exit(0); }
 if(!$apply){ echo "\nDry-run terminé. --apply après feu vert.\n"; exit(0); }
 
 // ── APPLY ────────────────────────────────────────────────────────────────────
@@ -73,10 +75,10 @@ $tbls=$pref.'category '.$pref.'category_lang '.$pref.'category_shop '.$pref.'cat
 echo "\nSauvegarde : $bk (".(is_file($bk)?round(filesize($bk)/1024).' Ko':'ÉCHEC').")\n";
 
 $c=new Category(WP_ROOT);
-$c->id_parent=$HOME;
+$c->id_parent=TARGET_PARENT;
 $c->update();
 Category::regenerateEntireNtree();
 Tools::clearSmartyCache();
 if(function_exists('exec')) @exec('rm -rf '.escapeshellarg(_PS_ROOT_DIR_.'/var/cache/prod').'/*');
-echo "332 déplacé sous Accueil, ntree régénéré, cache vidé.\n";
+echo "332 déplacé sous ".TARGET_PARENT.", ntree régénéré, cache vidé.\n";
 echo "Vérif : parent de 332 = ".(int)$db->getValue("SELECT id_parent FROM {$pref}category WHERE id_category=".WP_ROOT)."\n";
