@@ -142,6 +142,10 @@
 
   </div>
 
+  {* Cocon sémantique « Type de pièce » — sous la liste, racine PowerParts (533)
+     uniquement (variable non vide seulement là — cf. CategoryController). *}
+  {include file='catalog/_partials/type-piece-cocon.tpl'}
+
   {block name='product_list_footer'}{/block}
 
   {hook h="displayFooterCategory"}
