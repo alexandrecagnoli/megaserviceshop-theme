@@ -323,11 +323,13 @@ class Megaservice_microfichesMotoModuleFrontController extends ModuleFrontContro
      * AUCUNE vue éclatée : la navigation par microfiches ne les atteint donc
      * jamais. D'où cet accès dédié sur la page moto, filtré par compatibilité.
      *
-     * « Kits de pièces d'origine », enfant de « Pièces détachées d'origine » (12).
+     * « Kits pièces de rechange d'origine » (560), enfant de « Pièces détachées
+     * d'origine » (12). Remplace l'ancien placeholder vide 488 (désactivé) : les
+     * kits ont été importés sous 560 (485 produits, 85% avec compatibilité moto).
      * 0 désactive proprement la carte (la garde de kitsUrl() reste en place si la
      * catégorie venait à être supprimée ou désactivée).
      */
-    const KITS_CATEGORY_ID = 488;
+    const KITS_CATEGORY_ID = 560;
 
     /**
      * Produits Powerparts (catégorie 41 + sous-arbre), présentés au format natif

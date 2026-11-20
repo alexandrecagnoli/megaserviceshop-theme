@@ -56,8 +56,9 @@ class CategoryController extends CategoryControllerCore
      */
     private static $MOTO_CONTEXT_ROOT_IDS = [
         41,  // Accessoires Powerparts (ancienne branche, en cours de retrait)
-        488, // Kits de pièces d'origine — les kits ne figurent sur aucune vue
-             // éclatée, la compatibilité moto est leur seul filtre d'accès.
+        560, // Kits pièces de rechange d'origine — les kits ne figurent sur aucune
+             // vue éclatée, la compatibilité moto est leur seul filtre d'accès.
+             // Remplace l'ancien placeholder vide 488 (désactivé).
         533, // Accessoires moto (PowerParts refondu) : reprend la compatibilité
              // moto de 41. À tenir synchro avec MOUNTABILITY_ROOT_CATEGORIES du
              // module megaservice_mountability (qui exécute le filtrage réel).

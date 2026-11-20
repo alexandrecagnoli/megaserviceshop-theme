@@ -183,8 +183,9 @@ class Megaservice_mountability extends Module
      * Racines dont le sous-arbre est filtrable par montabilité.
      *
      *   41  Accessoires Powerparts (ancienne branche, en cours de retrait)
-     *   488 Kits de pièces d'origine — les kits ne figurent sur aucune vue
-     *       éclatée, la compatibilité moto est leur seul filtre d'accès.
+     *   560 Kits pièces de rechange d'origine — les kits ne figurent sur aucune
+     *       vue éclatée, la compatibilité moto est leur seul filtre d'accès.
+     *       Remplace l'ancien placeholder vide 488 (désactivé).
      *   533 Accessoires moto (= PowerParts refondu, branche import COMPLET) :
      *       reprend la compatibilité moto que portait 41, désormais la vraie
      *       branche accessoires.
@@ -194,7 +195,7 @@ class Megaservice_mountability extends Module
      * déclarée ici mais pas là-bas filtrerait les produits sans que le client
      * voie sur quelle moto — et l'inverse afficherait un bandeau mensonger.
      */
-    const MOUNTABILITY_ROOT_CATEGORIES = [41, 488, 533];
+    const MOUNTABILITY_ROOT_CATEGORIES = [41, 533, 560];
 
     /**
      * ps_facetedsearch tire ce hook en fin de construction de sa requête
