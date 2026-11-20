@@ -90,35 +90,49 @@ if(!$apply){ echo "\nDry-run terminé. --apply après feu vert.\n"; exit(0); }
 if($wouldOrphan>0){ fwrite(STDERR,"REFUS : $wouldOrphan produits deviendraient orphelins. Abandon.\n"); exit(1); }
 
 // ── APPLY ────────────────────────────────────────────────────────────────────
+// 0) table temporaire des produits cibles (dans 41 ET 12) — évite l'erreur MySQL
+//    1093 (DELETE sur une table référencée dans sa propre sous-requête).
+$db->execute("DROP TEMPORARY TABLE IF EXISTS tmp_oem41");
+$db->execute("CREATE TEMPORARY TABLE tmp_oem41 (id_product INT NOT NULL PRIMARY KEY) ENGINE=MEMORY");
+$db->execute("INSERT INTO tmp_oem41 (id_product) SELECT a.id_product FROM ($q41) a JOIN ($q12) b ON a.id_product=b.id_product");
+echo "\nProduits cibles (table temp) : ".(int)$db->getValue("SELECT COUNT(*) FROM tmp_oem41")."\n";
+
 // 1) sauvegarde des lignes supprimées (restauration)
 $ts=date('Ymd_His'); $restore=dirname(__DIR__).'/backups/restore_oem41_'.$ts.'.sql';
 @mkdir(dirname($restore),0775,true);
 $fh=fopen($restore,'w'); fwrite($fh,"-- Restauration des associations category_product retirées (OEM hors PowerParts), $ts\n");
 $rows=$db->executeS(
   "SELECT cp.id_category,cp.id_product,cp.position FROM {$pref}category_product cp
-   WHERE cp.id_category IN ($in41) AND cp.id_product IN ($q41) AND cp.id_product IN ($q12)");
+   JOIN tmp_oem41 t ON t.id_product=cp.id_product
+   WHERE cp.id_category IN ($in41)");
 foreach($rows as $r) fwrite($fh,"INSERT IGNORE INTO {$pref}category_product (id_category,id_product,position) VALUES (".(int)$r['id_category'].",".(int)$r['id_product'].",".(int)$r['position'].");\n");
 fclose($fh);
-echo "\nSauvegarde restauration : $restore (".count($rows)." lignes)\n";
+echo "Sauvegarde restauration : $restore (".count($rows)." lignes)\n";
 
 // 2) rebascule des catégories par défaut tombant dans 41 → catégorie OEM la plus profonde
 $db->execute(
   "UPDATE {$pref}product p
+   JOIN tmp_oem41 t ON t.id_product=p.id_product
    SET p.id_category_default = (
      SELECT cp.id_category FROM {$pref}category_product cp
      JOIN {$pref}category c ON c.id_category=cp.id_category
      WHERE cp.id_product=p.id_product AND c.nleft>=".$r12['nleft']." AND c.nright<=".$r12['nright']."
      ORDER BY c.level_depth DESC LIMIT 1)
-   WHERE p.id_category_default IN ($in41)
-     AND p.id_product IN ($q41) AND p.id_product IN ($q12)");
-$db->execute("UPDATE {$pref}product_shop ps JOIN {$pref}product p ON p.id_product=ps.id_product SET ps.id_category_default=p.id_category_default WHERE p.id_product IN ($q12)");
+   WHERE p.id_category_default IN ($in41)");
+$db->execute(
+  "UPDATE {$pref}product_shop ps
+   JOIN {$pref}product p ON p.id_product=ps.id_product
+   JOIN tmp_oem41 t ON t.id_product=ps.id_product
+   SET ps.id_category_default=p.id_category_default");
 echo "Catégories par défaut rebasculées sur OEM.\n";
 
-// 3) suppression des associations branche 41
+// 3) suppression des associations branche 41 (cible = category_product, source = temp)
 $db->execute(
   "DELETE cp FROM {$pref}category_product cp
-   WHERE cp.id_category IN ($in41) AND cp.id_product IN ($q41) AND cp.id_product IN ($q12)");
+   JOIN tmp_oem41 t ON t.id_product=cp.id_product
+   WHERE cp.id_category IN ($in41)");
 echo "Associations branche 41 supprimées.\n";
+$db->execute("DROP TEMPORARY TABLE IF EXISTS tmp_oem41");
 
 Tools::clearSmartyCache();
 if(function_exists('exec')) @exec('rm -rf '.escapeshellarg(_PS_ROOT_DIR_.'/var/cache/prod').'/*');
